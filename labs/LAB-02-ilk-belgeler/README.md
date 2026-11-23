@@ -720,9 +720,10 @@ listelenir (2).
 | Zaman seçici | var; aralık dışı document gizlenir | yok |
 | Histogram | var | yok |
 
-### 7. Güncelleme kalıpları: upsert, script ve toplu işlem
+<details>
+<summary><strong>İsteğe bağlı: güncelleme kalıpları (upsert, script ve toplu işlem)</strong></summary>
 
-**Soru: Uygulamalar document'leri en sık nasıl günceller?** Bir mağazanın stok index'i üzerinde, uygulamaların en sık yaptığı güncellemeleri Dev Tools'ta deneyin. Bu adım
+**Soru: Uygulamalar document'leri en sık nasıl günceller?** Bir mağazanın stok index'i üzerinde, uygulamaların en sık yaptığı güncellemeleri Dev Tools'ta deneyin. Bu bölüm
 kendi index'ini (`belge-stok`) açar; önceki adımların verisine dokunmaz.
 
 ```http
@@ -915,6 +916,8 @@ GET /belge-stok/_search?filter_path=hits.hits._id,hits.hits._source.ad
 ```
 
 Satışı olmayan `p3` (Klavye) silindi; `p1` (bir satış) ve `p2` (iki satış) kaldı.
+
+</details>
 
 </details>
 
