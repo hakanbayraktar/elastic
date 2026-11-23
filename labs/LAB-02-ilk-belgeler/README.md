@@ -37,6 +37,8 @@ cd ~/elastic/labs/LAB-02-ilk-belgeler
 | field | Document'teki bir anahtar (`ad`, `fiyat`) | sütun |
 | `_id` | Document'in index içindeki kimliği; verilmezse Elasticsearch üretir | birincil anahtar |
 | mapping | Her field'ın tipi (`text`, `keyword`, `date`, `float`) | şema |
+| inverted index | Her terimin hangi document'lerde geçtiğini tutan dizin; arama bunun üzerinden yapılır | kitabın arkasındaki dizin |
+| data view | Kibana'nın bir ya da birden çok index'e nasıl bakacağını tutan tanım; veri taşımaz | view (görünüm) |
 
 Fark: index'i ve mapping'i önceden tanımlamak zorunlu değildir. İlk document geldiğinde Elasticsearch
 index'i açar ve field tiplerini değerden tahmin eder (dynamic mapping). Bu kolaylık, Adım 5'te
@@ -48,11 +50,15 @@ göreceğimiz tarih tuzağının da kaynağıdır.
 
 ### 1. Dev Tools'u açın
 
-Kibana menüsünden **Management › Dev Tools**. Üstte kullanım verisi uyarısı çıkarsa **Dismiss**,
-editördeki örnek istekleri silmek için **Clear this input** düğmesine basın. Soldaki editöre istek
-yazılır (1), sağda yanıt görünür (3). İstek biçimi: ilk satırda `METOT /yol`, altında (gerekiyorsa) JSON gövde. İmleç isteğin
-içindeyken ▶ düğmesi (2) (ya da `Ctrl+Enter`) yalnız o isteği gönderir. Console, istekleri Kibana'ya
-giriş yaptığınız kullanıcıyla Elasticsearch'e iletir; parola yazmazsınız.
+Kibana menüsünden **Management › Dev Tools**'u açın.
+
+- Kullanım verisi uyarısı çıkarsa: **Dismiss**
+- Editördeki örnek istekleri silmek için: **Clear this input**
+- **(1) Sol editör:** isteği buraya yazarsınız
+- **(2) ▶ ya da `Ctrl+Enter`:** imlecin bulunduğu isteği gönderir
+- **(3) Sağ panel:** yanıt burada görünür
+- **İstek biçimi:** ilk satırda `METOT /yol`, altında gerekiyorsa JSON gövde
+- **Parola yok:** Console, Kibana'ya giriş yaptığınız kullanıcıyla bağlanır
 
 ![Dev Tools Console: 1 istek editörü, 2 gönder düğmesi, 3 yanıt](../../assets/screenshots/LAB-02/01-devtools-console.png){width=75%}
 
@@ -60,7 +66,7 @@ Bu labda `http` bloklarını Dev Tools'a, `bash` bloklarını terminale yapışt
 
 ### 2. Document ekleyin: Dev Tools ve curl
 
-Önce index'i açın. Index shard'lara bölünür: asıl shard'a primary, başka bir node'daki kopyasına replica denir.
+**Index'i açın.** Index **shard**'lara bölünür: asıl shard'a **primary**, başka bir node'daki kopyasına **replica** denir.
 Küçük veri için tek shard yeter (`number_of_shards: 1`). Ana cluster tek node olduğu için replica'yı koyacak yer
 yoktur; sayısını sıfır veriyoruz, yoksa index sarı (yellow) görünür:
 
@@ -78,7 +84,7 @@ PUT /belge-urunler
 {"acknowledged": true, "shards_acknowledged": true, "index": "belge-urunler"}
 ```
 
-`_id`'yi siz verirseniz `PUT`, Elasticsearch üretsin isterseniz `POST` kullanılır. İsteğin sonundaki
+**Dev Tools ile document ekleme.** `_id`'yi siz verirseniz `PUT`, Elasticsearch üretsin isterseniz `POST` kullanılır. İsteğin sonundaki
 `?filter_path=...` yanıttan yalnız yazdığınız field'ları bırakır; yanıt kısa ve okunur kalır:
 
 ```http
@@ -111,7 +117,7 @@ POST /belge-urunler/_doc
 Veritabanından gelen kayıtlarda kendi anahtarınızı `_id` yapmak, aynı kaydın iki kez
 yüklenmesini önler (aynı `_id` ikinci kez gelince yeni document açılmaz, eskisi güncellenir).
 
-Aynı istek terminalden `curl` ile. Dev Tools'tan farkı: adres ve kullanıcı/parola açıkça yazılır,
+**curl ile document ekleme.** Aynı istek terminalden `curl` ile. Dev Tools'tan farkı: adres ve kullanıcı/parola açıkça yazılır,
 JSON gövdesi için `Content-Type` başlığı verilir:
 
 ```bash
@@ -703,7 +709,9 @@ Beklenen çıktı:
 ### 6. Discover: zaman field'lı ve zaman field'sız data view
 
 Discover bir index'e doğrudan değil, bir **data view** üzerinden bakar. Data view, hangi
-index(ler)in okunacağını ve (varsa) hangi field'ın zaman field'ı olduğunu söyler.
+index(ler)in okunacağını ve (varsa) hangi field'ın zaman field'ı olduğunu söyler. **Index** veriyi Elasticsearch'te
+tutar; **data view** yalnız Kibana'nın ona nasıl bakacağını söyler. Data view'ı silmek veriyi silmez; `belge-*` gibi bir
+desenle birden çok index'e birlikte bakabilir.
 
 **a) Zaman field'lı data view.** **Stack Management › Data Views › Create data view**: Name
 `belge-talepler` (1), Index pattern `belge-talepler` (2), Timestamp field `@timestamp` (3),
@@ -818,10 +826,7 @@ POST /belge-stok/_update/p3?filter_path=result,_version
 {"_version":2,"result":"noop"}
 ```
 
-<details>
-<summary><strong>Script: mevcut değere göre güncelleme</strong></summary>
-
-İki USB bellek satıldı: stok 2 azalmalı, satış 2 artmalı. Yeni değeri
+**Script: mevcut değere göre güncelleme.** İki USB bellek satıldı: stok 2 azalmalı, satış 2 artmalı. Yeni değeri
 uygulamada hesaplayıp göndermek, o arada başka bir satış olursa yanlış sonuç verir. Script hesabı Elasticsearch'te,
 document'in o anki değeri üzerinde yapar. `ctx._source` document'in kendisi, `params` dışarıdan verilen değerdir:
 
@@ -849,8 +854,6 @@ GET /belge-stok/_source/p2
 {"ad":"USB Bellek","stok":3,"satis":2}
 ```
 
-</details>
-
 <details>
 <summary><strong><code>refresh=wait_for</code>: yazdığım hemen aranabilsin mi?</strong></summary>
 
@@ -869,10 +872,7 @@ POST /belge-stok/_update/p1?refresh=wait_for&filter_path=result
 
 </details>
 
-<details>
-<summary><strong><code>_update_by_query</code>: koşula uyan bütün document'leri güncellemek</strong></summary>
-
-Stoğu 10'un altına düşen ürünleri
+**`_update_by_query`: koşula uyan bütün document'leri güncellemek.** Stoğu 10'un altına düşen ürünleri
 `azaliyor: true` diye işaretleyeceğiz. Toplu değişiklikten önce aynı sorguyla kaç document etkileneceğine bakın:
 
 ```http
@@ -908,8 +908,6 @@ GET /belge-stok/_search?filter_path=hits.hits._id,hits.hits._source
 ```json
 {"hits":{"hits":[{"_id":"p2","_source":{"satis":2,"ad":"USB Bellek","azaliyor":true,"stok":3}}]}}
 ```
-
-</details>
 
 <details>
 <summary><strong><code>_delete_by_query</code>: koşula uyan bütün document'leri silmek</strong></summary>
