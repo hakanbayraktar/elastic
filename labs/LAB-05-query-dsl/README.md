@@ -480,7 +480,19 @@ Toplam skor iki terimin skorunun toplamıdır. `n` ve `N` nadirliği (idf), `dl`
 
 ### 7. Aynı isim neden bulunmuyor?
 
-**Soru: Aynı isim neden bir sorguda bulunur, ötekinde bulunmaz?** Müşteri adını üç biçimde arayın:
+**Soru: Aynı isim neden bir sorguda bulunur, ötekinde bulunmaz?**
+
+Önce Elasticsearch'ün "Eddie Underwood" adını nasıl sakladığına bakalım. Örnek veride `customer_full_name` iki biçimde
+saklanır:
+
+| Field | Tipi | İçinde ne saklı? |
+|---|---|---|
+| `customer_full_name` | `text` | iki ayrı kelime, küçük harfle: `eddie` · `underwood` |
+| `customer_full_name.keyword` | `keyword` | tek parça, yazıldığı gibi: `Eddie Underwood` |
+
+Şimdi aynı adı üç sorguyla arayın.
+
+**1) `match`, `text` field'ında:**
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -491,7 +503,7 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":158}
 ```
 
-Aynı adı `text` field'ında `term` ile:
+**2) `term`, `text` field'ında:**
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -502,7 +514,7 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":0}
 ```
 
-Aynı adı `.keyword` alt field'ında `term` ile:
+**3) `term`, `.keyword` field'ında:**
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -513,9 +525,14 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":1}
 ```
 
-- **`match`** adında "eddie" **ya da** "underwood" geçen herkesi getirir: 158.
-- **`term` text field'da** bulmaz: `customer_full_name` kelimelere bölünüp küçük harfle saklanır.
-- **`term` `.keyword`'de** bulur: değer tek parça saklanır. Nedeni mapping'dir.
+| Sorgu | Aradığı şey | Field'da var mı? | Sonuç |
+|---|---|---|---|
+| 1) `match` | aranan metni de böler: `eddie` **ya da** `underwood` | var (her ikisi ayrı ayrı) | 158: adında ya da soyadında bu kelimelerden biri geçen herkes |
+| 2) `term` | `Eddie Underwood` (olduğu gibi, tek parça, büyük harfli) | **yok**: field'da yalnız `eddie` ve `underwood` var | 0 |
+| 3) `term` | `Eddie Underwood` (olduğu gibi) | **var**: `.keyword` adı tek parça tutar | 1 |
+
+**Kural:** `term` aradığını hiç değiştirmez; field'da birebir aynı değer olmalıdır. Kelime aramak için `text` + `match`,
+tam değer için `.keyword` + `term`.
 
 ---
 
