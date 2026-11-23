@@ -274,7 +274,7 @@ PUT /mapping-urunler
 - **`dynamic: strict`:** mapping'de olmayan bir field gelirse document reddedilir (Adım 3).
 - **`ad`:** Türkçe analyzer'lı `text`; `ad.keyword` tam değer için, `ad.std` karşılaştırma için
   standart analyzer'lı (Adım 4).
-- **`kategori`:** `keyword`; kategori aranmaz, tam değerle süzülür ve gruplanır.
+- **`kategori`:** `keyword`; kategoride kelime aranmaz; tam değerle filtrelenir ve gruplanır.
 - **`eklendi`:** `format` iki biçimi kabul eder: `21.11.2026 14:30` ve ISO 8601. Türkçe tarih artık
   gerçek tarih olarak saklanır.
 

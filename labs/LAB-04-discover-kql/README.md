@@ -43,11 +43,14 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ## Kavramlar
 
-- **KQL:** Discover'ın arama dili; yalnız süzer (sayma ve gruplama Lens, aggregation ve ES|QL'in işi)
-- **`field : değer`:** field bu değeri içerir: `customer_gender : "FEMALE"`; tırnaklı ifade sırayla arar
-- **`>`, `>=`, `<`, `<=`:** sayı ve tarih aralığı: `taxful_total_price > 100`
-- **`and`, `or`, `not`, `( )`:** koşulları birleştirir: `day_of_week : (Saturday or Sunday)`
-- **`*`:** joker: `customer_first_name : Ed*`; `field : *` field'ı olanlar
+- **KQL (Kibana Query Language):** Discover'daki arama çubuğuna yazılan dil. Hangi document'lerin listeleneceğini
+  seçer. Saymak, toplamak, gruplamak (örneğin "kategori başına sipariş sayısı") KQL'in işi değildir; bunlar için
+  Lens, aggregation ya da ES|QL kullanılır.
+- **`field : değer`:** field'da bu değer geçen document'ler: `customer_gender : "FEMALE"`. Tırnak içinde birden çok
+  kelime varsa kelimeler yan yana ve bu sırayla aranır: `category : "Women's Clothing"`.
+- **`>`, `>=`, `<`, `<=`:** sayı ve tarih aralığı: `taxful_total_price > 100` (100 dolardan pahalı siparişler).
+- **`and`, `or`, `not`, `( )`:** koşulları birleştirir: `day_of_week : (Saturday or Sunday)` (cumartesi ya da pazar).
+- **`*` (joker):** `customer_first_name : Ed*` adı "Ed" ile başlayanlar; `email : *` email field'ı dolu olanlar.
 
 ---
 
