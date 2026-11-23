@@ -8,11 +8,13 @@
 
 ## Bu lab ne öğretiyor?
 
-Veritabanında müşteri, sipariş ve sipariş kalemi ayrı tablolardır ve JOIN ile birleşir. Elasticsearch'te
-JOIN ya yoktur ya da pahalıdır; aynı veri dört farklı biçimde modellenebilir ve her birinin bedeli farklıdır.
+Veritabanında müşteri, sipariş ve sipariş kalemi ayrı tablolardır, JOIN ile birleşir. Elasticsearch'te aynı
+5 müşteri ve 6 siparişi dört biçimde kurup aynı soruyu soruyoruz:
 
-Bu labda aynı 5 müşteri ve 6 siparişi dört biçimde kuracak, her birinde aynı soruyu soracak ve verinin
-bir parçası değiştiğinde ne olduğunu göreceğiz.
+- **Denormalize:** müşteri siparişin içinde; okuma hızlı, değişiklik pahalı
+- **`nested`:** dizideki her öğe kendi içinde eşleşir; mapping değişikliği için `_reindex` ve alias geçişi
+- **`join`:** müşteri ve sipariş ayrı document, aynı shard'da
+- **ES|QL `LOOKUP JOIN`:** müşteri tablosu sorgu anında birleşir
 
 ![İlişkisel veriyi Elasticsearch'te modellemenin dört yolu](../../assets/infographics/18-iliskisel-veri-modelleri.png)
 
@@ -20,8 +22,8 @@ bir parçası değiştiğinde ne olduğunu göreceğiz.
 
 ## Ön Koşullar
 
-- LAB-01 ana cluster'ı çalışıyor. LAB-01'i atladıysanız onun Adım 1-2'sini çalıştırın.
-- Diğer lablara bağlı değildir; örnek veri `sample-data/` altındadır.
+- Önce kurulu olmalı: LAB-01 ana cluster'ı.
+- Önceki labı atladıysanız: sorun değil; bu lab başka laba bağlı değildir, örnek veri `sample-data/` altındadır.
 
 ```bash
 cd ~/elastic/labs/LAB-09-iliskisel-veri-modelleme
@@ -42,25 +44,26 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ---
 
-## Kavramlar: hangi model ne zaman?
+## Kavramlar
 
-| Model | Birleştirme ne zaman? | Ne zaman seçilir | Bedeli |
-|---|---|---|---|
-| Denormalize document | Yazarken | Varsayılan; okuma çok, ayrıntı nadiren değişir | Ayrıntı değişince bütün document'ler güncellenir |
-| `nested` | Yazarken (document içinde) | Dizide "aynı öğede iki koşul" aranır | Her öğe ayrı gizli document; mapping yerinde değişmez |
-| `join` (parent/child) | Sorgu anında, aynı shard'da | Çocuklar çok ve sık değişir | Routing şart, sorgular yavaş |
-| ES\|QL `LOOKUP JOIN` | Sorgu anında | Küçük, değişen boyut tablosu (müşteri, ürün) | Yalnız ES\|QL; lookup index tek shard |
+- **Denormalize document:** birleştirme yazarken yapılır; varsayılan seçim. Bedeli: müşteri adı değişince bütün siparişleri yeniden yazılır
+- **`object` (varsayılan):** dizideki nesneleri düzleştirir; hangi değerin hangi öğeye ait olduğu kaybolur
+- **`nested`:** dizideki her öğe ayrı gizli document; "aynı öğede iki koşul" doğru çalışır. Var olan field `nested`'a çevrilemez
+- **`join` (parent/child):** müşteri (parent) ve sipariş (child) aynı index'te ayrı document; `routing` şart, sorgular yavaş
+- **ES|QL `LOOKUP JOIN`:** küçük, değişen tablo (müşteri, ürün) sorgu anında birleşir; sağ taraf `index.mode: lookup` index'i
+- **Alias:** index'e takma ad; uygulama alias'ı kullanır, arkadaki index değişse de fark etmez
 
 ---
 
 ## Adım Adım Uygulama Rehberi
 
-Bu labdaki `http` blokları **Kibana › Dev Tools**'a, `bash` blokları terminale yapıştırılır.
+`http` blokları **Kibana › Dev Tools**'a, `bash` blokları terminale yapıştırılır.
 
 ### 1. Denormalize document: müşteri siparişin içinde
 
-Siparişi müşterisi ve kalemleriyle tek document olarak yazıyoruz. Index'e `-v1` sonekli bir ad, uygulamaya
-ise `model-siparisler` alias'ını veriyoruz; Adım 3'te bunun neden işe yaradığını göreceksiniz:
+**Soru: Müşteri siparişin içinde olursa ne kazanırız, ne öderiz?** Siparişi müşterisi ve kalemleriyle tek
+document olarak yazıyoruz. Index'in adı `model-siparisler-v1`; uygulama ise `model-siparisler` alias'ını kullanır
+(Adım 3'te işe yarar):
 
 ```http
 PUT /model-siparisler-v1
@@ -78,7 +81,7 @@ PUT /model-siparisler-v1
 }
 ```
 
-Önce örnek veri dosyasını oluşturun: `sample-data/siparisler.ndjson`
+**Örnek veriyi oluşturun:** 6 sipariş (`sample-data/siparisler.ndjson`):
 
 ```bash
 mkdir -p sample-data
@@ -109,7 +112,7 @@ Beklenen çıktı:
 {"errors":false}
 ```
 
-İzmir'deki müşterinin siparişleri tek sorguyla, JOIN olmadan gelir:
+**Okuma kolay:** İzmir'deki müşterinin siparişleri tek sorguyla, JOIN olmadan gelir:
 
 ```http
 GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id
@@ -120,7 +123,7 @@ GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id
 {"hits":{"total":{"value":3},"hits":[{"_id":"S-2"},{"_id":"S-3"},{"_id":"S-6"}]}}
 ```
 
-Bedeli: müşteri adı değişince o müşterinin bütün siparişleri yeniden yazılır.
+**Değişiklik pahalı:** müşteri adı değişince o müşterinin bütün siparişleri yeniden yazılır (`_update_by_query`):
 
 ```http
 POST /model-siparisler/_update_by_query?refresh=true&filter_path=total,updated
@@ -134,11 +137,12 @@ POST /model-siparisler/_update_by_query?refresh=true&filter_path=total,updated
 {"total":3,"updated":3}
 ```
 
-Burada 3 document; gerçek sistemde bir müşterinin on binlerce siparişi olabilir.
+- **3 document güncellendi:** gerçek sistemde bir müşterinin on binlerce siparişi olabilir.
 
 ### 2. object tuzağı: dizideki öğeler düzleşir
 
-"İçinde 5 adet kulaklık olan siparişler" sorusunu soralım. Doğru cevap yalnız S-2'dir:
+**Soru: Dizideki öğeler neden karışır?** "İçinde 5 adet kulaklık olan siparişler" sorusunu soralım. Doğru cevap
+yalnız S-2'dir:
 
 ```http
 GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id
@@ -149,8 +153,11 @@ GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id
 {"hits":{"total":{"value":3},"hits":[{"_id":"S-1"},{"_id":"S-2"},{"_id":"S-6"}]}}
 ```
 
-S-1'de 1 kulaklık ve 5 akıllı saat, S-6'da 2 kulaklık ve 5 termos var. `object` field'ı diziyi `kalemler.urun = [Kulaklık, Akıllı Saat]` ve `kalemler.adet = [1, 5]` olarak düzleştirir;
-hangi adedin hangi ürüne ait olduğu kaybolur. Çözüm `nested`'dır, ama var olan field'ın tipi değiştirilemez:
+- **3 sonuç, 2'si yanlış:** S-1'de 1 kulaklık ve 5 akıllı saat, S-6'da 2 kulaklık ve 5 termos var.
+- **Neden:** `object` diziyi `kalemler.urun = [Kulaklık, Akıllı Saat]` ve `kalemler.adet = [1, 5]` olarak düzleştirir;
+  hangi adedin hangi ürüne ait olduğu kaybolur.
+
+**Çözüm `nested`, ama var olan field'ın tipi değiştirilemez:**
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -X PUT 'http://127.0.0.1:9200/model-siparisler-v1/_mapping' \
@@ -206,7 +213,7 @@ Beklenen çıktı:
 {"model-urun-ozellik":{"mappings":{"properties":{"ozellikler":{"type":"flattened"},"urun":{"type":"keyword"}}}}}
 ```
 
-Üç ürünün yedi farklı anahtarı mapping'de tek field'dır. Tam değer araması çalışır:
+Üç ürünün yedi farklı anahtarı mapping'de tek field'dır. **Tam değer araması çalışır:**
 
 ```http
 GET /model-urun-ozellik/_search?filter_path=hits.hits._source.urun
@@ -217,7 +224,7 @@ GET /model-urun-ozellik/_search?filter_path=hits.hits._source.urun
 {"hits":{"hits":[{"_source":{"urun":"Akıllı Saat"}},{"_source":{"urun":"Ofis Sandalyesi"}}]}}
 ```
 
-Bedeli: bütün değerler `keyword` gibi saklanır. "Garantisi 10 aydan uzun" aralık sorgusu 9 aylık
+**Bedeli:** bütün değerler `keyword` gibi saklanır. "Garantisi 10 aydan uzun" aralık sorgusu 9 aylık
 sandalyeyi de getirir, çünkü değerler metin olarak karşılaştırılır (`"9"` > `"10"`):
 
 ```http
@@ -230,13 +237,14 @@ GET /model-urun-ozellik/_search?filter_path=hits.hits._source
 ```
 
 Sayıyla hesaplanacak ya da tam metinle aranacak field'lar ayrı, tipli field'larda tutulur; `flattened`
-etiket ve özellik gibi yalnız süzülen field'lar içindir.
+etiket ve özellik gibi yalnız filtrelenen field'lar içindir.
 
 </details>
 
 ### 3. nested: yeni index, `_reindex` ve alias geçişi
 
-Doğru mapping'le yeni bir index açıyoruz; tek fark `kalemler`'in `nested` olması:
+**Soru: Field tipini nasıl değiştiririz?** Doğru mapping'le yeni bir index açıyoruz; tek fark `kalemler`'in
+`nested` olması:
 
 ```http
 PUT /model-siparisler-v2
@@ -253,7 +261,7 @@ PUT /model-siparisler-v2
 }
 ```
 
-Document'leri eski index'ten kopyalayın ve alias'ı tek işlemde yeni index'e çevirin:
+**`_reindex`:** document'leri eski index'ten yenisine kopyalar:
 
 ```http
 POST /_reindex?refresh=true&filter_path=total,created,failures
@@ -263,6 +271,8 @@ POST /_reindex?refresh=true&filter_path=total,created,failures
 ```json
 {"total":6,"created":6,"failures":[]}
 ```
+
+**Alias geçişi:** alias'ı tek işlemde yeni index'e çevirin:
 
 ```http
 POST /_aliases
@@ -274,9 +284,10 @@ POST /_aliases
 }
 ```
 
-Uygulama hep `model-siparisler` adını kullandığı için bu geçişi fark etmez; iki eylem tek işlemde olduğundan
-alias hiçbir an boşta kalmaz. Aynı soruyu `nested` sorgusuyla tekrar sorun; `inner_hits` hangi kalemin
-eşleştiğini gösterir:
+- **Kesintisiz:** uygulama hep `model-siparisler` adını kullanır; iki eylem tek işlemde olduğundan alias hiçbir an
+  boşta kalmaz.
+
+**`nested` sorgusu:** aynı soruyu tekrar sorun; `path` dizinin adı, `inner_hits` hangi kalemin eşleştiğini gösterir:
 
 ```http
 GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id,hits.hits._index,hits.hits.inner_hits.*.hits.hits._source
@@ -296,11 +307,12 @@ GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id,hits.hi
 {"hits":{"total":{"value":1},"hits":[{"_index":"model-siparisler-v2","_id":"S-2","inner_hits":{"kalemler":{"hits":{"hits":[{"_source":{"urun":"Kulaklık","adet":5}}]}}}}]}}
 ```
 
-Sonuç 3'ten 1'e indi ve `_index` field'ı document'in artık `v2`'den geldiğini gösteriyor.
+- **Sonuç 3'ten 1'e indi:** `_index`, document'in artık `v2`'den geldiğini gösteriyor.
 
 ### 4. join field'ı: müşteri ve sipariş ayrı document'ler
 
-Müşteri (parent) ve sipariş (child) aynı index'te ayrı document'lerdir; aralarındaki bağı `join` field'ı kurar:
+**Soru: Müşteri ve sipariş ayrı document olursa?** Müşteri (parent) ve sipariş (child) aynı index'te ayrı
+document'lerdir; aralarındaki bağı `join` field'ı kurar:
 
 ```http
 PUT /model-musteri-siparis
@@ -317,10 +329,8 @@ PUT /model-musteri-siparis
 }
 ```
 
-Dosyada önce müşteriler (`"iliski": {"name": "musteri"}`), sonra siparişler
-(`"iliski": {"name": "siparis", "parent": "m3"}` ve `"routing": "m3"`) var:
-
-Önce örnek veri dosyasını oluşturun: `sample-data/musteri-siparis.ndjson`
+**Örnek veriyi oluşturun** (`sample-data/musteri-siparis.ndjson`): önce müşteriler (`"iliski": {"name": "musteri"}`),
+sonra siparişler (`"iliski": {"name": "siparis", "parent": "m3"}` ve `"routing": "m3"`):
 
 ```bash
 mkdir -p sample-data
@@ -361,8 +371,9 @@ Beklenen çıktı:
 {"errors":false}
 ```
 
-Siparişin `routing` değeri müşterisinin `_id`'sidir: ebeveyn ve çocuklar aynı shard'da olmalıdır. Kargoda
-siparişi olan müşteriler ve İzmir'deki müşterinin siparişleri:
+- **`routing`:** siparişin `routing` değeri müşterisinin `_id`'sidir; parent ve child'lar aynı shard'da olmalıdır.
+
+**`has_child`:** kargoda siparişi olan müşteriler:
 
 ```http
 GET /model-musteri-siparis/_search?filter_path=hits.hits._source.ad
@@ -373,6 +384,8 @@ GET /model-musteri-siparis/_search?filter_path=hits.hits._source.ad
 {"hits":{"hits":[{"_source":{"ad":"Ağaoğlu Yapı"}},{"_source":{"ad":"Şimşek Lojistik"}},{"_source":{"ad":"Öztürk Gıda"}}]}}
 ```
 
+**`has_parent`:** İzmir'deki müşterinin siparişleri:
+
 ```http
 GET /model-musteri-siparis/_search?filter_path=hits.hits._source.siparis_id
 { "_source": ["siparis_id"], "query": { "has_parent": { "parent_type": "musteri", "query": { "term": { "il": "İzmir" } } } } }
@@ -382,13 +395,14 @@ GET /model-musteri-siparis/_search?filter_path=hits.hits._source.siparis_id
 {"hits":{"hits":[{"_source":{"siparis_id":"S-2"}},{"_source":{"siparis_id":"S-3"}},{"_source":{"siparis_id":"S-6"}}]}}
 ```
 
-Müşteri tek document olduğu için adı değişince yalnız o document güncellenir. Ama `routing` verilmeyen sipariş
-`[routing] is missing for join field [iliski]` hatasıyla reddedilir ve `has_child` sorguları büyük veride
-yavaşlar; bu yüzden `join` nadir seçilir.
+- **Kazanç:** müşteri tek document; adı değişince yalnız o document güncellenir.
+- **Bedel:** `routing` verilmeyen sipariş `[routing] is missing for join field [iliski]` hatasıyla reddedilir;
+  `has_child` sorguları büyük veride yavaşlar. Bu yüzden `join` nadir seçilir.
 
 ### 5. ES|QL LOOKUP JOIN: müşteri tablosu sorgu anında birleşir
 
-Müşteriler ayrı bir **lookup** index'inde, satışlarda yalnız `musteri_id` var:
+**Soru: Değişen müşteri tablosu sorgu anında nasıl birleşir?** Müşteriler ayrı bir **lookup** index'inde,
+satışlarda yalnız `musteri_id` var:
 
 ```http
 PUT /model-musteriler
@@ -406,7 +420,7 @@ PUT /model-satislar
 }
 ```
 
-Önce örnek veri dosyasını oluşturun: `sample-data/musteriler.ndjson`, `sample-data/satislar.ndjson`
+**Örnek veriyi oluşturun:** 5 müşteri, 6 satış (`sample-data/musteriler.ndjson`, `sample-data/satislar.ndjson`):
 
 ```bash
 mkdir -p sample-data
@@ -452,8 +466,9 @@ Beklenen çıktı:
 {"errors":false}
 ```
 
-`index.mode: lookup` index'i tek shard'lı tutar ve `LOOKUP JOIN`'in sağ tarafı olmasına izin verir. İl başına
-ciro:
+- **`index.mode: lookup`:** index'i tek shard'lı tutar ve `LOOKUP JOIN`'in sağ tarafı olmasına izin verir.
+
+**İl başına ciro:** `LOOKUP JOIN … ON musteri_id` her satışa müşterinin `il`'ini ekler:
 
 ```http
 POST /_query?format=txt
@@ -471,7 +486,7 @@ Beklenen çıktı:
 3998.8         |1              |Ankara
 ```
 
-Öztürk Gıda Manisa'ya taşınsın. Değişen yalnız müşteri tablosundaki bir document:
+**Müşteri taşınırsa:** Öztürk Gıda Manisa'ya taşınsın. Değişen yalnız müşteri tablosundaki bir document:
 
 ```http
 POST /model-musteriler/_update/3?refresh=true&filter_path=result
@@ -481,6 +496,8 @@ POST /model-musteriler/_update/3?refresh=true&filter_path=result
 ```json
 {"result":"updated"}
 ```
+
+Aynı sorguyu tekrar çalıştırın:
 
 ```http
 POST /_query?format=txt
@@ -498,8 +515,8 @@ Beklenen çıktı:
 3998.8         |1              |Ankara
 ```
 
-Adım 1'de müşteri adı değişikliği 3 document'i yeniden yazdırmıştı; burada satış document'lerine hiç dokunmadan
-sonuç değişti, çünkü birleştirme sorgu anında yapılıyor.
+- **İzmir → Manisa:** satış document'lerine hiç dokunmadan sonuç değişti; birleştirme sorgu anında yapılıyor.
+  Adım 1'de aynı tür değişiklik 3 document'i yeniden yazdırmıştı.
 
 ---
 

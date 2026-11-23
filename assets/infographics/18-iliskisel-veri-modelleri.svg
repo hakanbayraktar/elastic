@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
   <title id="title">İlişkisel veriyi Elasticsearch'te modellemenin dört yolu</title>
-  <desc id="desc">Aynı müşteri ve sipariş verisi dört biçimde: denormalize belge, nested kalemler, join alanıyla parent ve child belgeler, ES|QL LOOKUP JOIN ile ayrı lookup index'i. Her biri için ne zaman uygun olduğu ve bedeli; altta object alanının düzleşme hatası örneği.</desc>
+  <desc id="desc">Aynı müşteri ve sipariş verisi dört biçimde: denormalize document, nested kalemler, join field ile parent ve child document'ler, ES|QL LOOKUP JOIN ile ayrı lookup index'i. Her biri için ne zaman uygun olduğu ve bedeli; altta object field'ının düzleşme hatası örneği.</desc>
   <style>
     .bg { fill:#f7fafc }
     .title { font:700 40px Arial,sans-serif; fill:#172b4d }
@@ -25,7 +25,7 @@
   <text x="80" y="268" class="mono">  musteri: {ad, il}</text>
   <text x="80" y="292" class="mono">  kalemler: [...]</text>
   <text x="80" y="340" class="ok">+ En hızlı arama</text>
-  <text x="80" y="366" class="ok">+ Her şey tek belgede</text>
+  <text x="80" y="366" class="ok">+ Her şey tek document'te</text>
   <text x="80" y="406" class="bad">− Müşteri adı değişince</text>
   <text x="80" y="430" class="bad">  bütün siparişleri</text>
   <text x="80" y="454" class="bad">  güncellenir</text>
@@ -38,10 +38,10 @@
   <text x="455" y="193" class="head">2 · nested</text>
   <text x="455" y="244" class="mono">kalemler: nested</text>
   <text x="455" y="268" class="mono">  {urun, adet} ayrı</text>
-  <text x="455" y="292" class="mono">  gizli belge</text>
+  <text x="455" y="292" class="mono">  gizli document</text>
   <text x="455" y="340" class="ok">+ Kalem içi koşul doğru</text>
   <text x="455" y="366" class="ok">+ inner_hits eşleşen kalem</text>
-  <text x="455" y="406" class="bad">− Her kalem ayrı belge sayılır</text>
+  <text x="455" y="406" class="bad">− Her kalem ayrı document sayılır</text>
   <text x="455" y="430" class="bad">− Mapping yerinde değişmez:</text>
   <text x="455" y="454" class="bad">  yeni index + _reindex</text>
   <text x="455" y="510" class="small">Dizi içinde "aynı öğede</text>
@@ -53,12 +53,12 @@
   <text x="830" y="244" class="mono">m3 (musteri)</text>
   <text x="830" y="268" class="mono">  ├ S-2 (siparis)</text>
   <text x="830" y="292" class="mono">  └ S-3 (siparis)</text>
-  <text x="830" y="340" class="ok">+ Ebeveyn ayrı güncellenir</text>
+  <text x="830" y="340" class="ok">+ Parent ayrı güncellenir</text>
   <text x="830" y="366" class="ok">+ has_child / has_parent</text>
   <text x="830" y="406" class="bad">− Aynı shard: routing şart</text>
   <text x="830" y="430" class="bad">− Sorgular yavaş, bellek ister</text>
   <text x="830" y="454" class="bad">− Tek index, tek ilişki ağacı</text>
-  <text x="830" y="510" class="small">Çocuklar çok ve sık</text>
+  <text x="830" y="510" class="small">Child'lar çok ve sık</text>
   <text x="830" y="536" class="small">değişiyorsa; nadir seçim.</text>
 
   <rect x="1185" y="160" rx="14" width="355" height="500" class="card"/>
