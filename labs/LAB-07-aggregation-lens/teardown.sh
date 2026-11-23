@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# LAB-07 temizligi: yalniz bu labda olusturulan pano ve Lens gorsellestirmesini (basliga gore), canli siparis
+# LAB-07 temizligi: yalniz bu labda olusturulan pano ve Lens gorsellestirmelerini (basliga gore), canli siparis
 # akisini, analiz-canli index'ini ve data view'ini, ornek data view'a eklenen siparis_saati runtime field'ini siler.
 # Ornek e-ticaret verisine ve ana cluster'a dokunmaz.
 set -u
 cd "$(dirname "$0")"
 KB=http://127.0.0.1:5601; ES=http://127.0.0.1:9200; A='elastic:DevOps2026!'
-for pair in "dashboard:Satış özeti" "lens:Kategori bazında sipariş"; do
+for pair in "dashboard:Satış özeti" "lens:Kategori bazında sipariş" "lens:Günlük ciro" "lens:Ortalama sepet" "lens:Cinsiyete göre sipariş"; do
   type=${pair%%:*}; title=${pair#*:}
   for id in $(curl -s -u "$A" -G "$KB/api/saved_objects/_find" --data-urlencode "type=$type" --data-urlencode "search_fields=title" --data-urlencode "search=\"$title\"" | jq -r --arg t "$title" '.saved_objects[] | select(.attributes.title == $t) | .id'); do
     code=$(curl -s -o /dev/null -w '%{http_code}' -u "$A" -X DELETE -H 'kbn-xsrf: true' "$KB/api/saved_objects/$type/$id")

@@ -1328,7 +1328,73 @@ def lab18_pdf(page):
 
 
 # Yeni numarali lab akislari; "eski_" ile baslayanlar yeniden yazilacak eski lablarin kaynagidir.
-FLOWS = {"sunum": sunum, "lab01": lab01, "lab02": lab02, "lab04": lab04, "lab07": lab07, "lab07canli": lab07canli, "lab07runtime": lab07runtime, "lab21": lab21,
+
+def lab07ek(page):
+    """LAB-07 Adim 4 ek ornekler: Satis ozeti panosuna Lens ile uc panel (cizgi, metric, pasta)."""
+    lab = "LAB-07"
+    page.goto(BASE + "/app/dashboards#/list", wait_until="domcontentloaded"); settle(page, 5)
+    page.get_by_text("Satış özeti", exact=True).first.click(); settle(page, 6)
+    page.locator('[data-test-subj="dateRangePickerControlButton"], [data-test-subj="superDatePickerShowDatesButton"]').first.click(); time.sleep(1.5)
+    page.locator('[data-test-subj="dateRangePickerPresetItem-Last_7_days"], [data-test-subj="superDatePickerCommonlyUsed_Last_7 days"]').first.click(); settle(page, 4)
+    if not page.locator('[data-test-subj="dashboardAddTopNavButton"]').count():  # pano zaten duzenleme modunda olabilir
+        page.locator('[data-test-subj="dashboardEditMode"]').first.click(timeout=15000); settle(page, 3)
+
+    def yeni_panel():
+        page.locator('[data-test-subj="dashboardAddTopNavButton"]').first.click(); time.sleep(2)
+        page.locator('[data-test-subj="create-action-Visualization"]').first.click(); settle(page, 8)
+        for txt in ("Don't show again", "Got it", "Dismiss"):
+            try: page.get_by_text(txt).first.click(timeout=1200)
+            except Exception: pass
+
+    def tur(ad):
+        page.locator('[data-test-subj="lnsChartSwitchPopover"]').first.click(); time.sleep(1.5)
+        page.locator(f'[data-test-subj="lnsChartSwitchPopover_{ad}"]').first.click(); time.sleep(3)
+
+    def boyut(panel, islem, field):
+        page.locator(f'[data-test-subj="{panel}"] [data-test-subj="lns-empty-dimension"]').first.click(); time.sleep(2)
+        page.locator(f'[data-test-subj="lns-indexPatternDimension-{islem}"]').first.click(); time.sleep(1.5)
+        if field:
+            cb = page.locator('[data-test-subj="indexPattern-dimension-field"] input').first
+            cb.click(); cb.fill(field); time.sleep(1); page.keyboard.press("Enter"); time.sleep(3)
+        page.locator('[data-test-subj="lns-indexPattern-dimensionContainerBack"]').first.click(); settle(page, 4)
+
+    def kaydet(baslik, ad, isaretler):
+        page.mouse.move(800, 60); time.sleep(1)
+        shoot(page, lab, ad, isaretler + [(("testsubj", "lnsApp_saveButton"), len(isaretler) + 1, "down")])
+        page.locator('[data-test-subj="lnsApp_saveButton"]').first.click(); time.sleep(2)
+        page.locator('[data-test-subj="savedObjectTitle"]').fill(baslik)
+        page.locator('[data-test-subj="confirmSaveSavedObjectButton"]').first.click(); settle(page, 8)
+
+    # a) Gunluk ciro: cizgi grafik
+    yeni_panel(); tur("line")
+    boyut("lnsXY_xDimensionPanel", "date_histogram", "order_date")
+    boyut("lnsXY_yDimensionPanel", "sum", "taxful_total_price")
+    kaydet("Günlük ciro", "08-lens-gunluk-ciro", [
+        (("testsubj", "lnsChartSwitchPopover"), 1, "down"),
+        (("testsubj", "lnsXY_xDimensionPanel"), 2, "left"),
+        (("testsubj", "lnsXY_yDimensionPanel"), 3, "left")])
+    # b) Ortalama sepet: metric
+    yeni_panel(); tur("lnsMetric")
+    boyut("lnsMetric_primaryMetricDimensionPanel", "average", "taxful_total_price")
+    kaydet("Ortalama sepet", "09-lens-ortalama-sepet", [
+        (("testsubj", "lnsChartSwitchPopover"), 1, "down"),
+        (("testsubj", "lnsMetric_primaryMetricDimensionPanel"), 2, "left")])
+    # c) Cinsiyete gore siparis: pasta
+    yeni_panel(); tur("pie")
+    boyut("lnsPie_sliceByDimensionPanel", "terms", "customer_gender")
+    boyut("lnsPie_sizeByDimensionPanel", "count", None)
+    kaydet("Cinsiyete göre sipariş", "10-lens-cinsiyet-pasta", [
+        (("testsubj", "lnsChartSwitchPopover"), 1, "down"),
+        (("testsubj", "lnsPie_sliceByDimensionPanel"), 2, "left"),
+        (("testsubj", "lnsPie_sizeByDimensionPanel"), 3, "left")])
+    # Pano: dort panel, kaydet
+    page.locator('[data-test-subj="dashboardQuickSaveMenuItem"]').first.click(); settle(page, 5)
+    page.mouse.move(800, 60); time.sleep(1)
+    n = page.locator('[data-test-subj="dashboardPanel"]').count()
+    print("panel sayisi:", n)
+    shoot(page, lab, "11-pano-dort-panel", [(("css", '[data-test-subj="dashboardPanel"]'), 1, "right")])
+
+FLOWS = {"sunum": sunum, "lab01": lab01, "lab02": lab02, "lab04": lab04, "lab07": lab07, "lab07canli": lab07canli, "lab07runtime": lab07runtime, "lab07ek": lab07ek, "lab21": lab21,
          "lab14": lab14, "lab10": lab10, "lab12_upload": lab12_upload, "lab16": lab16, "lab16_2": lambda page: lab16(page, "2"), "lab16_pano": lab16_pano, "lab16_kaydet": lab16_kaydet, "lab24_izleme": lab24_izleme, "lab14_ingest_arayuz": lab14_ingest_arayuz, "lab18_harita": lab18_harita, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "lab18_kural": lab18_kural, "lab18_aktif": lab18_aktif, "lab18_rapor": lab18_rapor, "lab18_pdf": lab18_pdf, "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
          "eski_3node": eski_3node}
 

@@ -8,11 +8,11 @@
 
 ## Bu lab ne öğretiyor?
 
-Arama "hangi document'ler?" sorusunu cevaplar; rapor ise "kaç tane, toplam ne kadar, hangi grupta,
-hangi gün?" diye sorar. Elasticsearch bu soruları document'leri tek tek döndürmeden, aggregation ile
-hesaplar. Bu labda aynı e-ticaret verisinde ciro, kategori bazında ortalama sepet ve günlük satış
-çıkaracak; bir e-ticaret sitesindeki filtre panelini kuracak ve sonucu Lens ile bir panoya koyacağız.
-Son iki adımda canlı bir sipariş akışını son 15 dakikada izleyecek ve veriyi panoya hazırlayacağız.
+- Tek sayılar: ciro, ortalama sepet, farklı müşteri (metric aggregation)
+- Gruplamak: kategori ve gün bazında (bucket ve iç içe aggregation)
+- E-ticaret filtre paneli: `post_filter`
+- Lens ile grafik ve pano
+- Gerçek zamanlı izleme; pano için veri hazırlama (runtime field)
 
 ---
 
@@ -28,15 +28,13 @@ cd ~/elastic/labs/LAB-07-aggregation-lens
 
 ---
 
-## Kavramlar: iki tür aggregation
+## Kavramlar
 
-| Tür | Ne yapar | Örnek |
-|---|---|---|
-| Metric | Bir sayı hesaplar | `sum` (toplam), `avg` (ortalama), `cardinality` (farklı değer sayısı) |
-| Bucket | Document'leri gruplara (bucket) ayırır | `terms` (değere göre), `date_histogram` (zamana göre), `range` (aralığa göre) |
-
-Bucket'ların içine metric konur: "her kategori için ortalama sepet". Aggregation `keyword`, sayı ve
-tarih field'larında çalışır; `text` field'ında çalışmaz, çünkü metin token'lara bölünmüştür ve bütün değer tek parça olarak saklanmaz.
+- **aggregation:** document'leri tek tek döndürmeden hesap yapar: kaç tane, toplam, hangi grupta
+- **metric:** bir sayı hesaplar: `sum` (toplam), `avg` (ortalama), `cardinality` (farklı değer sayısı)
+- **bucket:** document'leri gruplara ayırır: `terms` (değere göre), `date_histogram` (zamana göre)
+- **iç içe:** bucket'ın içine metric konur: "her kategori için ortalama sepet"
+- **hangi field?** `keyword`, sayı, tarih; `text` field'da çalışmaz (metin token'lara bölünmüştür)
 
 ---
 
@@ -46,8 +44,8 @@ Bu labda `http` bloklarını Kibana › Dev Tools'a, `bash` bloklarını termina
 
 ### 1. Tek sayılar: metric aggregation
 
-Toplam ciro, ortalama sepet ve kaç farklı müşteri olduğu. `size: 0` document listesini döndürmez;
-yalnız hesap sonucu gelir:
+**Soru: Toplam ciro, ortalama sepet ve kaç farklı müşteri var?** `size: 0` document listesini döndürmez; yalnız hesap
+sonucu gelir:
 
 ```http
 GET /kibana_sample_data_ecommerce/_search?filter_path=aggregations
@@ -77,13 +75,12 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=aggregations
 }
 ```
 
-Her aggregation'a bir ad verilir (`ciro`, `ort_sepet`, `musteri`); yanıt aynı adlarla gelir.
-`cardinality` yaklaşık sayar: milyonlarca farklı değerde bellek harcamamak için az bir hata payını
-kabul eder; küçük veride sonuç kesindir.
+- **Ad:** her aggregation'a bir ad verilir (`ciro`, `ort_sepet`, `musteri`); yanıt aynı adlarla gelir.
+- **`cardinality`:** yaklaşık sayar; milyonlarca değerde bellek harcamamak için az hata payı kabul eder, küçük veride kesindir.
 
 ### 2. Gruplamak: bucket ve iç içe aggregation
 
-En çok sipariş alan üç kategori ve her birinde ortalama sepet:
+**Soru: Hangi kategori en çok sipariş alıyor, sepetleri ne kadar?** En çok sipariş alan üç kategori ve ortalama sepetleri:
 
 ```http
 GET /kibana_sample_data_ecommerce/_search?filter_path=aggregations
@@ -134,14 +131,12 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=aggregations
 }
 ```
 
-- `terms` field değerine göre gruplar ve en kalabalık `size` grubu döndürür. `category.keyword`
-  kullanılır: gruplama tam değerle yapılır.
-- `doc_count`: gruptaki sipariş sayısı. İçteki `ort_sepet` yalnız o grubun document'leriyle hesaplanır.
-- `sum_other_doc_count`: listeye girmeyen gruplardaki document sayısı. `doc_count_error_upper_bound`:
-  çok shard'lı index'te sayımın en fazla ne kadar eksik olabileceği. Her shard kendi en iyi
-  gruplarını hesaplar, koordinatör node bunları birleştirir; tek shard'da hata 0'dır.
+- **`terms`:** değere göre gruplar, en kalabalık `size` grubu döndürür; tam değer için `category.keyword`.
+- **`doc_count`:** gruptaki sipariş sayısı; içteki `ort_sepet` yalnız o grubun document'leriyle hesaplanır.
+- **`sum_other_doc_count`:** listeye girmeyen gruplardaki document sayısı.
+- **`doc_count_error_upper_bound`:** çok shard'da sayımın en fazla ne kadar eksik olabileceği; tek shard'da 0.
 
-Zamana göre gruplamak için `date_histogram`. Son yedi günün günlük sipariş sayısı ve cirosu:
+**Zamana göre: `date_histogram`.** Son yedi günün günlük sipariş sayısı ve cirosu:
 
 ```http
 GET /kibana_sample_data_ecommerce/_search?filter_path=aggregations.gun.buckets.key_as_string,aggregations.gun.buckets.doc_count
@@ -195,16 +190,15 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=aggregations.gun.buckets.k
 }
 ```
 
-Örnek verinin tarihleri yükleme gününe göre kaydırıldığı için sizin tarih ve sayılarınız farklı
-olur; yedi gün, gün başına 140-160 sipariş görürsünüz. `now-7d/d` "yedi gün önce, günün başına
-yuvarlanmış" demektir.
+- **Sayılar sizde farklı:** örnek verinin tarihleri yükleme gününe göre kayar; gün başına 140-160 sipariş görürsünüz.
+- **`now-7d/d`:** "yedi gün önce, günün başına yuvarlanmış".
 
 ### 3. Filtre paneli: seçilen marka listeyi daraltmasın
 
-E-ticaret sitesinde "shirt" arayan kullanıcı soldaki listeden bir marka seçer. Sonuçlar o markaya
-daralmalı, ama marka listesi bütün markaları ve sayılarını göstermeye devam etmeli; yoksa kullanıcı
-başka markayı seçemez. `post_filter` tam bunu yapar: aggregation hesaplandıktan **sonra** yalnız
-sonuç listesine uygulanır.
+**Soru: Kullanıcı bir marka seçince marka listesi neden daralmamalı?** "shirt" arayan kullanıcı soldan bir marka
+seçer: sonuçlar daralmalı, ama marka listesi bütün markaları göstermeye devam etmeli; yoksa başka markayı seçemez.
+
+**`post_filter`:** aggregation hesaplandıktan **sonra** yalnız sonuç listesine uygulanır:
 
 ```http
 GET /kibana_sample_data_ecommerce/_search?filter_path=hits.total.value,aggregations.marka.buckets
@@ -250,14 +244,14 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=hits.total.value,aggregati
 }
 ```
 
-- `hits.total.value` (503): yalnız seçilen markanın shirt siparişleri; sonuç listesi daraldı.
-- `marka`: "shirt" arayan bütün siparişlerde markalar; seçim listeyi daraltmadı. Uygulama bu
+- **`hits.total.value` (503):** yalnız seçilen markanın shirt siparişleri; sonuç listesi daraldı.
+- **`marka`:** "shirt" arayan bütün siparişlerde markalar; seçim listeyi daraltmadı. Uygulama bu
   sayıları filtre panelinde, sonuçları ortada gösterir.
-- Aynı filtre `query` içine konsaydı marka listesinde yalnız Elitelligence kalırdı.
+- **`query` içinde olsaydı:** marka listesinde yalnız Elitelligence kalırdı.
 
 ### 4. Lens ile pano
 
-Aynı soruyu tıklayarak grafiğe ve panoya çevirelim.
+**Soru: Aynı soruyu kod yazmadan grafiğe ve panoya nasıl çeviririz?** Lens ile, tıklayarak.
 
 1. Discover'da `Kibana Sample Data eCommerce` data view'ını ve **Last 7 days** zaman aralığını seçin.
    Varsayılan **Last 15 minutes** aralığında grafik boş kalır.
@@ -285,14 +279,54 @@ Aynı soruyu tıklayarak grafiğe ve panoya çevirelim.
 
 ![Pano: 8 Save, 9 eklenen panel](../../assets/screenshots/LAB-07/05-dashboard.png)
 
-Pano kaydedildikten sonra **Dashboards** listesinden açılır; zaman aralığı değişince bütün paneller
-birlikte güncellenir. Aynı yolla ciro ya da günlük satış panelleri eklenir: Lens'te dikey eksene
-`taxful_total_price` field'ını sürükleyip **Sum** seçmek "kategori bazında ciro" grafiğini verir.
+- **Pano:** **Dashboards** listesinden açılır; zaman aralığı değişince bütün paneller birlikte güncellenir.
+- **Başka panel:** dikey eksene `taxful_total_price` sürükleyip **Sum** seçmek "kategori bazında ciro" grafiğini verir.
+
+<details>
+<summary><strong>Panoya üç panel daha: günlük ciro, ortalama sepet, cinsiyete göre sipariş</strong></summary>
+
+Tek grafik tek soruya cevap verir; panonun değeri birkaç soruyu yan yana görmektir. "Satış özeti" panosuna üç panel
+ekleyin. Her panel için:
+
+1. **Dashboards › Satış özeti**'ni açın; zaman aralığı **Last 7 days**
+2. **Edit**, sonra **Add › Visualization**: Lens, örnek verinin data view'ıyla açılır
+
+**a) Günlük ciro: çizgi grafik** (soru: ciro zamanla nasıl değişiyor?)
+
+1. Grafik türü (1): **Line**
+2. **Horizontal axis** (2): **Date histogram**, field `order_date`
+3. **Vertical axis** (3): **Sum**, field `taxful_total_price`
+4. **Save to library** (4): başlık `Günlük ciro`, **Save**; panoya dönülür
+
+![Lens çizgi grafik: 1 grafik türü, 2 yatay eksen, 3 dikey eksen, 4 Save to library](../../assets/screenshots/LAB-07/08-lens-gunluk-ciro.png)
+
+**b) Ortalama sepet: tek sayı** (soru: bir sipariş ortalama ne kadar?)
+
+1. Grafik türü (1): **Metric**
+2. **Primary metric** (2): **Average**, field `taxful_total_price`
+3. **Save to library** (3): başlık `Ortalama sepet`, **Save**
+
+![Lens metric: 1 grafik türü, 2 primary metric, 3 Save to library](../../assets/screenshots/LAB-07/09-lens-ortalama-sepet.png)
+
+**c) Cinsiyete göre sipariş: pasta** (soru: siparişlerin yüzde kaçı kimden?)
+
+1. Grafik türü (1): **Pie**
+2. **Slice by** (2): **Top values**, field `customer_gender`
+3. **Metric** (3): **Count**
+4. **Save to library** (4): başlık `Cinsiyete göre sipariş`, **Save**
+
+![Lens pasta: 1 grafik türü, 2 slice by, 3 metric, 4 Save to library](../../assets/screenshots/LAB-07/10-lens-cinsiyet-pasta.png)
+
+Sağ üstten **Save** ile panoyu kaydedin. Pano dört panelle açılır; zaman aralığını değiştirince hepsi birlikte güncellenir:
+
+![Satış özeti panosu: dört panel](../../assets/screenshots/LAB-07/11-pano-dort-panel.png)
+
+</details>
 
 ### 5. Gerçek zamanlı: canlı sipariş akışı
 
-Yazılan bir document hemen aranmaz; Elasticsearch varsayılan olarak saniyede bir **refresh** yapar
-ve document ancak o zaman aramaya girer. Canlı veri için bir index açıp bunu görün:
+**Soru: "Gerçek zamanlı" ne kadar gerçek zamanlı?** Yazılan document ancak **refresh** ile (varsayılan saniyede bir)
+aramaya girer. Canlı veri için bir index açıp bunu görün:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -X PUT 'http://127.0.0.1:9200/analiz-canli' -H 'Content-Type: application/json' -d '{
@@ -314,11 +348,11 @@ Beklenen çıktı:
 {"count":2}
 ```
 
-İlk document yazıldı ama `_count` 0 döndü: refresh henüz olmadı. `refresh=wait_for` isteği document aramaya
-girene kadar bekler; ardından iki document de görünür. "Gerçek zamanlı" bu yüzden "yaklaşık 1 saniye içinde"
-demektir.
+- **`_count` 0:** ilk document yazıldı ama refresh henüz olmadı.
+- **`refresh=wait_for`:** document aramaya girene kadar bekler; ardından iki document de görünür.
+- **Sonuç:** "gerçek zamanlı" yaklaşık 1 saniye içinde demektir.
 
-Şimdi son 15 dakikayı saniyede bir siparişle doldurun ve 10 dakika sürecek canlı akışı arka planda başlatın:
+**Canlı akışı başlatın:** son 15 dakika saniyede bir siparişle dolar, 10 dakika sürecek akış arka planda başlar:
 
 ```bash
 python3 scripts/canli_siparis.py gecmis
@@ -331,7 +365,7 @@ Beklenen çıktı:
 gecmis 15 dakika: 900 siparis, hata: False
 ```
 
-Gerçek zamanlı panonun sorusu: son 15 dakikada dakika başına kaç sipariş geldi?
+**Son 15 dakikada dakika başına kaç sipariş geldi?**
 
 ```bash
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/analiz-canli/_search?size=0' -H 'Content-Type: application/json' -d '{
@@ -345,31 +379,30 @@ Beklenen çıktı:
 [23,60,60,60,60,60,60,60,60,60,60,60,60,60,60,37]
 ```
 
-Her dakika 60 sipariş; ilk ve son kova yarımdır, çünkü 15 dakikalık pencere dakika sınırına denk gelmez.
-Sorguyu birkaç saniye sonra tekrar çalıştırın: canlı akış son kovayı büyütür (sayılar sizde farklıdır).
+- **Her dakika 60:** ilk ve son bucket yarımdır; 15 dakikalık pencere dakika sınırına denk gelmez.
+- **Tekrar çalıştırın:** canlı akış son bucket'ı büyütür (sayılar sizde farklıdır).
 
-Aynı akışı Kibana'da izlemek için bir data view açın:
+**Kibana'da izlemek için data view açın:**
 
 ```http
 POST kbn:/api/data_views/data_view
 { "data_view": { "id": "analiz-canli", "title": "analiz-canli", "name": "Canlı siparişler", "timeFieldName": "@timestamp" } }
 ```
 
-Discover'da `Canlı siparişler` data view'ını seçin, zaman aralığını **Last 15 minutes** (1) yapın. Zaman
-kutusunu yeniden açıp **Settings** (2) sekmesinde **Refresh every** anahtarını (3) açın ve değeri
-`10 seconds` yapın:
+1. Discover'da `Canlı siparişler` data view'ı, zaman aralığı **Last 15 minutes** (1)
+2. Zaman kutusunu yeniden açın: **Settings** (2) → **Refresh every** anahtarı (3), değer `10 seconds`
 
 ![Otomatik yenileme: 2 Settings, 3 Refresh every anahtarı](../../assets/screenshots/LAB-07/06a-canli-ayar.png)
 
-Histogram (4) her 10 saniyede kendiliğinden yenilenir ve sağ uçtaki çubuk büyür:
+3. Histogram (4) her 10 saniyede yenilenir, sağ uçtaki çubuk büyür:
 
 ![Canlı izleme: 1 Last 15 minutes, 4 dakikalık histogram](../../assets/screenshots/LAB-07/06-canli-discover.png)
 
 
 ### 6. Pano için veri hazırlama: doğru tip ve runtime field
 
-Grafikler aggregation'dan beslenir ve aggregation `text` field'da çalışmaz. `category` hem `text` hem
-`category.keyword` olarak index'lenmiştir; ikisiyle de gruplamayı deneyin:
+**Soru: Grafik neden bazı field'larla çizilmez?** Grafikler aggregation'dan beslenir, aggregation `text` field'da çalışmaz.
+`category` hem `text` hem `category.keyword` olarak index'lenmiş; ikisiyle de gruplamayı deneyin:
 
 ```bash
 for f in category category.keyword; do
@@ -385,9 +418,9 @@ Beklenen çıktı:
 {"field":"category.keyword","status":null,"ilk":"Men's Clothing","hata":null}
 ```
 
-Lens bu yüzden `category` yerine `Top values of category.keyword` kullanır. Veride olmayan bir değer
-gerekiyorsa (örneğin siparişin saati) veriyi yeniden yazmadan **runtime field** tanımlanır; değer sorgu
-anında script ile hesaplanır:
+- **Lens** bu yüzden `category` yerine `Top values of category.keyword` kullanır.
+
+**Veride olmayan değer: runtime field.** Örneğin siparişin saati; veri yeniden yazılmaz, değer sorgu anında script ile hesaplanır:
 
 ```http
 GET kibana_sample_data_ecommerce/_search?size=0&filter_path=aggregations
@@ -401,28 +434,27 @@ GET kibana_sample_data_ecommerce/_search?size=0&filter_path=aggregations
 {"aggregations":{"saat":{"doc_count_error_upper_bound":0,"sum_other_doc_count":4048,"buckets":[{"key":16,"doc_count":211},{"key":3,"doc_count":210},{"key":1,"doc_count":206}]}}}
 ```
 
-Saat UTC'dir. Aynı field'ı data view'a eklerseniz Discover ve Lens onu sıradan bir field gibi görür:
+**Data view'a ekleyin** (saat UTC): Discover ve Lens onu sıradan bir field gibi görür:
 
 ```http
 POST kbn:/api/data_views/data_view/ff959d40-b880-11e8-a6d9-e546fe2bba5f/runtime_field
 { "name": "siparis_saati", "runtimeField": { "type": "long", "script": { "source": "emit(doc['order_date'].value.getHour())" } } }
 ```
 
-Discover'da `Kibana Sample Data eCommerce` data view'ını açın; field listesinde `siparis_saati` (1) görünür,
-tıklayınca en sık saatler gelir (2):
+Discover'da `Kibana Sample Data eCommerce` data view'ında `siparis_saati` (1) görünür; tıklayınca en sık saatler (2):
 
 ![Runtime field: 1 siparis_saati field'ı, 2 en sık saatler](../../assets/screenshots/LAB-07/07-runtime-field.png)
 
-Runtime field her sorguda yeniden hesaplanır; sık kullanılan bir değer büyük veride yavaşlatır. O zaman
-field mapping'e eklenip veri ingest pipeline ile yazılırken doldurulur.
+- **Bedeli:** runtime field her sorguda yeniden hesaplanır; sık kullanılan değer büyük veride yavaşlatır.
+- **O zaman:** field mapping'e eklenir, veri ingest pipeline ile yazılırken doldurulur.
 
 ---
 
 ## Temizlik
 
 Örnek veri sonraki lablarda kullanılır, silinmez. Bu labın oluşturduğu panoyu, canlı akışı, `analiz-canli`
-index'ini ve data view'ını, örnek data view'a eklenen `siparis_saati` field'ını siler. Lens grafiği panonun
-içinde kaydedildiği için onunla birlikte gider:
+index'ini ve data view'ını, örnek data view'a eklenen `siparis_saati` field'ını siler. İlk Lens grafiği panonun
+içinde kaydedildiği için onunla birlikte gider; kutudaki üç panel kütüphaneye kaydedildiği için ayrıca silinir:
 
 ```bash
 ./teardown.sh
@@ -432,11 +464,16 @@ Beklenen çıktı:
 
 ```text
 dashboard 'Satış özeti' -> 200
+lens 'Günlük ciro' -> 200
+lens 'Ortalama sepet' -> 200
+lens 'Cinsiyete göre sipariş' -> 200
 canli siparis akisi -> durduruldu
 runtime field siparis_saati -> 200
 data view analiz-canli -> 200
 index analiz-canli -> 200
 ```
+
+`lens` satırları yalnız kutudaki paneller eklendiyse, `canli siparis akisi` satırı yalnız akış hâlâ çalışıyorsa görünür.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.
