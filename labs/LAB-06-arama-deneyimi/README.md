@@ -197,9 +197,21 @@ GET /deneyim-urunler/_search?filter_path=hits.hits._source.ad
 | `kab` | Kablosuz Kulaklık · Kablolu Kulaklık · Kablosuz Klavye · Şarj Kablosu |
 | `kablosuz ku` | Kablosuz Kulaklık · Kablosuz Klavye · Kablolu Kulaklık · Oyuncu Kulaklığı |
 
-- **Sıra neden böyle?** `bool_prefix` son kelimeyi ön ek ("ku…"), öncekileri tam kelime sayar; iki kelimesi de tutan
-  "Kablosuz Kulaklık" üstte.
-- **`_2gram`, `_3gram`:** kelime çiftlerini tutar; yan yana geçen kelimeler daha yüksek skor alır.
+**Neden "Kablolu Kulaklık" da geldi?** `bool_prefix` "kablosuz ku" metnini koşullara böler ve **biri tutsa yeter** (OR):
+
+- **"kablosuz":** tam kelime olarak aranır
+- **"ku…":** son kelime yarım yazılmış sayılır; "ku" ile başlayan her kelime tutar (kulaklık, kulaklığı)
+- **yan yana:** `_2gram` alt field'ı yan yana iki kelimeyi tek parça saklar ("kablosuz kulaklık"); "kablosuz ku" bu çiftle de
+  eşleşir. `_3gram` aynısını üç kelime için yapar.
+
+| Sıra · ürün | "kablosuz" | "ku…" | yan yana | Tutan |
+|---|---|---|---|---|
+| 1 · Kablosuz Kulaklık | var | var | var | 3 |
+| 2 · Kablosuz Klavye | var | – | – | 1 |
+| 3 · Kablolu Kulaklık | – | var | – | 1 |
+| 4 · Oyuncu Kulaklığı | – | var | – | 1 |
+
+Kablolu Kulaklık'ta "kablosuz" yok ama "kulaklık" "ku" ile başlıyor; listeye bu yüzden girer. Çok parçası tutan ürün üste çıkar.
 
 <details><summary><strong>Arka planda: search_as_you_type'ın edge n-gram'ları</strong></summary>
 
