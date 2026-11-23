@@ -8,14 +8,13 @@
 
 ## Bu lab ne öğretiyor?
 
-Bir sunucuyu Beats ile izlemek her Beat için ayrı bir YAML dosyası ve servis demektir; ayarı değiştirmek
-için sunucuya girip dosyayı düzenlemek gerekir. 50 sunucuda hangi sunucuda hangi ayarın çalıştığını kimse
-bilemez. Fleet ayarı sunucudan alıp Kibana'ya taşır: sunucuda tek bir program (**Elastic Agent**) çalışır,
-ne toplayacağını Kibana'daki **agent policy** söyler.
+Beats ile her Beat ayrı YAML ve servis demektir; 50 sunucuda hangi ayarın çalıştığını kimse bilemez. Fleet ayarı
+Kibana'ya taşır: sunucuda tek program (**Elastic Agent**) çalışır, ne toplayacağını Kibana'daki **agent policy** söyler.
 
-Bu labda Fleet Server ve bir ajanı container olarak kuracak, ajanın sunucuyu izlediğini gösterecek, politikayı
-Kibana'dan değiştirecek, **Add integrations** ile Nginx loglarını ekleyecek ve CPU'ya kısa bir yük verip bir
-Lens panosunda göreceğiz.
+- **Fleet Server ve ajan:** container olarak kurmak, ajanın sunucuyu izlediğini görmek
+- **Politikayı Kibana'dan değiştirmek:** sunucuya girmeden ayarın ajana gitmesi (revision)
+- **Add integrations:** Nginx loglarını eklemek, integration'ın hazır panosu
+- **CPU yükü:** kısa bir yükü Lens panosunda görmek
 
 ![Fleet Server, Elastic Agent ve politika akışı](../../assets/infographics/15-fleet-agent-policy-akisi.png)
 
@@ -23,9 +22,9 @@ Lens panosunda göreceğiz.
 
 ## Ön Koşullar
 
-- LAB-01 ana cluster'ı çalışıyor. LAB-01'i atladıysanız onun Adım 1-2'sini çalıştırın.
-- `127.0.0.1:8220` portu boş olmalı. İki ajan container'ı birlikte yaklaşık 1 GB RAM kullanır. Adım 7 `stress-ng`
-  paketini `sudo apt-get` ile kurar.
+- Önce kurulu olmalı: LAB-01 ana cluster'ı. `127.0.0.1:8220` portu boş olmalı; iki ajan container'ı birlikte
+  yaklaşık 1 GB RAM kullanır. Adım 7 `stress-ng` paketini `sudo apt-get` ile kurar.
+- Önceki labı atladıysanız: sorun değil; LAB-10'a bağlı değildir, veriyi ajan sunucudan toplar.
 
 ```bash
 cd ~/elastic/labs/LAB-11-fleet-elastic-agent
@@ -46,18 +45,14 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ---
 
-## Kavramlar: Fleet'te kim ne yapar?
+## Kavramlar
 
-| Parça | Ne yapar | Bu labda |
-|---|---|---|
-| Kibana Fleet | Politikaları ve integration'ları tutar; her değişiklikte politikanın **revision**'ı artar | `fleet-linux-policy` |
-| Fleet Server | Ajanların düzenli sorduğu (check-in) sunucu; yeni politikayı ajana verir | `fleet-server-lab`, port 8220 |
-| Elastic Agent | Politikayı uygular, veriyi **doğrudan Elasticsearch'e** yazar | `agent-fleet-lab` (`linux-agent-01`) |
-| Integration | Bir kaynağın hazır toplama ayarı (System, Nginx…) | `system-lab` |
-| Namespace | Data stream adının son parçası; ortamı ya da ekibi ayırır | `fleetlab` |
-
-Fleet Server veri taşımaz: ayar Fleet Server'dan gelir, veri ajandan Elasticsearch'e gider. Data stream adları
-`<tür>-<veri seti>-<namespace>` biçimindedir: `logs-system.auth-fleetlab`.
+- **Elastic Agent:** her sunucuda çalışan tek program; politikayı uygular, veriyi **doğrudan Elasticsearch'e** yazar
+- **Agent policy:** ajanın ne toplayacağının listesi; her değişiklikte **revision**'ı bir artar
+- **Integration:** bir kaynağın hazır toplama ayarı (System, Nginx…); panolarını ve ingest pipeline'larını da getirir
+- **Fleet (Kibana):** politikaları ve integration'ları yönetilen arayüz
+- **Fleet Server:** ajanların düzenli sorduğu (check-in) sunucu; yeni politikayı ajana verir, veri taşımaz
+- **Namespace:** data stream adının son parçası, ortamı ya da ekibi ayırır: `<tür>-<veri seti>-<namespace>` → `logs-system.auth-fleetlab`
 
 ---
 
@@ -93,8 +88,9 @@ toplayıcılar `/proc` yerine sunucunun bağlanan `/hostfs/proc`'unu okur.
 
 ### 1. Fleet'i hazırlayın
 
-Betik Fleet Server için bir service token üretir, Fleet'in output'unu ana cluster'a yönlendirir, iki politika
-açar ve ajanın kayıt token'ını alır. Token'lar `.env.fleet` dosyasına yazılır, ekrana basılmaz:
+**Soru: Ajan çalışmadan önce Fleet'te ne hazır olmalı?** Betik Fleet Server için bir service token üretir,
+Fleet'in output'unu ana cluster'a yönlendirir, iki politika açar ve ajanın kayıt token'ını alır. Token'lar
+`.env.fleet` dosyasına yazılır, ekrana basılmaz:
 
 ```bash
 python3 scripts/setup_fleet.py
@@ -115,16 +111,18 @@ enrollment token       : alindi
 
 </details>
 
-İlk çalıştırma paketleri indirdiği için yaklaşık 40 saniye sürer.
+- **Yaklaşık 40 saniye:** ilk çalıştırma paketleri indirir.
 
 ### 2. Fleet Server ve ajanı başlatın
+
+**Soru: Ajan Fleet'e nasıl kaydolur?** İki container'ı başlatın; ajan token'la Fleet Server'a kaydolur:
 
 ```bash
 docker compose --env-file .env.fleet up -d
 ```
 
-Fleet Server açılır, ajan ona kaydolur ve ilk politikayı uygular; ikisinin de `online` olması yaklaşık 1
-dakika sürer:
+**Bekleyin:** Fleet Server açılır, ajan ona kaydolur ve ilk politikayı uygular; ikisinin de `online` olması
+yaklaşık 1 dakika sürer:
 
 ```bash
 timeout 300 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:5601/api/fleet/agents?perPage=50" | jq "[.items[] | select((.policy_id | test(\"^fleet-\")) and .status == \"online\")] | length")" -ge 2 ]; do printf .; sleep 5; done'; echo
@@ -142,14 +140,14 @@ linux-agent-01  fleet-linux-policy  online
 
 Satırların sırası sizde farklı olabilir.
 
-Aynı listeyi **Management › Fleet › Agents**'ta görün: `linux-agent-01` satırında (1) durum `Healthy`,
-politika `Lab Linux sunucu`. **Last activity** birkaç saniye öncesini gösterir: ajan düzenli check-in yapıyor.
+**Arayüzde:** **Management › Fleet › Agents**: `linux-agent-01` satırında (1) durum `Healthy`, politika
+`Lab Linux sunucu`. **Last activity** birkaç saniye öncesini gösterir: ajan düzenli check-in yapıyor.
 
 ![Fleet › Agents: 1 linux-agent-01 Healthy](../../assets/screenshots/LAB-11/01-fleet-agents.png)
 
 ### 3. Politikada ne var?
 
-Ajanın ne topladığını politikadaki integration'lar belirler:
+**Soru: Ajan ne topluyor?** Politikadaki integration'lar belirler:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/package_policies?perPage=50' \
@@ -168,13 +166,13 @@ fleet_server-lab  fleet-server-policy  hostfs=-
    └─ status: (HEALTHY) Running
 ```
 
-`system-lab` sunucunun loglarını ve metriklerini toplar; `hostfs=/hostfs` metriklerin sunucudan okunmasını
-sağlar. `elastic-agent status` ajanın Fleet'e bağlı ve sağlıklı olduğunu kendisi söyler.
+- **`system-lab`:** sunucunun loglarını ve metriklerini toplar; `hostfs=/hostfs` metriklerin sunucudan okunmasını sağlar.
+- **`elastic-agent status`:** ajan Fleet'e bağlı ve sağlıklı olduğunu kendisi söyler.
 
 ### 4. Önce ve sonra: ajan sunucuyu mu görüyor, container'ı mı?
 
-Bağlama olmasa container'ın `/var/log`'unda yalnız image'ın kendi birkaç dosyası olurdu. Bağlamayla aynı dizin
-sunucunun dizinidir:
+**Soru: Container'daki ajan sunucuyu nasıl görür?** Bağlama (volume) olmasa container'ın `/var/log`'unda yalnız
+image'ın kendi birkaç dosyası olurdu. Bağlamayla aynı dizin sunucunun dizinidir:
 
 ```bash
 docker exec agent-fleet-lab ls /var/log | grep -E '^(syslog|auth\.log)$'
@@ -187,8 +185,8 @@ auth.log
 syslog
 ```
 
-Süreç metriklerinin gelmesini bekleyip iki log veri setinin document sayısına ve son 5 dakikada en çok görülen
-süreçlere bakın:
+**Veri geliyor mu?** Süreç metriklerinin gelmesini bekleyip iki log veri setinin document sayısına ve son 5
+dakikada en çok görülen süreçlere bakın:
 
 ```bash
 timeout 180 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" http://127.0.0.1:9200/metrics-system.process-fleetlab/_count | jq .count 2>/dev/null)" -gt 0 ] 2>/dev/null; do printf .; sleep 5; done'; echo
@@ -212,13 +210,14 @@ system.auth    3521
 | `logs-system.auth-fleetlab` | 0 document | sunucunun SSH ve `sudo` kayıtları |
 | `metrics-system.process-*` | yalnız `elastic-agent` ve alt bileşenleri | sunucudaki bütün süreçler: `dockerd`, ana cluster'ın `java`'sı… |
 
-Ajan dosyaları baştan okur; sayılar ve süreç listesi sunucunun yaşına ve o anki yüküne göre sizde farklıdır. İnternete açık sunucularda `auth`
-kayıtlarının çoğu başarısız SSH denemeleridir. Süreç adları çekirdekte 15 karakterde kesilir.
+- **Sayılar sizde farklıdır:** ajan dosyaları baştan okur; sayılar ve süreç listesi sunucunun yaşına ve yüküne bağlıdır.
+- **`auth` kayıtları:** internete açık sunucularda çoğu başarısız SSH denemeleridir.
+- **Kısa süreç adları:** çekirdek süreç adlarını 15 karakterde keser.
 
 ### 5. Politikayı Kibana'dan canlı değiştirin
 
-Her politika değişikliği politikanın revision'ını bir artırır; ajan yeni revision'ı bir sonraki check-in'de
-alır. Önce iki değer:
+**Soru: Ayar sunucuya girmeden nasıl değişir?** Her politika değişikliği revision'ı bir artırır; ajan yeni
+revision'ı bir sonraki check-in'de alır. **Önce:** politikanın ve ajanın revision'ı:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agent_policies/fleet-linux-policy' | jq '.item.revision'
@@ -232,7 +231,7 @@ Beklenen çıktı:
 2
 ```
 
-Şimdi Kibana'da süreç metriklerinin toplanma aralığını değiştirin:
+**Kibana'da** süreç metriklerinin toplanma aralığını değiştirin:
 
 1. **Management › Fleet › Agent policies**'te **Lab Linux sunucu** politikasını açın ve `system-lab`
    integration'ına (1) tıklayın.
@@ -253,7 +252,7 @@ Beklenen çıktı:
 
    ![Save and deploy changes onayı](../../assets/screenshots/LAB-11/05-save-and-deploy.png)
 
-Ajanın yeni revision'a geçmesini bekleyin:
+**Sonra:** ajanın yeni revision'a geçmesini bekleyin:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agent_policies/fleet-linux-policy' | jq '.item.revision'
@@ -269,13 +268,13 @@ Beklenen çıktı:
 3
 ```
 
-Politika 2'den 3'e çıktı, ajan birkaç saniye içinde yetişti. Sunucuya girilmedi, container yeniden başlatılmadı.
+- **2 → 3:** ajan birkaç saniye içinde yetişti; sunucuya girilmedi, container yeniden başlatılmadı.
 
 ### 6. Kibana'dan integration ekleyin: Nginx
 
-System integration'ı betik ekledi. Şimdi aynı politikaya Kibana'nın **Add integrations** akışıyla bir tane daha
-ekleyeceğiz. Sunucudaki Nginx (80/443) her isteği `/var/log/nginx/access.log`'a yazar; ajan `/var/log`'u zaten
-okuyor, yeni bir bağlama gerekmez.
+**Soru: Yeni bir kaynağı toplamaya nasıl başlarız?** System integration'ını betik ekledi; aynı politikaya
+Kibana'nın **Add integrations** akışıyla Nginx'i ekliyoruz. Sunucudaki Nginx (80/443) her isteği
+`/var/log/nginx/access.log`'a yazar; ajan `/var/log`'u zaten okuyor, yeni bir bağlama gerekmez.
 
 1. Kibana ana sayfasında **Add integrations**'a basın, arama kutusuna `nginx` yazın (1) ve **Nginx (ECS)**
    kartını (2) açın; sonra **Add Nginx (ECS)** (3).
@@ -292,7 +291,7 @@ okuyor, yeni bir bağlama gerekmez.
 
    ![Existing hosts: 6 sekme, 7 Lab Linux sunucu, 8 Save and continue](../../assets/screenshots/LAB-11/08-nginx-politika.png)
 
-Politika revision'ı yine artar; ajan yetişince Nginx logları gelir:
+**Nginx logları geliyor mu?** Politika revision'ı yine artar; ajan yetişince loglar gelir:
 
 ```bash
 timeout 180 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" http://127.0.0.1:9200/logs-nginx.access-fleetlab/_count | jq .count 2>/dev/null)" -gt 0 ] 2>/dev/null; do printf .; sleep 5; done'; echo
@@ -309,8 +308,10 @@ system-lab  system  namespace=fleetlab
 4
 ```
 
-Önce ve sonra: sunucunun ham satırı ve aynı türden bir isteğin ajanın yazdığı hâli. Integration'ın ingest
-pipeline'ı satırı ECS field'larına ayırır. `nginx-lab` namespace'i kendisi vermez, politikanınkini (`fleetlab`) alır:
+- **`namespace=politikadan`:** `nginx-lab` namespace'i kendisi vermez, politikanınkini (`fleetlab`) alır.
+
+**Önce ve sonra:** sunucunun ham satırı ve aynı türden bir isteğin ajanın yazdığı hâli. Integration'ın ingest
+pipeline'ı satırı ECS field'larına ayırır:
 
 ```bash
 sudo tail -1 /var/log/nginx/access.log | cut -c1-120
@@ -325,7 +326,7 @@ Beklenen çıktı:
 {"ip":"188.114.102.252","method":"GET","kod":200,"url":"/api/console/autocomplete_entities?field","tarayici":"Chrome"}
 ```
 
-İstekler, IP'ler ve URL sizde farklıdır. Ajan dosyayı baştan okur; sayı sunucunun Nginx trafiğine bağlıdır.
+- **Sizde farklıdır:** istekler, IP'ler ve URL sunucunun Nginx trafiğine bağlıdır.
 
 <details>
 <summary><strong>Tek node'da yellow kalmasın: replica 0</strong></summary>
@@ -399,9 +400,9 @@ galerisinin Kibana'daki karşılığı).
 
 ### 7. CPU yükü ve Lens panosu
 
-System integration'ı CPU'yu 10 saniyede bir `metrics-system.cpu-fleetlab`'e yazar. `stress-ng` ile kısa ve
-sınırlı bir yük verip panoda görelim: 4 çekirdekten 2'si, %80 yük, 90 saniye; süre dolunca kendiliğinden
-biter ve bellek kullanmaz.
+**Soru: Bir yük metriklere ve panoya nasıl yansır?** System integration'ı CPU'yu 10 saniyede bir
+`metrics-system.cpu-fleetlab`'e yazar. `stress-ng` ile kısa ve sınırlı bir yük vereceğiz: 4 çekirdekten 2'si, %80 yük,
+90 saniye; süre dolunca kendiliğinden biter ve bellek kullanmaz.
 
 ```bash
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq stress-ng >/dev/null 2>&1; stress-ng --version | cut -d' ' -f1-3
@@ -415,9 +416,8 @@ stress-ng, version 0.17.06
 4
 ```
 
-Yükten önceki 2 dakikanın ortalaması, 90 saniyelik yük, yük bitince son 80 saniyenin ortalaması
-(`system.cpu.total.norm.pct`: bütün çekirdeklerin ortalaması, yüzde). 80 saniyelik pencere yükün içinde kalır;
-veri 10 saniyede bir geldiği için son ölçüm birkaç saniye geride olabilir:
+**Önce, yük, sonra:** yükten önceki 2 dakikanın ortalaması, 90 saniyelik yük, yük bitince son 80 saniyenin
+ortalaması (`system.cpu.total.norm.pct`: bütün çekirdeklerin ortalaması). 80 saniyelik pencere yükün içinde kalır:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/metrics-system.cpu-fleetlab/_search?size=0' -H 'Content-Type: application/json' \
@@ -436,9 +436,10 @@ successful run completed in 1 min, 30.02 secs
 "yuk sirasinda: %46"
 ```
 
-Yüzdeler sunucunun o anki yüküne göre sizde farklıdır (burada 2 çekirdek %80'de, 4 çekirdeğin ortalaması yaklaşık +%40 artar); önemli olan yükün farkıdır.
+- **Fark önemli:** yüzdeler sunucunun o anki yüküne göre sizde farklıdır; 4 çekirdeğin 2'si %80'de olunca ortalama
+  yaklaşık 40 puan artar.
 
-Şimdi aynı veriyi panoya koyun:
+**Panoya koyun:** aynı veriyi Lens ile çizin:
 
 1. **Dashboards › Create dashboard › Create visualization**. Data view **metrics-\*** (1), sorgu kutusuna
    `data_stream.dataset : "system.cpu" and data_stream.namespace : "fleetlab"` (2). Soldaki listeden
@@ -458,8 +459,7 @@ Yüzdeler sunucunun o anki yüküne göre sizde farklıdır (burada 2 çekirdek 
 
    ![Pano: CPU çizgisinde yük penceresi](../../assets/screenshots/LAB-11/12-pano-cpu.png)
 
-Çizgide yükün başladığı ve bittiği an görünür. Bu sunucuda yükten önce %44, yük sırasında %75 ölçüldü: 4 çekirdeğin
-2'si %80 yüklenince ortalama yaklaşık 30-40 puan artar. Sunucunun o anki işine göre sayılar sizde farklıdır.
+- **Yük penceresi:** çizgide yükün başladığı ve bittiği an görünür; sayılar sunucunun o anki işine göre sizde farklıdır.
 
 ---
 
