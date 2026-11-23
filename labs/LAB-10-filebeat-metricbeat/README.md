@@ -8,13 +8,13 @@
 
 ## Bu lab ne öğretiyor?
 
-Bir sunucuda loglar dosyalara (`/var/log/auth.log`), container logları Docker'ın dosyalarına, CPU ve
-bellek bilgisi ise çekirdeğe dağılmıştır. "Hangi container 404 üretiyor, o sırada hangisi en çok bellek
-kullanıyor?" sorusu için bunların tek yerde, field'lara ayrılmış hâlde olması gerekir.
+"Hangi container 404 üretiyor, o sırada hangisi en çok bellek kullanıyor?" sorusu için dosyalara ve çekirdeğe
+dağılmış log ve metriklerin tek yerde, field'lara ayrılmış hâlde olması gerekir:
 
-Bu labda Filebeat host'un oturum logunu ve iki demo servisin container loglarını, Metricbeat host ve
-container metriklerini toplayacak. Nginx satırını Filebeat'in kendisinde field'lara ayıracak, sonucu
-Discover'da tek sorguyla bulacağız.
+- **Filebeat:** host'un `auth.log`'unu ve iki demo servisin container loglarını toplamak
+- **Processor'lar:** nginx satırını Filebeat'te field'lara ayırmak (`dissect`), container adını eklemek
+- **Metricbeat:** host ve container CPU/bellek metrikleri
+- **Discover:** 404 üreten istekleri tek sorguyla bulmak
 
 ![Filebeat ve Metricbeat ile sunucudan log ve metrik toplama](../../assets/infographics/20-beats-log-metrik.png)
 
@@ -22,9 +22,9 @@ Discover'da tek sorguyla bulacağız.
 
 ## Ön Koşullar
 
-- LAB-01 ana cluster'ı çalışıyor. Önceki labları atladıysanız da lab çalışır; veriyi bu labın kendi
-  container'ları üretir.
-- `127.0.0.1:8081` ve `127.0.0.1:3001` boş olmalı. Dört container birlikte yaklaşık 700 MB RAM kullanır.
+- Önce kurulu olmalı: LAB-01 ana cluster'ı. `127.0.0.1:8081` ve `127.0.0.1:3001` boş olmalı; dört container
+  birlikte yaklaşık 700 MB RAM kullanır.
+- Önceki labı atladıysanız: sorun değil; veriyi bu labın kendi container'ları üretir.
 
 ```bash
 cd ~/elastic/labs/LAB-10-filebeat-metricbeat
@@ -32,16 +32,13 @@ cd ~/elastic/labs/LAB-10-filebeat-metricbeat
 
 ---
 
-## Kavramlar: Beats ne toplar, nereye yazar?
+## Kavramlar
 
-| Beat | Ne okur | Bu labda |
-|---|---|---|
-| Filebeat | Log dosyaları (satır satır), kaldığı yeri `registry`'de tutar | `auth.log` ve Docker container logları |
-| Metricbeat | Modüllerle sistem ve servis metrikleri, belirli aralıkla | `system` (CPU, bellek, disk, süreç) ve `docker` |
-
-Beat bir **input** (ne okunacak), **processor**'lar (olay yazılmadan önce ne değişecek) ve bir **output**'tan
-oluşur. Basit ayrıştırma (`dissect`, JSON çözme) Beat'te yapılabilir; grok, birden çok desen ve olayları
-farklı hedeflere yönlendirme gerekiyorsa Logstash kullanılır: Beat'te grok processor'ı yoktur ve Beat tek bir output'a yazar.
+- **Beat:** tek işe odaklı, hafif veri toplayıcı; veriyi okuduğu makinede çalışır ve Elasticsearch'e (ya da Logstash'e) yazar
+- **Filebeat:** log dosyalarını satır satır okur; kaldığı yeri `registry`'de tutar, kapanıp açılınca aynı satırı iki kez göndermez
+- **Metricbeat:** modüllerle (`system`, `docker`…) metrikleri belirli aralıkla (`period`) ölçer
+- **Input · processor · output:** ne okunacak · olay yazılmadan önce ne değişecek · nereye yazılacak
+- **Beat mi Logstash mı:** basit ayrıştırma (`dissect`, JSON çözme) Beat'te yapılır; grok, birden çok desen ya da olayları farklı hedeflere yönlendirme gerekirse Logstash (Beat'te grok yok, tek output var)
 
 ---
 
@@ -98,9 +95,9 @@ farklı hedeflere yönlendirme gerekiyorsa Logstash kullanılır: Beat'te grok p
 
 ### 1. Index şablonları
 
-Beats'in kendi şablonu yüzlerce field içerir ve data stream ister. Burada iki küçük şablonu biz
-kuruyoruz (`setup.template.enabled: false`): metin field'ları `keyword` olur, yalnız `message` aranabilir
-metindir.
+**Soru: Beat'in yazacağı index'lerin mapping'ini kim belirler?** Beats'in kendi şablonu yüzlerce field içerir ve
+data stream ister. Burada iki küçük şablonu biz kuruyoruz (`setup.template.enabled: false`): metin field'ları
+`keyword` olur, yalnız `message` aranabilir metindir.
 
 Kibana › Dev Tools'a yapıştırın:
 
@@ -139,6 +136,8 @@ PUT _index_template/beats-metric
 
 ### 2. Demo servisleri ve Filebeat'i başlatın
 
+**Soru: Container logları Elasticsearch'e nasıl gelir?** İki demo servisi (nginx, API) ve Filebeat'i başlatın:
+
 ```bash
 docker compose up -d nginx api filebeat
 timeout 120 bash -c 'until curl -s -o /dev/null 127.0.0.1:3001/api/pay && curl -s -o /dev/null 127.0.0.1:8081/; do printf .; sleep 2; done'; echo " servisler hazır"
@@ -150,8 +149,8 @@ Beklenen çıktı:
 . servisler hazır
 ```
 
-Servislere sabit sayıda istek atın; betik ayrıca host'un `auth.log`'una 5 deneme satırı yazar. `RUN`
-bu koşunun etiketidir; Adım 4'te satırları onunla bulacağız:
+**Trafik üretin:** betik servislere sabit sayıda istek atar ve host'un `auth.log`'una 5 deneme satırı yazar.
+`RUN` bu koşunun etiketidir; Adım 4'te satırları onunla bulacağız:
 
 ```bash
 export RUN=$(date +%H%M%S)
@@ -168,8 +167,8 @@ Beklenen çıktı:
   auth.log: 5 satir (etiket beats-lab-194014)
 ```
 
-Filebeat dosyaları birkaç saniyede bir tarar. 40 isteğin hepsi (betiğin 38'i ve hazır olma kontrolünün
-2'si) Elasticsearch'e gelene kadar bekleyin:
+**Bekleyin:** Filebeat dosyaları birkaç saniyede bir tarar. 40 isteğin hepsi (betiğin 38'i ve hazır olma
+kontrolünün 2'si) Elasticsearch'e gelene kadar bekleyin:
 
 ```bash
 timeout 120 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:9200/beats-log-docker-*/_count?q=http.response.status_code:*%20OR%20api.http_status:*" | jq .count)" -ge 40 ]; do printf .; sleep 3; done'; echo
@@ -184,11 +183,13 @@ beats-log-docker-2026.11.21
 beats-log-sistem-2026.11.21
 ```
 
-Index adlarındaki tarih sizde farklıdır.
+- **İki index:** container logları `beats-log-docker-*`, host logu `beats-log-sistem-*`; tarih sizde farklıdır.
 
 ### 3. Önce ve sonra: nginx satırı
 
-Docker'ın diske yazdığı ham satır (Docker'ın dosyaları root'a aittir):
+**Soru: Filebeat ham satırı nasıl field'lara ayırdı?**
+
+**Önce:** Docker'ın diske yazdığı ham satır (Docker'ın dosyaları root'a aittir, `sudo` gerekir):
 
 ```bash
 ID=$(docker inspect -f '{{.Id}}' nginx-beats-lab)
@@ -201,8 +202,9 @@ Beklenen çıktı:
 {"log":"172.19.0.1 - - [21/Nov/2026:16:27:30 +0000] \"GET /yok HTTP/1.1\" 404 153 \"-\" \"curl/8.5.0\" \"-\"\n","stream":"stdout","time":"2026-11-21T16:27:30.69017799Z"}
 ```
 
-Saat sizde farklıdır. Nginx her 404 için `stderr`'e bir hata satırı da yazar; `grep` erişim satırını
-(`stdout`) seçer. Elasticsearch'teki document:
+- **İki satır:** nginx her 404 için `stderr`'e bir hata satırı da yazar; `grep` erişim satırını (`stdout`) seçer.
+
+**Sonra:** Elasticsearch'teki document:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/beats-log-docker-*/_search?q=url.path:%22/yok%22&size=1' \
@@ -221,10 +223,10 @@ Beklenen çıktı:
 | Dosya adındaki container id | `container.name: nginx-beats-lab` | `add_docker_metadata` |
 | `GET`, `/yok`, `404` | `http.request.method`, `url.path`, `http.response.status_code` (sayı) | `dissect` |
 
-`172.19.0.1` Docker ağının geçidi: istek host'tan port yönlendirmesiyle geldi.
+- **`172.19.0.1`:** Docker ağının geçidi; istek host'tan port yönlendirmesiyle geldi.
 
-API container'ı zaten JSON yazdığı için `decode_json_fields` satırı `api.*` field'larına açar. Servis
-başına durum kodları:
+**API logu:** API container'ı zaten JSON yazdığı için `decode_json_fields` satırı `api.*` field'larına açar.
+Servis başına durum kodları:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/beats-log-docker-*/_search?size=0' -H 'Content-Type: application/json' \
@@ -238,12 +240,12 @@ Beklenen çıktı:
 {"nginx":{"200":21,"404":5},"api":{"200":11,"500":3}}
 ```
 
-Betiğin 20 ve 10 isteğine Adım 2'deki hazır olma kontrolünün birer isteği eklenir.
+- **21 ve 11:** betiğin 20 ve 10 isteğine Adım 2'deki hazır olma kontrolünün birer isteği eklenir.
 
 ### 4. Host logu: auth.log
 
-Aynı Filebeat host'un `auth.log` dosyasını da okur. Bu koşunun 5 satırı index'e düşene kadar bekleyip
-dosyadaki sıralarıyla (`log.offset`) gösterin:
+**Soru: Host'un kendi log dosyası da toplanıyor mu?** Aynı Filebeat host'un `auth.log` dosyasını da okur. Bu
+koşunun 5 satırı index'e düşene kadar bekleyip dosyadaki sıralarıyla (`log.offset`) gösterin:
 
 ```bash
 timeout 60 bash -c "until [ \"\$(curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/beats-log-sistem-*/_count?q=message:%22beats-lab-$RUN%22' | jq .count)\" -ge 5 ]; do printf .; sleep 2; done"; echo
@@ -262,12 +264,14 @@ Beklenen çıktı:
 <host> | 2026-11-21T19:40:14.640656+03:00 <host> beats-lab-194014: deneme oturumu 5
 ```
 
-`host.name` ve satırdaki ad sunucunuzun adıdır; saat ve etiket sizde farklıdır. Filebeat dosyayı baştan okur;
-index'te sunucunun eski oturum kayıtları (SSH girişleri, `sudo` kullanımı) ve labı daha önce yaptıysanız
-eski deneme satırları da vardır. Filebeat kapanıp açılırsa `registry` sayesinde
-kaldığı yerden devam eder; aynı satırı iki kez göndermez.
+- **`host.name`:** sunucunuzun adı; saat ve etiket sizde farklıdır.
+- **Eski satırlar da var:** Filebeat dosyayı baştan okur; index'te sunucunun eski oturum kayıtları (SSH girişleri,
+  `sudo`) ve labı daha önce yaptıysanız eski deneme satırları da vardır.
+- **`registry`:** Filebeat kapanıp açılırsa kaldığı yerden devam eder; aynı satırı iki kez göndermez.
 
 ### 5. Metricbeat: host ve container metrikleri
+
+**Soru: Hangi container en çok bellek kullanıyor?** Metricbeat'i başlatın; ilk bellek ölçümleri gelene kadar bekleyin:
 
 ```bash
 docker compose up -d metricbeat
@@ -280,7 +284,7 @@ Beklenen çıktı:
 .....
 ```
 
-En çok bellek kullanan üç container, ES|QL ile:
+**En çok bellek kullanan üç container**, ES|QL ile:
 
 ```http
 POST _query?format=txt
@@ -297,12 +301,13 @@ Beklenen çıktı:
 62             |filebeat-beats-lab 
 ```
 
-Değerler sizde farklıdır; Elasticsearch genellikle en üsttedir. Host tarafında aynı index'te
-`system.cpu.total.norm.pct` (CPU) ve `system.memory.actual.used.pct` (bellek) field'ları 10 saniyede bir gelir.
+- **Değerler sizde farklıdır;** Elasticsearch genellikle en üsttedir.
+- **Host metrikleri:** aynı index'te `system.cpu.total.norm.pct` (CPU) ve `system.memory.actual.used.pct` (bellek)
+  10 saniyede bir gelir.
 
 ### 6. Discover: 404 üreten istekler
 
-Kibana adresini sunucuda hesaplayın:
+**Soru: Toplanan loglarda arayüzden nasıl ararız?** Kibana adresini sunucuda hesaplayın:
 
 ```bash
 IP=$(curl -s https://api.ipify.org); H=$(hostname -s)
@@ -315,7 +320,7 @@ Beklenen çıktı:
 Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 ```
 
-Log index'leri için bir data view kurun (Dev Tools):
+**Data view:** log index'leri için bir data view kurun (Dev Tools):
 
 ```http
 POST kbn:/api/data_views/data_view
@@ -331,7 +336,7 @@ container.name : "nginx-beats-lab" and http.response.status_code >= 400
 
 ![Discover: 1 Beats logları data view'ı, 2 sorgu, 3 beş 404 isteği](../../assets/screenshots/LAB-10/01-discover-404.png)
 
-Beş document gelir (3): `trafik.sh`'nin attığı `/yok` istekleri.
+- **Beş document (3):** `trafik.sh`'nin attığı `/yok` istekleri.
 
 <details>
 <summary><strong>Filebeat'i container yerine sunucuya paketle kurmak</strong></summary>
@@ -354,8 +359,8 @@ filebeat version 9.5.5 (amd64), libbeat 9.5.5 [b80bf8464fba72f582cefed91dd72909e
 ```
 
 Config `/etc/filebeat/filebeat.yml`'dir; `sudo filebeat test config` ve `sudo filebeat test output`
-ayarı ve Elasticsearch bağlantısını sınar, `sudo systemctl enable --now filebeat` servisi başlatır. Bu
-labda servisi başlatmayın: aynı dosyaları container'daki Filebeat zaten okuyor. Paketi ve config'ini
+ayarı ve Elasticsearch bağlantısını sınar, `sudo systemctl enable --now filebeat` servisi başlatır. Burada
+servisi başlatmayın: aynı dosyaları container'daki Filebeat zaten okuyor. Paketi ve config'ini
 kaldırmak için (`purge`; APT deposu tanımı kalır):
 
 ```bash
