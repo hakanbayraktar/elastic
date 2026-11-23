@@ -8,13 +8,11 @@
 
 ## Bu lab ne öğretiyor?
 
-Mapping'i Elasticsearch'e bırakırsanız "21.11.2026 14:30" gibi bir tarih düz metin olur ve her metin
-field'ı sessizce iki biçimde saklanır. Aramaya geçmeden önce bunun nedenini görmek gerekir; yoksa aynı
-değer bir sorguyla bulunur, ötekiyle bulunmaz. Her field'ın tipi ve metin field'larının hangi analyzer'dan
-geçtiği, aramanın neyi bulacağını belirler.
-Bu labda kendi mapping'imizi yazıp yanlış veriyi reddedeceğiz, Türkçe metni doğru küçük harfe ve
-köke indireceğiz, analyzer'ın yanıldığı bir kelimeyi kuralla düzeltip veriyi yeni index'e
-taşıyacağız.
+- Elasticsearch field tipini nasıl seçer (dynamic mapping)
+- `text` ile `keyword` farkı; `term` ile `match` farkı
+- Kendi mapping'inizi yazmak, yanlış veriyi reddetmek
+- Analyzer: Türkçe küçük harf ve kök bulma
+- Mapping neden değişmez; yeni index ve `_reindex`
 
 ---
 
@@ -26,20 +24,15 @@ taşıyacağız.
 cd ~/elastic/labs/LAB-03-mapping-analyzer
 ```
 
-
 ---
 
-## Kavramlar: mapping ve analyzer
+## Kavramlar
 
-| Kavram | Ne demek |
-|---|---|
-| mapping | Index'in şeması: her field'ın tipi (`text`, `keyword`, `date`, `float`...) ve ayarı |
-| `text` | Analyzer'dan geçer, kelimelere (token) bölünür; kelime kelime aranır |
-| `keyword` | Bölünmez, değer olduğu gibi saklanır; tam eşleşme, sıralama ve gruplama için |
-| analyzer | Metni token'lara çeviren zincir: karakter filtresi → tokenizer (bölme) → token filtreleri (küçük harf, kök bulma) |
-
-Analyzer hem document yazılırken hem `match` sorgusunda çalışır; iki taraf aynı token'ı üretirse
-eşleşme olur. `term` sorgusu analyzer'dan geçmez.
+- **mapping:** index'in şeması; her field'ın tipi (`text`, `keyword`, `date`, `float`...)
+- **`text`:** analyzer'dan geçer, kelimelere (**token**) bölünür; kelime kelime aranır
+- **`keyword`:** bölünmez, olduğu gibi saklanır; tam eşleşme, sıralama, gruplama için
+- **analyzer:** metni token'lara çeviren zincir: tokenizer (böler) → filtreler (küçük harf, kök)
+- **`match`** aranan metni de analyzer'dan geçirir; **`term`** geçirmez, olduğu gibi arar
 
 ---
 
@@ -49,7 +42,9 @@ Bu labda `http` bloklarını Kibana › Dev Tools'a, `bash` bloklarını termina
 
 ### 1. Tipi Elasticsearch seçerse: `text` ve `keyword`
 
-Mapping vermeden üç ürün yazın (index'i yalnız replica 0 ayarıyla açıyoruz; tek node'da sağlık yeşil kalsın):
+**Soru: Mapping vermezsek Elasticsearch metni nasıl saklar, nasıl buluruz?**
+
+**Index'i açın.** Mapping vermiyoruz; yalnız replica 0 (tek node'da sağlık yeşil kalsın):
 
 ```http
 PUT /mapping-dinamik
@@ -60,7 +55,7 @@ PUT /mapping-dinamik
 {"acknowledged": true, "shards_acknowledged": true, "index": "mapping-dinamik"}
 ```
 
-Üç ürünü `_bulk` ile tek istekte yükleyin. Her ürün iki satırdır: eylem satırı (`{"index":{}}`, `_id`'yi
+**Üç ürün yükleyin.** `_bulk` ile tek istekte; her ürün iki satırdır: eylem satırı (`{"index":{}}`, `_id`'yi
 Elasticsearch üretir) ve ürünün kendisi:
 
 ```http
@@ -77,7 +72,7 @@ POST /mapping-dinamik/_bulk?refresh=true&filter_path=errors
 {"errors": false}
 ```
 
-Elasticsearch'ün seçtiği tipler (`_mapping` index'in şemasını döndürür):
+**Elasticsearch'ün seçtiği tiplere bakın** (`_mapping` index'in şemasını döndürür):
 
 ```http
 GET /mapping-dinamik/_mapping?filter_path=*.mappings.properties
@@ -88,8 +83,9 @@ GET /mapping-dinamik/_mapping?filter_path=*.mappings.properties
 ```
 
 Her metin field'ı `text`, altında da `keyword` tipinde bir alt field (`kategori.keyword`) var: aynı değer
-iki biçimde saklanıyor. `text` field'ına ne yazıldığını `_analyze` gösterir: verilen metni o field'ın
-analyzer'ından geçirip çıkan token'ları listeler:
+iki biçimde saklanıyor.
+
+**`text` field'ına ne yazıldı?** `_analyze` metni o field'ın analyzer'ından geçirip çıkan token'ları listeler:
 
 ```http
 POST /mapping-dinamik/_analyze?filter_path=tokens.token
@@ -100,11 +96,12 @@ POST /mapping-dinamik/_analyze?filter_path=tokens.token
 {"tokens":[{"token":"kablosuz"},{"token":"kulaklık"}]}
 ```
 
-Şimdi aynı değeri üç yolla Dev Tools'ta arayın; yanıtta kaç document bulunduğu (`total`) ve bulunan ürünler görünür.
-İki sorgu tipi kullanacağız: `term` aradığınız değeri olduğu gibi, hiçbir değişiklik yapmadan arar. `match` aranan
-metni önce field'ın analyzer'ından geçirir (küçük harfe çevirir, kelimelere böler), çıkan token'larla arar.
+**Aynı değeri üç yolla arayın.** Yanıtta kaç document bulunduğu (`total`) ve ürünler görünür.
 
-Kibana › Dev Tools'a yapıştırın. `text` field'ında `term`:
+- **`term`:** değeri olduğu gibi, hiç değiştirmeden arar.
+- **`match`:** metni önce field'ın analyzer'ından geçirir (küçük harf, kelimelere bölme), sonra arar.
+
+**1) `text` field'ında `term`:**
 
 ```http
 GET /mapping-dinamik/_search?filter_path=hits.total.value,hits.hits._source
@@ -121,7 +118,7 @@ GET /mapping-dinamik/_search?filter_path=hits.total.value,hits.hits._source
 "Elektronik" `text` field'ında küçük harfle `elektronik` token'ı olarak saklandı. `term` sorguyu olduğu gibi,
 büyük E ile arar; böyle bir token yok, sonuç boş.
 
-Aynı field'da `match`:
+**2) Aynı field'da `match`:**
 
 ```http
 GET /mapping-dinamik/_search?filter_path=hits.total.value,hits.hits._source
@@ -137,7 +134,7 @@ GET /mapping-dinamik/_search?filter_path=hits.total.value,hits.hits._source
 
 `match` aranan metni de aynı analyzer'dan geçirir (`elektronik`) ve iki kulaklığı bulur.
 
-`keyword` alt field'ında `term`:
+**3) `keyword` alt field'ında `term`:**
 
 ```http
 GET /mapping-dinamik/_search?filter_path=hits.total.value,hits.hits._source
@@ -153,7 +150,7 @@ GET /mapping-dinamik/_search?filter_path=hits.total.value,hits.hits._source
 
 `.keyword` değeri tek parça ve harfi harfine saklar; birebir yazılmış "Elektronik" eşleşir.
 
-Kural: metinde kelime aramak için `text` + `match`; tam değer, filtre, gruplama ve sıralama için `keyword` +
+**Kural:** metinde kelime aramak için `text` + `match`; tam değer, filtre, gruplama ve sıralama için `keyword` +
 `term`. Discover'daki KQL ve Query DSL sorguları da bu ayrımla çalışır.
 
 <details>
@@ -241,8 +238,10 @@ DELETE /mapping-normalizer
 
 ### 2. Kendi mapping'inizi tanımlayın
 
-Adım 1'de tipleri Elasticsearch seçti. Bu kez field tiplerini biz veriyoruz; "21.11.2026 14:30" biçimindeki tarih
-de gerçek tarih olarak saklanacak:
+**Soru: Tipleri Elasticsearch'e bırakmak yerine biz verirsek ne kazanırız?** Yanlış veri reddedilir, Türkçe
+tarih ("21.11.2026 14:30") gerçek tarih olarak saklanır, metin doğru analyzer'dan geçer.
+
+**Mapping'i yazın:**
 
 ```http
 PUT /mapping-urunler
@@ -272,14 +271,14 @@ PUT /mapping-urunler
 {"acknowledged": true, "shards_acknowledged": true, "index": "mapping-urunler"}
 ```
 
-- `dynamic: strict`: mapping'de olmayan bir field gelirse document reddedilir (Adım 3).
-- `ad`: Türkçe analyzer'lı `text`; `ad.keyword` tam değer için, `ad.std` karşılaştırma için
+- **`dynamic: strict`:** mapping'de olmayan bir field gelirse document reddedilir (Adım 3).
+- **`ad`:** Türkçe analyzer'lı `text`; `ad.keyword` tam değer için, `ad.std` karşılaştırma için
   standart analyzer'lı (Adım 4).
-- `kategori`: `keyword`; kategori aranmaz, tam değerle süzülür ve gruplanır.
-- `eklendi`: `format` iki biçimi kabul eder: `21.11.2026 14:30` ve ISO 8601. Türkçe tarih artık
+- **`kategori`:** `keyword`; kategori aranmaz, tam değerle süzülür ve gruplanır.
+- **`eklendi`:** `format` iki biçimi kabul eder: `21.11.2026 14:30` ve ISO 8601. Türkçe tarih artık
   gerçek tarih olarak saklanır.
 
-Büyük bir mapping'in içinde yalnız birkaç field'ın tanımına bakmak için `_mapping/field` kullanılır:
+**Yalnız birkaç field'a bakmak:** büyük bir mapping'in içinden `_mapping/field` ile:
 
 ```http
 GET /mapping-urunler/_mapping/field/kategori,eklendi?filter_path=*.mappings.*.mapping
@@ -289,9 +288,7 @@ GET /mapping-urunler/_mapping/field/kategori,eklendi?filter_path=*.mappings.*.ma
 {"mapping-urunler":{"mappings":{"eklendi":{"mapping":{"eklendi":{"type":"date","format":"dd.MM.yyyy HH:mm||strict_date_optional_time"}}},"kategori":{"mapping":{"kategori":{"type":"keyword"}}}}}}
 ```
 
-Dört ürünü yükleyin (biri ISO, üçü Türkçe tarihli) ve tarih aralığıyla sayın:
-
-Önce örnek veri dosyasını oluşturun: `sample-data/urunler.ndjson`
+**Örnek veriyi oluşturun:** dört ürün, biri ISO, üçü Türkçe tarihli (`sample-data/urunler.ndjson`):
 
 ```bash
 mkdir -p sample-data
@@ -307,7 +304,7 @@ cat > sample-data/urunler.ndjson << 'EOF'
 EOF
 ```
 
-Dosyayı `_bulk` ile yükleyin:
+**Dosyayı `_bulk` ile yükleyin:**
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -X POST 'http://127.0.0.1:9200/_bulk?refresh=true&filter_path=errors' \
@@ -320,7 +317,7 @@ Beklenen çıktı:
 {"errors":false}
 ```
 
-19 Kasım ve sonrasında eklenen ürünleri sayın:
+**Tarih aralığıyla sayın:** 19 Kasım ve sonrasında eklenen ürünler:
 
 ```http
 GET /mapping-urunler/_count?filter_path=count
@@ -412,11 +409,12 @@ DELETE /mapping-kopya
 
 ### 3. Yanlış veri reddedilir
 
-İki hatalı document gönderin. Dev Tools hata yanıtını tam gösterir; `type` (hatanın türü) ve `reason`
-(nedeni) satırlarına bakın. `reason` başındaki `[1:61]` hatanın gövdedeki satır ve sütunudur; gövdeyi farklı
-boşluklarla yazarsanız bu sayı değişir.
+**Soru: Mapping'e uymayan bir document gelirse ne olur?** İki hatalı document gönderin; yanıtta şunlara bakın:
 
-Sayı field'ına metin:
+- **`type`:** hatanın türü
+- **`reason`:** nedeni; baştaki `[1:61]` hatanın gövdedeki satır ve sütunudur (boşluklar değişirse sayı değişir)
+
+**Sayı field'ına metin:**
 
 <!-- runner:expect-fail -->
 ```http
@@ -444,7 +442,7 @@ PUT /mapping-urunler/_doc/5
 }
 ```
 
-Mapping'de olmayan bir field:
+**Mapping'de olmayan bir field:**
 
 <!-- runner:expect-fail -->
 ```http
@@ -468,9 +466,9 @@ PUT /mapping-urunler/_doc/5
 }
 ```
 
-- `fiyat` `float` olduğu için "ücretsiz" sayıya çevrilemez, document yazılmaz.
-- `renk` mapping'de yok; `dynamic: strict` olmasaydı Elasticsearch field'ı sessizce `text` olarak
-  eklerdi. Veritabanı tablosundaki şema gibi, beklenmeyen field'ı reddetmek veri kalitesini korur.
+- **`fiyat`:** `float` olduğu için "ücretsiz" sayıya çevrilemez, document yazılmaz.
+- **`renk`:** mapping'de yok; `dynamic: strict` olmasaydı Elasticsearch field'ı sessizce `text` olarak eklerdi.
+  Beklenmeyen field'ı reddetmek veri kalitesini korur.
 
 <details>
 <summary><strong>Reddetmek yerine kabul edip yok saymak: <code>ignore_malformed</code> ve <code>dynamic: false</code></strong></summary>
@@ -648,7 +646,8 @@ DELETE /mapping-coerce
 
 ### 4. Türkçe metin: küçük harf ve kök
 
-Aynı metni iki analyzer'la görün: `ad` (Türkçe) ve `ad.std` (standart):
+**Soru: Kullanıcı "kulaklık" yazınca "Kulaklıklar" bulunur mu?** Analyzer'a bağlıdır. Aynı metni iki analyzer'la
+görün: `ad` (Türkçe) ve `ad.std` (standart):
 
 ```http
 POST /mapping-urunler/_analyze?filter_path=tokens.token
@@ -659,7 +658,7 @@ POST /mapping-urunler/_analyze?filter_path=tokens.token
 {"tokens": [{"token": "ışıklı"}, {"token": "kulaklık"}]}
 ```
 
-Aynı metin standart analyzer'la (`ad.std`):
+**Aynı metin standart analyzer'la (`ad.std`):**
 
 ```http
 POST /mapping-urunler/_analyze?filter_path=tokens.token
@@ -675,7 +674,7 @@ POST /mapping-urunler/_analyze?filter_path=tokens.token
 - Türkçe analyzer kelimeyi köküne indirir: "Kulaklıklar" → "kulaklık". Kullanıcı tekil arasa da
   çoğul ürün bulunur.
 
-Arama sonucu da buna göre değişir. Aynı kelimeyi önce Türkçe analyzer'lı `ad`'da, sonra standart analyzer'lı
+**Arama sonucu da değişir.** Aynı kelimeyi önce Türkçe analyzer'lı `ad`'da, sonra standart analyzer'lı
 `ad.std`'de arayın:
 
 ```http
@@ -687,7 +686,7 @@ GET /mapping-urunler/_count?filter_path=count
 {"count": 1}
 ```
 
-Aynı kelime standart analyzer'lı `ad.std`'de:
+**Aynı kelime standart analyzer'lı `ad.std`'de:**
 
 ```http
 GET /mapping-urunler/_count?filter_path=count
@@ -801,7 +800,7 @@ DELETE /mapping-ascii
 
 ### 5. Kök bulma yanılırsa: kurallı düzeltme ve yeni index
 
-Kök bulma bir algoritmadır, her kelimede doğru çalışmaz:
+**Soru: Kök bulma yanlış kök üretirse ne yaparız?** Kök bulma bir algoritmadır, her kelimede doğru çalışmaz:
 
 ```http
 GET /mapping-urunler/_count?filter_path=count
@@ -812,7 +811,7 @@ GET /mapping-urunler/_count?filter_path=count
 {"count": 0}
 ```
 
-Bu dört kelimenin hangi köke indiğine bakın:
+**Hangi köke iniyor?**
 
 ```http
 POST /mapping-urunler/_analyze?filter_path=tokens.token
@@ -827,7 +826,7 @@ POST /mapping-urunler/_analyze?filter_path=tokens.token
 arama çoğul ürünü bulamaz. Çözüm, analyzer zincirine kendi kuralımızı eklemek: `stemmer_override`
 sözlükteki kelimeyi verilen köke çevirir, kök bulucu o kelimeye dokunmaz.
 
-Önce mevcut index'te bir field'ın tipini değiştirmeyi deneyin:
+**Mevcut index'te düzeltebilir miyiz?** Bir field'ın tipini değiştirmeyi deneyin:
 
 <!-- runner:expect-fail -->
 ```http
@@ -851,9 +850,9 @@ PUT /mapping-urunler/_mapping
 }
 ```
 
-Var olan field'ın tipi ve analyzer'ı değiştirilemez: index'teki token'lar eski kurala göre
-yazılmıştır, değiştirmek bütün document'leri yeniden işlemek demektir. Yeni field eklemek serbesttir.
-Bu yüzden düzeltme yeni bir index'te yapılır ve veri `_reindex` ile taşınır:
+**Neden reddedildi?** Var olan field'ın tipi ve analyzer'ı değiştirilemez: token'lar eski kurala göre yazıldı,
+değiştirmek bütün document'leri yeniden işlemek demektir. Yeni field eklemek serbesttir. Düzeltme yeni bir
+index'te yapılır, veri `_reindex` ile taşınır:
 
 ```http
 PUT /mapping-urunler-v2
@@ -891,14 +890,14 @@ PUT /mapping-urunler-v2
 {"acknowledged": true, "shards_acknowledged": true, "index": "mapping-urunler-v2"}
 ```
 
-- `apostrophe`: kesme işaretinden sonrasını atar ("İstanbul'daki" → "İstanbul").
-- `tr_kucuk`: Türkçe küçük harf (`I` → `ı`); hazır `lowercase` filtresine `language: turkish` verilerek
+- **`apostrophe`:** kesme işaretinden sonrasını atar ("İstanbul'daki" → "İstanbul").
+- **`tr_kucuk`:** Türkçe küçük harf (`I` → `ı`); hazır `lowercase` filtresine `language: turkish` verilerek
   tanımlanır.
-- `tr_kural`: kuraldaki kelimeler `elbise` olur ve kök bulucu onlara dokunmaz. Kural sırası
+- **`tr_kural`:** kuraldaki kelimeler `elbise` olur ve kök bulucu onlara dokunmaz. Kural sırası
   önemlidir: kök bulucudan önce gelmelidir.
-- `tr_kok`: diğer kelimeler için Türkçe kök bulma.
+- **`tr_kok`:** diğer kelimeler için Türkçe kök bulma.
 
-Veriyi eski index'ten yenisine kopyalayın (`source` okunan, `dest` yazılan index):
+**Veriyi yeni index'e taşıyın** (`source` okunan, `dest` yazılan index):
 
 ```http
 POST /_reindex?refresh=true&filter_path=total,created
@@ -912,7 +911,7 @@ POST /_reindex?refresh=true&filter_path=total,created
 {"total": 4, "created": 4}
 ```
 
-Yeni index'te aynı iki kontrol: kural uygulanıyor mu, tekil arama çoğul ürünü buluyor mu?
+**Yeni index'te kontrol:** kural uygulanıyor mu, tekil arama çoğul ürünü buluyor mu?
 
 ```http
 POST /mapping-urunler-v2/_analyze?filter_path=tokens.token
@@ -923,7 +922,7 @@ POST /mapping-urunler-v2/_analyze?filter_path=tokens.token
 {"tokens": [{"token": "elbise"}, {"token": "elbise"}, {"token": "ceket"}, {"token": "ceket"}]}
 ```
 
-Tekil "elbise" aramasını sayın:
+**Tekil "elbise" aramasını sayın:**
 
 ```http
 GET /mapping-urunler-v2/_count?filter_path=count
@@ -934,10 +933,9 @@ GET /mapping-urunler-v2/_count?filter_path=count
 {"count": 1}
 ```
 
-`_reindex` document'leri `_source`'tan okuyup yeni index'in mapping'iyle yeniden yazar. Kural sonradan
-değişirse aynı işlem tekrarlanır: eski document'ler eski token'larla durur. Uygulamanın index adını
-değiştirmeden yeni index'e geçmesi için alias kullanılır: uygulama alias'a yazar ve okur, alias
-eski index'ten yeni index'e tek istekte çevrilir.
+- **`_reindex`:** document'leri `_source`'tan okuyup yeni index'in mapping'iyle yeniden yazar.
+- **Kural yine değişirse:** aynı işlem tekrarlanır; eski document'ler eski token'larla durur.
+- **alias:** uygulama index adı yerine alias'a yazar ve okur; alias tek istekte yeni index'e çevrilir.
 
 ---
 
