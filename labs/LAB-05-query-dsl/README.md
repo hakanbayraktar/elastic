@@ -8,11 +8,10 @@
 
 ## Bu lab ne öğretiyor?
 
-Discover'daki KQL sorgusu Elasticsearch'e Query DSL olarak gider (Discover'da **Inspect** ile görülebilir).
-Uygulamalar, betikler ve panolar da Elasticsearch'le bu dille konuşur. Bu labda aynı e-ticaret verisinde
-tam değer ve metin aramasını ayıracak, koşulları `bool` ile birleştirecek, sonuçları sıralayıp
-sayfalayacak ve sonuçların neden o sırada geldiğini (skor) göreceğiz. Lab bir soruyla biter: aynı isim
-neden bir sorguda bulunur, ötekinde bulunmaz?
+- Bir `_search` isteğini ve yanıtını okumak
+- Tam değer (`term`, `range`) ile metin aramasını (`match`) ayırmak
+- Koşulları `bool` ile birleştirmek; sıralamak ve sayfalamak
+- Sonuçların neden o sırada geldiğini (skor) görmek
 
 ![İki tür sorgu: full-text ve term-level](../../assets/infographics/41-query-dsl-iki-tur.png)
 
@@ -30,16 +29,13 @@ cd ~/elastic/labs/LAB-05-query-dsl
 
 ---
 
-## Kavramlar: iki tür sorgu
+## Kavramlar
 
-| Tür | Sorgular | Aranan değere ne olur? | Ne için |
-|---|---|---|---|
-| Term-level | `term`, `terms`, `range`, `exists` | Olduğu gibi aranır | Tam değer: kategori, durum, tarih, sayı |
-| Full-text | `match`, `match_phrase` | Field'ın analyzer'ından geçer (küçük harf, kelimelere bölme) | Metin içinde arama: ürün adı, açıklama |
-
-Sorgu iki yerde durabilir: `must` (eşleşmeli ve skora katılır) ya da `filter` (eşleşmeli ama skora
-katılmaz). Skor gerekmiyorsa `filter` kullanılır: skor hesaplanmadığı için daha hızlıdır ve sonucu
-önbelleğe alınır.
+- **Query DSL:** Elasticsearch'ün JSON sorgu dili; Discover, uygulamalar ve panolar bu dille konuşur
+- **term-level** (`term`, `terms`, `range`, `exists`): değeri olduğu gibi arar; kategori, durum, sayı, tarih
+- **full-text** (`match`, `match_phrase`): metni analyzer'dan geçirip arar; ürün adı, açıklama
+- **`must` / `filter`:** ikisi de eşleşme ister; `must` skora katılır, `filter` katılmaz (daha hızlı, önbelleğe alınır)
+- **skor (`_score`):** document'in sorguya ne kadar uyduğu; sonuçlar buna göre sıralanır
 
 ---
 
@@ -49,7 +45,7 @@ Bu labda `http` bloklarını Kibana › Dev Tools'a, `bash` bloklarını termina
 
 ### 1. Bir arama isteği ve yanıtı
 
-En pahalı iki sipariş; yalnız üç field:
+**Soru: Bir arama isteği neyden oluşur, yanıtta neye bakarız?** En pahalı iki sipariş, yalnız üç field:
 
 ```http
 GET /kibana_sample_data_ecommerce/_search?filter_path=took,hits.total.value,hits.hits._score,hits.hits._source
@@ -96,16 +92,15 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=took,hits.total.value,hits
 }
 ```
 
-- `took`: milisaniye. `hits.total.value`: koşula uyan document sayısı (`match_all`: hepsi). `size` yalnız
-  kaçının döneceğini sınırlar.
-- `hits.hits`: dönen document'ler; `_source` istenen field'lar. `sort` verilince `_score` hesaplanmaz
-  (`null`).
-- Yalnız sayı gerekiyorsa `_count` kullanılır; sonraki adımlar böyle sayar.
+- **`took`:** süre (milisaniye). **`hits.total.value`:** koşula uyan document sayısı (`match_all`: hepsi).
+- **`size`:** kaçının döneceğini sınırlar. **`hits.hits`:** dönen document'ler; `_source` istenen field'lar.
+- **`sort` verilince** `_score` hesaplanmaz (`null`). Yalnız sayı gerekiyorsa `_count`; sonraki adımlar böyle sayar.
 
 ### 2. Tam değer: `term`, `terms`, `range`, `exists`
 
-Dört sorgu da değeri olduğu gibi arar ve `_count` ile yalnız eşleşen document sayısını döndürür; her birinin ne
-yaptığı blokların altında:
+**Soru: Tam değerle nasıl ararız?** Dört sorgu da değeri olduğu gibi arar; `_count` yalnız eşleşen sayıyı döndürür.
+
+**`term`:** tek tam değer (Women's Shoes kategorisi):
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -116,7 +111,7 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":1136}
 ```
 
-`terms`: değerlerden biri (hafta sonu günleri):
+**`terms`:** değerlerden biri (hafta sonu günleri):
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -127,7 +122,7 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":1350}
 ```
 
-`range`: tutarı 50 ile 100 dolar arası:
+**`range`:** tutarı 50 ile 100 dolar arası:
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -138,7 +133,7 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":2092}
 ```
 
-`exists`: doğum tarihi field'ı olan siparişler:
+**`exists`:** doğum tarihi field'ı olan siparişler:
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -149,12 +144,10 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":0}
 ```
 
-- `term`: tek tam değer. `category.keyword` kategorinin bölünmemiş hâlidir; büyük-küçük harf ve kesme
-  işareti dahil birebir yazılır.
-- `terms`: değerlerden biri (SQL'deki `IN`).
-- `range`: `gt`, `gte`, `lt`, `lte`. Tarihte de çalışır: `"order_date": { "gte": "now-7d" }`.
-- `exists`: field'ı olan document'ler. `customer_birth_date` bu veride hiç dolu değildir; `0` "field yok"
-  demektir, sorgu hatası değil.
+- **`term`:** `category.keyword` bölünmemiş değerdir; büyük-küçük harf ve kesme işareti birebir yazılır.
+- **`terms`:** SQL'deki `IN` gibi.
+- **`range`:** `gt`, `gte`, `lt`, `lte`; tarihte de çalışır: `"order_date": { "gte": "now-7d" }`.
+- **`exists`:** `customer_birth_date` bu veride hiç dolu değil; `0` "field yok" demek, sorgu hatası değil.
 
 <details>
 <summary><strong>Ön ek ile tam değer: <code>prefix</code></strong></summary>
@@ -177,8 +170,9 @@ Bu veride "Ed" ile başlayan tek ad "Eddie"dir. Harfe duyarlıdır: `"ed"` yazsa
 
 ### 3. Metin: `match`, `operator`, `match_phrase`
 
-Ürün adında "leather jacket" geçen siparişler. `match` aranan metni de analyzer'dan geçirir ve kelimelerden
-**herhangi biri** geçen document'i bulur:
+**Soru: Metnin içinde nasıl ararız?** Ürün adında "leather jacket" geçen siparişler.
+
+**`match`:** aranan metni analyzer'dan geçirir; kelimelerden **herhangi biri** geçen document'i bulur:
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -189,7 +183,7 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":386}
 ```
 
-İki kelime birlikte geçsin (`operator: and`) ya da yan yana ve bu sırayla geçsin (`match_phrase`):
+**`operator: and`:** iki kelime birlikte geçsin:
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -200,7 +194,7 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":30}
 ```
 
-Kelimeler yan yana ve bu sırayla (`match_phrase`):
+**`match_phrase`:** kelimeler yan yana ve bu sırayla:
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -211,8 +205,8 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":30}
 ```
 
-`and` ile `match_phrase` burada aynı sayıyı verir, çünkü bu veride iki kelime hep yan yana geçer. "jacket
-leather" yazsaydınız `and` yine bulur, `match_phrase` bulmazdı.
+**Neden aynı sayı?** Bu veride iki kelime hep yan yana geçer. "jacket leather" yazsaydınız `and` yine bulur,
+`match_phrase` bulmazdı.
 
 <details>
 <summary><strong>İfade aramasında esneklik: <code>slop</code> ve <code>match_phrase_prefix</code></strong></summary>
@@ -265,8 +259,8 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 
 ### 4. Koşulları birleştirmek: `bool`
 
-`bool` dört bölümden oluşur. Ceket arayan kadın müşterilerin pazar dışındaki siparişleri; hafta içi
-olanlar öne çıksın:
+**Soru: Birden çok koşulu nasıl birleştiririz?** `bool` ile; dört bölümü var. Ceket arayan kadın müşterilerin
+pazar dışındaki siparişleri; hafta içi olanlar öne çıksın:
 
 ```http
 GET /kibana_sample_data_ecommerce/_search?filter_path=hits.total.value,hits.hits._score,hits.hits._source
@@ -304,10 +298,9 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=hits.total.value,hits.hits
 | 2 | Elyssa Hubbard, Wednesday (3.06) | Mary Richards, Monday (3.86) |
 | 3 | Mary Richards, Monday (2.86) | Wilhemina St. Massey, Tuesday (3.86) |
 
-- `must`: eşleşmeli ve skoru belirler. `filter`: eşleşmeli, skoru değiştirmez. `must_not`: eşleşmemeli.
-- `should`: `must` varken eşleşirse yalnız skoru artırır; bu yüzden ilk sonuçlar Pazartesi-Çarşamba.
-- `must` yoksa `should` koşullarından en az biri eşleşmelidir. Kaçının eşleşeceğini
-  `minimum_should_match` belirler:
+- **`must`:** eşleşmeli, skoru belirler. **`filter`:** eşleşmeli, skoru değiştirmez. **`must_not`:** eşleşmemeli.
+- **`should`:** `must` varken eşleşirse yalnız skoru artırır; ilk sonuçlar bu yüzden Pazartesi-Çarşamba.
+- **`must` yoksa** `should` koşullarından en az biri eşleşmeli; kaçının eşleşeceğini `minimum_should_match` belirler:
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -333,7 +326,7 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 
 ### 5. Sıralama ve sayfalama
 
-Sonuçları tutara göre sıralayıp beşerli sayfalar hâlinde alın. İkinci sayfa (`from: 5`):
+**Soru: Sonuçları sıralayıp sayfa sayfa nasıl alırız?** Tutara göre sıralı, beşerli sayfalar; ikinci sayfa (`from: 5`):
 
 ```http
 GET /kibana_sample_data_ecommerce/_search?filter_path=hits.hits._source
@@ -358,15 +351,13 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=hits.hits._source
 }}
 ```
 
-- `from` atlanacak, `size` döndürülecek document sayısıdır. Sayfa 3: `from: 10`.
-- İkinci `sort` anahtarı (`order_id`) eşit tutarlı siparişlerin sırasını sabitler; yoksa sayfa sınırında
-  aynı document iki sayfada görünebilir.
-- `from + size` varsayılan olarak 10.000'i geçemez. Derin sayfalamada `search_after` kullanılır: sonraki sayfa,
-  önceki sayfanın son document'inin `sort` değerinden başlar.
+- **`from` / `size`:** atlanacak / döndürülecek document sayısı; sayfa 3: `from: 10`.
+- **İkinci `sort` anahtarı** (`order_id`): eşit tutarlıların sırasını sabitler; yoksa aynı document iki sayfada görünebilir.
+- **`from + size` en çok 10.000:** daha derin sayfalama `search_after` ile, önceki sayfanın son `sort` değerinden.
 
 ### 6. Sonuçlar neden bu sırada? Skor
 
-Skoru küçük bir örnekte görelim. Dört ürün başlığı yükleyin:
+**Soru: Sonuçlar neden bu sırada?** Skoru küçük bir örnekte görelim. Dört ürün başlığı yükleyin:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -X PUT 'http://127.0.0.1:9200/arama-skor' -H 'Content-Type: application/json' \
@@ -487,7 +478,7 @@ Toplam skor iki terimin skorunun toplamıdır. `n` ve `N` nadirliği (idf), `dl`
 
 ### 7. Aynı isim neden bulunmuyor?
 
-Müşteri adını üç biçimde arayın:
+**Soru: Aynı isim neden bir sorguda bulunur, ötekinde bulunmaz?** Müşteri adını üç biçimde arayın:
 
 ```http
 GET /kibana_sample_data_ecommerce/_count?filter_path=count
@@ -520,9 +511,9 @@ GET /kibana_sample_data_ecommerce/_count?filter_path=count
 {"count":1}
 ```
 
-Aynı isim `term` ile `customer_full_name`'de bulunmuyor, `.keyword`'de bulunuyor; `match` ise adında "eddie"
-**ya da** "underwood" geçen herkesi getiriyor. Nedeni mapping'dir: `customer_full_name`
-kelimelere bölünüp küçük harfle saklanır, `.keyword` tek parça saklanır.
+- **`match`** adında "eddie" **ya da** "underwood" geçen herkesi getirir: 158.
+- **`term` text field'da** bulmaz: `customer_full_name` kelimelere bölünüp küçük harfle saklanır.
+- **`term` `.keyword`'de** bulur: değer tek parça saklanır. Nedeni mapping'dir.
 
 ---
 
