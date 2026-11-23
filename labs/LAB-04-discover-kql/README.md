@@ -114,12 +114,12 @@ geçmiş kısmı gösterir (bu koşuda 4675'in 1727'si); sayılar sizde farklıd
 **Soru: Discover ekranında nereye bakarız?**
 
 1. **Discover**'ı açın; **Data view**: **Kibana Sample Data eCommerce** (1)
-2. Zaman kutusu: **Last 30 days** (4)
-3. Field listesinde (6) `customer_gender`'a tıklayın: en sık değerler ve oranları görünür
-4. Bir satırın başındaki genişletme simgesi (10) document'in bütün field'larını açar
+2. Zaman kutusu: **Last 30 days** (2)
+3. Field listesinde (3) `customer_gender`'a tıklayın: en sık değerler ve oranları görünür
+4. Bir satırın başındaki genişletme simgesi (4) document'in bütün field'larını açar
 5. **Field statistics** sekmesi: sorgu yazmadan her field'ın değer dağılımını gösterir
 
-![Discover: 1 data view, 4 zaman, 6 field listesi, 10 document açma](../../assets/screenshots/LAB-04/03-discover-tur.png)
+![Discover: 1 data view, 2 zaman, 3 field listesi, 4 document açma](../../assets/screenshots/LAB-04/03-discover-tur.png)
 
 Üstteki sayı seçili zaman aralığındaki document sayısıdır; histogram aynı document'leri güne göre sayar.
 
@@ -127,15 +127,15 @@ geçmiş kısmı gösterir (bu koşuda 4675'in 1727'si); sayılar sizde farklıd
 
 **Soru:** Son 30 günde 100 dolardan pahalı kadın müşteri siparişleri kaç?
 
-**KQL:** arama çubuğuna (2) yazıp Enter'a basın:
+**KQL:** arama çubuğuna (1) yazıp Enter'a basın:
 
 ```text
 customer_gender : "FEMALE" and taxful_total_price > 100
 ```
 
-**Ekranda:** **Documents** sekmesindeki sayı (8) cevaptır; histogram yalnız bu siparişleri gösterir:
+**Ekranda:** **Documents** sekmesindeki sayı (2) cevaptır; histogram yalnız bu siparişleri gösterir:
 
-![Discover KQL: 2 sorgu, 8 document sayısı](../../assets/screenshots/LAB-04/04-discover-kql.png)
+![Discover KQL: 1 sorgu, 2 document sayısı](../../assets/screenshots/LAB-04/04-discover-kql.png)
 
 - **`customer_gender : "FEMALE"`:** `keyword` field'ında tam değer
 - **`taxful_total_price > 100`:** sayı aralığı; **`and`** ikisi birlikte
@@ -164,10 +164,10 @@ Ana sorgu bu koşuda **180** document buldu.
 **Soru: Aynı koşulu yazmadan, tıklayarak kurabilir miyiz?**
 
 1. Arama çubuğunu temizleyin
-2. Filtre ekleme simgesi (3): **Field** `customer_gender`, **Operator** `is`, **Value** `FEMALE`, **Add filter**
+2. Filtre ekleme simgesi (1): **Field** `customer_gender`, **Operator** `is`, **Value** `FEMALE`, **Add filter**
 3. İkinci filtre: `taxful_total_price`, `is between`, alt sınır `100`, üst sınır boş
 
-![Filtre: 3 filtre ekleme; field, operator, value](../../assets/screenshots/LAB-04/05-filtre.png)
+![Filtre: 1 filtre ekleme; field, operator, value](../../assets/screenshots/LAB-04/05-filtre.png)
 
 Filtreler çubuğun altında birer etiket olur. Document sayısını Adım 3'teki KQL sayısıyla karşılaştırın:
 
@@ -186,27 +186,48 @@ Filtreler çubuğun altında birer etiket olur. Document sayısını Adım 3'tek
 **Soru: Bu aramayı yarın yeniden nasıl açarız?** Kaydederek.
 
 1. Sağ üstte **Save**
-2. Başlık (12): `Kadın 100 dolar üstü siparişler`
+2. Başlık (1): `Kadın 100 dolar üstü siparişler`
 3. **Save and add to library**
 
 Kaydedilen arama (Discover session) data view'ı, sorguyu ve filtreleri tutar; **Open** ile açılır, panoya eklenebilir:
 
-![Discover Save: 12 başlık; altta Store time with Discover session](../../assets/screenshots/LAB-04/07-discover-kaydet.png)
+![Discover Save: 1 başlık; altta Store time with Discover session](../../assets/screenshots/LAB-04/07-discover-kaydet.png)
 
 **Store time with Discover session** varsayılan olarak kapalıdır: kayıtlı arama açılınca o anki zaman kutusu geçerlidir.
 Açarsanız zaman aralığı da aramayla saklanır.
+
+
+<details>
+<summary><strong>Kayıtlı aramayı panoya eklemek</strong></summary>
+
+Kayıtlı arama bir pano paneli olabilir: panoda document listesi olarak görünür ve panonun zaman seçicisine uyar.
+
+1. **Dashboards › Create dashboard**, sonra **Add › From library** (1)
+2. Arama kutusuna (2) `Kadın` yazın; **Kadın 100 dolar üstü siparişler**'e (3) tıklayın; panel eklenir, pencereyi kapatın:
+
+![From library: 1 sekme, 2 arama, 3 kayıtlı arama](../../assets/screenshots/LAB-04/10-pano-from-library.png)
+
+3. Zaman aralığı **Last 30 days**; sağ üstten **Save**, başlık `Kadın siparişleri`, **Save**. Panel (4) aramanın KQL'i ve iki
+   filtresiyle gelir:
+
+![Pano: 4 kayıtlı aramanın paneli](../../assets/screenshots/LAB-04/11-pano-kayitli-arama.png)
+
+- **Bağlı panel:** arama değişirse (Discover'da yeniden **Save**) panodaki panel de değişir.
+- **Sayma ve grafik:** kayıtlı arama liste verir; "kaç tane" ve grafik için Lens panelleri kullanılır.
+
+</details>
 
 ### 6. Arkada ne gidiyor? Inspect
 
 **Soru: Kibana Elasticsearch'e ne gönderiyor?** KQL ve filtreler Query DSL'e çevrilir.
 
-1. Sağ üstteki **⋮** menüsü → **Inspect tab** (13)
+1. Sağ üstteki **⋮** menüsü → **Inspect tab** (1)
 
-![Discover menüsü: ⋮ düğmesi, 13 Inspect tab](../../assets/screenshots/LAB-04/08-discover-inspect-menu.png)
+![Discover menüsü: ⋮ düğmesi, 1 Inspect tab](../../assets/screenshots/LAB-04/08-discover-inspect-menu.png)
 
-2. **Inspector**'da **Request** (14): gönderilen istek (15)
+2. **Inspector**'da **Request** (2): gönderilen istek (3)
 
-![Inspector: 14 Request sekmesi, 15 gönderilen Query DSL](../../assets/screenshots/LAB-04/09-discover-inspect.png)
+![Inspector: 2 Request sekmesi, 3 gönderilen Query DSL](../../assets/screenshots/LAB-04/09-discover-inspect.png)
 
 Filtreler bir `bool` sorgusunun `filter` bölümüne dönüştü:
 
@@ -237,7 +258,7 @@ karşılaştırın; sayıyı ve en az bir document'i kontrol edin.
 
 ## Temizlik
 
-Yalnız bu labın kayıtlı aramasını (**Kadın 100 dolar üstü siparişler**) siler. Örnek e-ticaret verisi
+Yalnız bu labın kayıtlı aramasını (**Kadın 100 dolar üstü siparişler**) ve kutudaki **Kadın siparişleri** panosunu siler. Örnek e-ticaret verisi
 sonraki lablarda kullanılır, silinmez:
 
 ```bash
@@ -247,8 +268,11 @@ sonraki lablarda kullanılır, silinmez:
 Beklenen çıktı:
 
 ```text
+pano (Kadın siparişleri) -> 1
 kayitli arama (Kadın 100 dolar üstü siparişler) -> 1
 ```
+
+Kutuyu yapmadıysanız pano satırında `0` yazar.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.

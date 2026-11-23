@@ -62,9 +62,9 @@ def discover(page):
     page.locator('[data-test-subj="field-customer_gender-showDetails"]').first.click(); time.sleep(2)
     k.shoot(page, LAB, "03-discover-tur", [
         (("testsubj", "discover-dataView-switch-link"), 1, "down"),
-        (("testsubj", "dateRangePickerControlButton"), 4, "down"),
-        (("testsubj", "field-customer_gender-showDetails"), 6, "right"),
-        (("css", '[data-test-subj="docTableExpandToggleColumn"] button, [data-test-subj="docTableExpandToggleColumn"]'), 10, "right"),
+        (("testsubj", "dateRangePickerControlButton"), 2, "down"),
+        (("testsubj", "field-customer_gender-showDetails"), 3, "right"),
+        (("css", '[data-test-subj="docTableExpandToggleColumn"] button, [data-test-subj="docTableExpandToggleColumn"]'), 4, "right"),
     ])
     page.keyboard.press("Escape"); time.sleep(1)
 
@@ -73,8 +73,8 @@ def discover(page):
     ana = sayi(page)
     print("ANA", ana)
     k.shoot(page, LAB, "04-discover-kql", [
-        (("testsubj", "queryInput"), 2, "down"),
-        (("testsubj", "discoverQueryHits"), 8, "down"),
+        (("testsubj", "queryInput"), 1, "down"),
+        (("testsubj", "discoverQueryHits"), 2, "down"),
     ])
     for soru, q in SORULAR:
         sorgu(page, q)
@@ -98,11 +98,16 @@ def discover(page):
         return page.locator('[data-test-subj="saveFilter"]').first
     kaydet = filtre("customer_gender", "is", ["FEMALE"])
     k.shoot(page, LAB, "05-filtre", [
-        (("testsubj", "addFilter"), 3, "down"),
+        (("testsubj", "addFilter"), 1, "down"),
         (("testsubj", "filterParams"), None, "left"),
     ])
     kaydet.click(); k.settle(page, 4)
+    once = sayi(page)
     filtre("taxful_total_price", "is between", ["100"]).click(); k.settle(page, 5)
+    for _ in range(30):  # sonuc yenilenmeden ekran alinmasin (Cancel kalkip sayi degisene kadar)
+        if sayi(page) != once and not page.get_by_role("button", name="Cancel").count():
+            break
+        time.sleep(1)
     fsay = sayi(page)
     print(f"FILTRE KQL={ana} filtre={fsay}")
     k.shoot(page, LAB, "06-filtre-etiket", [
@@ -116,7 +121,7 @@ def discover(page):
     st = page.locator('[data-test-subj="storeTimeWithSearch"]').first
     print("STORE_TIME varsayilan:", st.get_attribute("aria-checked"), st.is_checked() if st.count() else None)
     k.shoot(page, LAB, "07-discover-kaydet", [
-        (("testsubj", "savedObjectTitle"), 12, "left"),
+        (("testsubj", "savedObjectTitle"), 1, "left"),
         (("testsubj", "storeTimeWithSearch"), None, "left"),
     ])
     page.locator('[data-test-subj="confirmSaveSavedObjectButton"]').first.click(); k.settle(page, 5)
@@ -124,7 +129,7 @@ def discover(page):
     # Adim 6: Inspect
     page.locator('[data-test-subj="app-menu-overflow-button"]').first.click(); time.sleep(1.5)
     k.shoot(page, LAB, "08-discover-inspect-menu", [
-        (("role", "menuitem", "Inspect tab"), 13, "left"),
+        (("role", "menuitem", "Inspect tab"), 1, "left"),
     ])
     page.get_by_role("menuitem", name="Inspect tab").first.click(); time.sleep(3)
     if page.locator('[data-test-subj="inspectorViewChooser"]').count():
@@ -132,8 +137,8 @@ def discover(page):
         page.locator('[data-test-subj="inspectorViewChooserRequests"]').first.click(); time.sleep(2)
     page.locator('[data-test-subj="inspectorRequestDetailRequest"]').first.click(); time.sleep(2)
     k.shoot(page, LAB, "09-discover-inspect", [
-        (("testsubj", "inspectorRequestDetailRequest"), 14, "up"),
-        (("testsubj", "inspectorRequestCodeViewerContainer"), 15, None),
+        (("testsubj", "inspectorRequestDetailRequest"), 2, "up"),
+        (("testsubj", "inspectorRequestCodeViewerContainer"), 3, None),
     ])
     metin = page.locator('[data-test-subj="inspectorRequestCodeViewerContainer"]').first.inner_text()
     try:
@@ -144,11 +149,38 @@ def discover(page):
     page.keyboard.press("Escape"); time.sleep(1)
 
 
+def pano(page):
+    """Adim 5 kutusu: kayitli aramayi (Discover session) yeni panoya eklemek."""
+    page.goto(k.BASE + "/app/dashboards#/create", wait_until="domcontentloaded"); k.settle(page, 6)
+    page.locator('[data-test-subj="dashboardAddTopNavButton"]').first.click(); time.sleep(2)
+    page.locator('[data-test-subj="addToDashboardTab-library"]').first.click(); time.sleep(2)
+    page.locator('[data-test-subj="savedObjectFinderSearchInput"]').first.fill("Kadın")
+    page.keyboard.press("Enter")  # arama Enter ile calisir
+    hedef = '[data-test-subj="savedObjectTitleKadın-100-dolar-üstü-siparişler"]'
+    page.locator(hedef).first.wait_for(timeout=15000); time.sleep(1)
+    k.shoot(page, LAB, "10-pano-from-library", [
+        (("testsubj", "addToDashboardTab-library"), 1, "right"),
+        (("testsubj", "savedObjectFinderSearchInput"), 2, "left"),
+        (("css", hedef), 3, "left")])
+    page.locator(hedef).first.click(); k.settle(page, 4)
+    page.keyboard.press("Escape"); time.sleep(1)
+    for b in ('[data-test-subj="euiFlyoutCloseButton"]',):
+        if page.locator(b).count(): page.locator(b).first.click(); time.sleep(1)
+    page.locator('[data-test-subj="dateRangePickerControlButton"]').first.click(); time.sleep(1.5)
+    page.locator('[data-test-subj="dateRangePickerPresetItem-Last_30_days"]').first.click(); k.settle(page, 6)
+    page.locator('[data-test-subj="dashboardInteractiveSaveMenuItem"]').first.click(); time.sleep(2)
+    page.locator('[data-test-subj="savedObjectTitle"]').fill("Kadın siparişleri")
+    page.locator('[data-test-subj="confirmSaveSavedObjectButton"]').first.click(); k.settle(page, 6)
+    page.mouse.move(800, 60); time.sleep(1)
+    print("panel sayisi:", page.locator('[data-test-subj="dashboardPanel"]').count())
+    k.shoot(page, LAB, "11-pano-kayitli-arama", [(("css", '[data-test-subj="dashboardPanel"]'), 4, "right")])
+
+
 if __name__ == "__main__":
     parca = sys.argv[1]
     with sync_playwright() as pw:
         br = pw.chromium.launch(channel="chrome")
         page = br.new_page(viewport={"width": 1600, "height": 900}, device_scale_factor=k.SCALE)
         k.login(page)
-        {"veri": veri, "discover": discover}[parca](page)
+        {"veri": veri, "discover": discover, "pano": pano}[parca](page)
         br.close()
