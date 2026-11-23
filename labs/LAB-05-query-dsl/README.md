@@ -94,6 +94,7 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=took,hits.total.value,hits
 
 - **`took`:** süre (milisaniye). **`hits.total.value`:** koşula uyan document sayısı (`match_all`: hepsi).
 - **`size`:** kaçının döneceğini sınırlar. **`hits.hits`:** dönen document'ler; `_source` istenen field'lar.
+- **10.000'den büyük sonuç:** `hits.total` 10.000'de durur (`relation: gte`); tam sayı için `"track_total_hits": true`.
 - **`sort` verilince** `_score` hesaplanmaz (`null`). Yalnız sayı gerekiyorsa `_count`; sonraki adımlar böyle sayar.
 
 ### 2. Tam değer: `term`, `terms`, `range`, `exists`
@@ -354,6 +355,7 @@ GET /kibana_sample_data_ecommerce/_search?filter_path=hits.hits._source
 - **`from` / `size`:** atlanacak / döndürülecek document sayısı; sayfa 3: `from: 10`.
 - **İkinci `sort` anahtarı** (`order_id`): eşit tutarlıların sırasını sabitler; yoksa aynı document iki sayfada görünebilir.
 - **`from + size` en çok 10.000:** daha derin sayfalama `search_after` ile, önceki sayfanın son `sort` değerinden.
+  Sayfalar arasında veri değişmesin diye önce `POST /<index>/_pit?keep_alive=1m` ile bir point in time açılır.
 
 ### 6. Sonuçlar neden bu sırada? Skor
 

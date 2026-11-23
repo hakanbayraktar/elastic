@@ -937,6 +937,54 @@ GET /mapping-urunler-v2/_count?filter_path=count
 - **Kural yine değişirse:** aynı işlem tekrarlanır; eski document'ler eski token'larla durur.
 - **alias:** uygulama index adı yerine alias'a yazar ve okur; alias tek istekte yeni index'e çevrilir.
 
+**Uygulamayı kesintisiz geçirin: alias.** Uygulama şimdiye kadar eski index'e `mapping-katalog` alias'ı üzerinden
+bakıyor olsun:
+
+```http
+POST /_aliases
+{ "actions": [ { "add": { "index": "mapping-urunler", "alias": "mapping-katalog" } } ] }
+```
+
+```json
+{"acknowledged":true,"errors":false}
+```
+
+Alias üzerinden tekil arama eski kurala göre çalışır:
+
+```http
+GET /mapping-katalog/_count?filter_path=count
+{ "query": { "match": { "ad": "elbise" } } }
+```
+
+```json
+{"count":0}
+```
+
+Alias'ı tek istekte yeni index'e çevirin; `remove` ve `add` birlikte uygulanır, arada alias boş kalmaz:
+
+```http
+POST /_aliases
+{ "actions": [
+  { "remove": { "index": "mapping-urunler",    "alias": "mapping-katalog" } },
+  { "add":    { "index": "mapping-urunler-v2", "alias": "mapping-katalog" } }
+] }
+```
+
+```json
+{"acknowledged":true,"errors":false}
+```
+
+Aynı adres, yeni kural:
+
+```http
+GET /mapping-katalog/_count?filter_path=count
+{ "query": { "match": { "ad": "elbise" } } }
+```
+
+```json
+{"count":1}
+```
+
 ---
 
 ## Temizlik

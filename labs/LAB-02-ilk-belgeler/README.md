@@ -43,7 +43,7 @@ cd ~/elastic/labs/LAB-02-ilk-belgeler
 
 ### 1. Dev Tools'u açın
 
-Kibana menüsünden **Management › Dev Tools**'u açın.
+**Soru: Elasticsearch'e isteği nereden göndereceğiz?** Kibana menüsünden **Management › Dev Tools**'u açın.
 
 - Kullanım verisi uyarısı çıkarsa: **Dismiss**
 - Editördeki örnek istekleri silmek için: **Clear this input**
@@ -57,7 +57,10 @@ Kibana menüsünden **Management › Dev Tools**'u açın.
 
 ### 2. Document ekleyin: Dev Tools ve curl
 
-**Index'i açın.** Index **shard**'lara bölünür: asıl shard'a **primary**, başka bir node'daki kopyasına **replica** denir.
+**Soru: İlk document nasıl yazılır?**
+
+**Index'i açın.** Index **shard**'lara bölünür. Asıl shard **primary**'dir; aynı verinin başka bir node'da tutulan eşi
+**replica**'dır.
 Küçük veri için tek shard yeter (`number_of_shards: 1`). Ana cluster tek node olduğu için replica'yı koyacak yer
 yoktur; sayısını sıfır veriyoruz, yoksa index sarı (yellow) görünür:
 
@@ -128,6 +131,8 @@ Beklenen çıktı:
 İkisi aynı REST API'yi çağırır: Dev Tools denemek için, curl betik ve otomasyon için.
 
 ### 3. Okuyun, güncelleyin, silin
+
+**Soru: Yazdığımız document'i nasıl okur, değiştirir, sileriz?**
 
 **Okuyun.** Document'i `_id`'siyle getirin:
 
@@ -422,11 +427,14 @@ GET /belge-surum/_source/m1
 `_version` artık veritabanındaki sürümle aynıdır. `if_seq_no` "ben okuduktan sonra değişti mi?" diye sorar;
 `version_type=external` "gelen kayıt elimdekinden yeni mi?" diye sorar.
 
+**`retry_on_conflict`:** `_update` içeride oku-değiştir-yaz yapar; arada başka bir yazma olursa çakışır. `?retry_on_conflict=3`
+verilirse Elasticsearch yeniden okuyup en çok 3 kez kendisi dener (sayaç gibi mevcut değere göre güncellemelerde).
+
 </details>
 
 ### 4. Toplu yükleme: `_bulk`
 
-Document'leri tek tek göndermek her biri için ayrı HTTP isteği demektir. `_bulk` çok document'i tek
+**Soru: Çok sayıda document'i tek tek mi göndereceğiz?** Document'leri tek tek göndermek her biri için ayrı HTTP isteği demektir. `_bulk` çok document'i tek
 istekte yükler. Gövdesi **NDJSON**'dur (newline-delimited JSON): her satır kendi başına tam bir JSON'dur,
 satırlar yeni satırla ayrılır ve dosya da yeni satırla biter. Elasticsearch gövdeyi tek parça çözmeden satır
 satır okur; binlerce document belleği şişirmeden işlenir. Her document iki satırdır:
@@ -594,7 +602,7 @@ bu labda kullanıldı; yoğun yazmada her isteğe eklenmez.
 
 ### 5. Zaman damgalı veri: destek talepleri
 
-Bu kez her document'te olayın zamanı olan `@timestamp` field'ı var. `tarih_tr` aynı zamanı Türkçe biçimde
+**Soru: Zamanı olan veride field tipleri nasıl seçilir?** Bu kez her document'te olayın zamanı olan `@timestamp` field'ı var. `tarih_tr` aynı zamanı Türkçe biçimde
 (`21.11.2026 13:15`) taşır. Dosyayı oluşturun (8 talep, her biri eylem satırı + document satırı):
 
 ```bash
@@ -712,11 +720,9 @@ listelenir (2).
 | Zaman seçici | var; aralık dışı document gizlenir | yok |
 | Histogram | var | yok |
 
----
-
 ### 7. Güncelleme kalıpları: upsert, script ve toplu işlem
 
-Bir mağazanın stok index'i üzerinde, uygulamaların en sık yaptığı güncellemeleri Dev Tools'ta deneyin. Bu adım
+**Soru: Uygulamalar document'leri en sık nasıl günceller?** Bir mağazanın stok index'i üzerinde, uygulamaların en sık yaptığı güncellemeleri Dev Tools'ta deneyin. Bu adım
 kendi index'ini (`belge-stok`) açar; önceki adımların verisine dokunmaz.
 
 ```http

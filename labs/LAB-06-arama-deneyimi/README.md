@@ -169,6 +169,10 @@ GET /deneyim-urunler/_search?filter_path=hits.hits._source.ad
 }
 ```
 
+```json
+{"hits":{"hits":[{"_source":{"ad":"Kablosuz Kulaklık"}},{"_source":{"ad":"Kablolu Kulaklık"}},{"_source":{"ad":"Kablosuz Klavye"}},{"_source":{"ad":"Şarj Kablosu"}}]}}
+```
+
 **Yazmaya devam etti: "kablosuz ku":**
 
 ```http
@@ -182,6 +186,10 @@ GET /deneyim-urunler/_search?filter_path=hits.hits._source.ad
     }
   }
 }
+```
+
+```json
+{"hits":{"hits":[{"_source":{"ad":"Kablosuz Kulaklık"}},{"_source":{"ad":"Kablosuz Klavye"}},{"_source":{"ad":"Kablolu Kulaklık"}},{"_source":{"ad":"Oyuncu Kulaklığı"}}]}}
 ```
 
 | Yazılan | Öneriler (sırayla) |
@@ -226,11 +234,19 @@ GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 { "query": { "match": { "ad": "klavey" } } }
 ```
 
+```json
+{"hits":{"total":{"value":0}}}
+```
+
 **Aynı arama, yazım hatasına izin vererek (`fuzziness`):**
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 { "query": { "match": { "ad": { "query": "klavey", "fuzziness": "AUTO" } } } }
+```
+
+```json
+{"hits":{"total":{"value":1},"hits":[{"_source":{"ad":"Kablosuz Klavye"}}]}}
 ```
 
 | Sorgu | Sonuç |
@@ -251,6 +267,10 @@ GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 { "query": { "match": { "ad": "headset" } } }
 ```
 
+```json
+{"hits":{"total":{"value":3},"hits":[{"_source":{"ad":"Kablosuz Kulaklık"}},{"_source":{"ad":"Kablolu Kulaklık"}},{"_source":{"ad":"Oyuncu Kulaklığı"}}]}}
+```
+
 - **Sonuç 3:** Kablosuz Kulaklık, Kablolu Kulaklık, Oyuncu Kulaklığı. Arama analyzer'ı "headset"i "kulaklık"a genişletti.
 - **"kulaklik"** (ı'sız) da aynı kuralla bulunur.
 
@@ -259,6 +279,10 @@ GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.total.value
 { "query": { "match": { "ad": "headphone" } } }
+```
+
+```json
+{"hits":{"total":{"value":0}}}
 ```
 
 **Kuralı güncelleyin.** Index kapatılmaz, document'ler yeniden yazılmaz:
@@ -277,6 +301,10 @@ PUT /_synonyms/deneyim-esanlam/kulaklik?filter_path=result,reload_analyzers_deta
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 { "query": { "match": { "ad": "headphone" } } }
+```
+
+```json
+{"hits":{"total":{"value":3},"hits":[{"_source":{"ad":"Kablosuz Kulaklık"}},{"_source":{"ad":"Kablolu Kulaklık"}},{"_source":{"ad":"Oyuncu Kulaklığı"}}]}}
 ```
 
 - **Sonuç artık 3 kulaklık:** set güncellenince onu kullanan arama analyzer'ları yeniden yüklenir.
@@ -391,6 +419,10 @@ GET /deneyim-urunler/_count?filter_path=count
 { "query": { "match": { "ad": "kulaklıklar" } } }
 ```
 
+```json
+{"count":3}
+```
+
 **Aynı kelime, sonuna yıldız koyarak (`wildcard`):**
 
 ```http
@@ -398,11 +430,19 @@ GET /deneyim-urunler/_count?filter_path=count
 { "query": { "wildcard": { "ad": { "value": "kulaklıklar*" } } } }
 ```
 
+```json
+{"count":0}
+```
+
 **Daha kısa bir başlangıçla (`kulak*`):**
 
 ```http
 GET /deneyim-urunler/_count?filter_path=count
 { "query": { "wildcard": { "ad": { "value": "kulak*" } } } }
+```
+
+```json
+{"count":3}
 ```
 
 | Sorgu | Sayı |
@@ -423,9 +463,15 @@ GET /deneyim-urunler/_count?filter_path=count
 { "query": { "query_string": { "query": "kulaklıklar*", "fields": ["ad"], "analyze_wildcard": true } } }
 ```
 
+```json
+{"count":3}
+```
+
 - **Yıldızın yeri:** `kulak*` (sonda) hızlıdır; `*lak` (başta) bütün terimleri tarar, büyük index'te yavaştır.
 - **Yazarken arama için** wildcard yerine Adım 2'deki `search_as_you_type`.
 - **Pahalı sorguları kapatmak:** cluster ayarı `search.allow_expensive_queries: false`.
+- **Kullanıcı girdisi için `simple_query_string`:** `query_string` hatalı sözdiziminde (kapanmayan tırnak, tek `(`) hata
+  verir ve baştaki jokere izin verir; `simple_query_string` hatalı kısmı yok sayar, arama kutusu için daha güvenlidir.
 
 ---
 

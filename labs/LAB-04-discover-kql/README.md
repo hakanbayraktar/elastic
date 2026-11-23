@@ -117,6 +117,7 @@ geçmiş kısmı gösterir (bu koşuda 4675'in 1727'si); sayılar sizde farklıd
 2. Zaman kutusu: **Last 30 days** (4)
 3. Field listesinde (6) `customer_gender`'a tıklayın: en sık değerler ve oranları görünür
 4. Bir satırın başındaki genişletme simgesi (10) document'in bütün field'larını açar
+5. **Field statistics** sekmesi: sorgu yazmadan her field'ın değer dağılımını gösterir
 
 ![Discover: 1 data view, 4 zaman, 6 field listesi, 10 document açma](../../assets/screenshots/LAB-04/03-discover-tur.png)
 
