@@ -8,12 +8,10 @@
 
 ## Bu lab ne öğretiyor?
 
-Bir yöneticinin sorusu "son 30 günde 100 dolardan pahalı kadın müşteri siparişleri kaç?" gibidir. Discover
-bu soruyu kod yazmadan cevaplar: doğru data view, doğru zaman aralığı ve tek satırlık bir KQL sorgusu.
-
-Bu labda Kibana'nın örnek e-ticaret verisini yükleyecek, Discover'da gezinecek, soruları KQL'e çevirecek,
-aynı koşulu tıklayarak filtreyle kuracak, aramayı kaydedecek ve Kibana'nın arkada Elasticsearch'e gönderdiği
-Query DSL'i Inspect ile göreceğiz.
+- Kibana'nın örnek e-ticaret verisini yüklemek
+- Discover'da gezinmek: data view, zaman aralığı, field listesi
+- Soruyu KQL'e çevirmek; aynı koşulu filtreyle kurmak
+- Aramayı kaydetmek; arkada giden Query DSL'i Inspect ile görmek
 
 ![Discover'da araştırma sırası: data view, zaman, sorgu, sonuç, Inspect](../../assets/infographics/40-discover-arastirma-akisi.png)
 
@@ -43,18 +41,13 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ---
 
-## Kavramlar: KQL
+## Kavramlar
 
-| Yazım | Anlamı | Örnek |
-|---|---|---|
-| `field : değer` | field bu değeri içerir | `customer_gender : "FEMALE"` |
-| `field : "iki kelime"` | ifade bu sırayla geçer | `category : "Women's Clothing"` |
-| `>`, `>=`, `<`, `<=` | sayı ve tarih aralığı | `taxful_total_price > 100` |
-| `and`, `or`, `not`, `( )` | koşulları birleştirir | `day_of_week : (Saturday or Sunday)` |
-| `*` | joker; `field : *` field'ı olanlar | `customer_first_name : Ed*` |
-
-KQL yalnız süzer: sayma, gruplama ve sıralama Lens, aggregation ve ES|QL'in işidir. Discover
-her sorguya zaman kutusunu da ekler: sonuç sayısı **sorgu + zaman aralığıdır**.
+- **KQL:** Discover'ın arama dili; yalnız süzer (sayma ve gruplama Lens, aggregation ve ES|QL'in işi)
+- **`field : değer`:** field bu değeri içerir: `customer_gender : "FEMALE"`; tırnaklı ifade sırayla arar
+- **`>`, `>=`, `<`, `<=`:** sayı ve tarih aralığı: `taxful_total_price > 100`
+- **`and`, `or`, `not`, `( )`:** koşulları birleştirir: `day_of_week : (Saturday or Sunday)`
+- **`*`:** joker: `customer_first_name : Ed*`; `field : *` field'ı olanlar
 
 ---
 
@@ -62,19 +55,24 @@ her sorguya zaman kutusunu da ekler: sonuç sayısı **sorgu + zaman aralığıd
 
 ### 1. Örnek e-ticaret verisini ekleyin
 
-Kibana ana sayfasında **Try sample data** (1) bağlantısına basın:
+**Soru: Discover'ı hangi veriyle deneyeceğiz?** Kibana'nın hazır örnek e-ticaret verisiyle: binlerce sipariş,
+tarihleri bugüne göre kaydırılmış.
+
+1. Kibana ana sayfasında **Try sample data** (1):
 
 ![Kibana sayfası: 1 Try sample data](../../assets/screenshots/LAB-04/01-sample-data-link.png)
 
-Açılan **Sample data** sekmesinde **Sample eCommerce orders** kartındaki **Install data** (2) düğmesine basın.
-Kurulum bitince düğme **View data** olur:
+2. **Sample eCommerce orders** kartında **Install data** (2). Kurulum bitince düğme **View data** olur:
 
 ![Örnek veri kartları: 2 Install data](../../assets/screenshots/LAB-04/02-sample-data-install.png)
 
-Kibana `kibana_sample_data_ecommerce` index'ini, aynı adlı data view'ı ve hazır panoları kurar. Kaç sipariş
-geldiğini ve hangi tarih aralığında olduğunu kontrol edin: `size=0` document getirmez, yalnız özet döner;
-`track_total_hits` sayıyı tam verir; `min` / `max` en eski ve en yeni `order_date`'i bulur; `date +%F` bugünün
-tarihidir:
+Kibana `kibana_sample_data_ecommerce` index'ini, aynı adlı data view'ı ve hazır panoları kurar.
+
+**Kaç sipariş geldi, hangi tarihler?**
+
+- **`size=0`:** document getirmez, yalnız özet döner
+- **`track_total_hits`:** sayıyı tam verir
+- **`min` / `max`:** en eski ve en yeni `order_date`; `date +%F` bugünün tarihi
 
 ```bash
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/kibana_sample_data_ecommerce/_search?size=0&filter_path=hits.total.value,aggregations' \
@@ -87,11 +85,11 @@ Beklenen çıktı:
 
 ```text
 siparis: 4675  ilk: 2026-11-12  son: 2026-12-12
-2026-11-22
+2026-11-23
 ```
 
-Kibana örnek veriyi 1 replica ile açar. Tek node'lu ana cluster'da replica'nın konacağı ikinci node yoktur, cluster
-yellow kalır. Replica'yı 0'a çekin:
+**Replica'yı 0'a çekin.** Kibana örnek veriyi 1 replica ile açar; tek node'da replica'yı koyacak yer yok, cluster
+yellow kalır:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -X PUT 'http://127.0.0.1:9200/kibana_sample_data_ecommerce/_settings' -H 'Content-Type: application/json' -d '{"index.number_of_replicas": 0}'; echo
@@ -105,20 +103,21 @@ Beklenen çıktı:
 {"status":"green"}
 ```
 
-Örnek verinin tarihleri yükleme gününe göre kaydırılır. Bu koşuda veri 2026-11-22'de yüklendi: ilk sipariş 10
-gün önce, son sipariş 20 gün sonra. Discover'da **Last 30 days** yalnız geçmiş kısmı gösterir (bu koşuda 4675'in
-1497'si); sayılar yükleme gününe göre sizde farklıdır.
+**Tarihler kaydırılır:** veri yükleme gününe göre 10 gün geriye, 20 gün ileriye yayılır. **Last 30 days** yalnız
+geçmiş kısmı gösterir (bu koşuda 4675'in 1727'si); sayılar sizde farklıdır.
 
 ### 2. Discover'da gezinin
 
-**Discover**'ı açın. **Data view** listesinden **Kibana Sample Data eCommerce**'i (1), zaman kutusundan
-**Last 30 days**'i (4) seçin. Soldaki field listesinde (6) `customer_gender`'a tıklayın: en sık değerler ve
-oranları görünür. Bir satırın başındaki genişletme düğmesi (10) document'in bütün field'larını açar:
+**Soru: Discover ekranında nereye bakarız?**
+
+1. **Discover**'ı açın; **Data view**: **Kibana Sample Data eCommerce** (1)
+2. Zaman kutusu: **Last 30 days** (4)
+3. Field listesinde (6) `customer_gender`'a tıklayın: en sık değerler ve oranları görünür
+4. Bir satırın başındaki genişletme simgesi (10) document'in bütün field'larını açar
 
 ![Discover: 1 data view, 4 zaman, 6 field listesi, 10 document açma](../../assets/screenshots/LAB-04/03-discover-tur.png)
 
-Üstteki sayı, seçili zaman aralığındaki document sayısıdır; histogram da aynı document'leri güne göre
-sayar.
+Üstteki sayı seçili zaman aralığındaki document sayısıdır; histogram aynı document'leri güne göre sayar.
 
 ### 3. Soruyu KQL'e çevirin
 
@@ -134,32 +133,35 @@ customer_gender : "FEMALE" and taxful_total_price > 100
 
 ![Discover KQL: 2 sorgu, 8 document sayısı](../../assets/screenshots/LAB-04/04-discover-kql.png)
 
-Sorgunun parçaları: `customer_gender : "FEMALE"` bir `keyword` field'ında tam değer, `taxful_total_price > 100`
-sayı aralığı, `and` ikisinin birlikte sağlanması. "Son 30 gün" sorguda değil zaman kutusundadır.
+- **`customer_gender : "FEMALE"`:** `keyword` field'ında tam değer
+- **`taxful_total_price > 100`:** sayı aralığı; **`and`** ikisi birlikte
+- **"Son 30 gün"** sorguda değil, zaman kutusunda
 
 Aynı yöntemle birkaç soru daha (zaman aralığı yine **Last 30 days**):
 
 | Soru | KQL | Document (bu koşuda) |
 |---|---|---:|
-| Ürün adında "jacket" geçen siparişler | `products.product_name : jacket` | 130 |
-| Women's Shoes kategorisi (tam değer) | `category.keyword : "Women's Shoes"` | 377 |
-| Tutarı 50 ile 100 dolar arası | `taxful_total_price >= 50 and taxful_total_price <= 100` | 676 |
-| Adı "Ed" ile başlayan müşteriler | `customer_first_name.keyword : Ed*` | 23 |
-| Hafta sonu siparişleri | `day_of_week : (Saturday or Sunday)` | 440 |
-| Men's Clothing içermeyen siparişler | `not category.keyword : "Men's Clothing"` | 835 |
+| Ürün adında "jacket" geçen siparişler | `products.product_name : jacket` | 150 |
+| Women's Shoes kategorisi (tam değer) | `category.keyword : "Women's Shoes"` | 438 |
+| Tutarı 50 ile 100 dolar arası | `taxful_total_price >= 50 and taxful_total_price <= 100` | 794 |
+| Adı "Ed" ile başlayan müşteriler | `customer_first_name.keyword : Ed*` | 25 |
+| Hafta sonu siparişleri | `day_of_week : (Saturday or Sunday)` | 575 |
+| Men's Clothing içermeyen siparişler | `not category.keyword : "Men's Clothing"` | 975 |
 
-Ana sorgu bu koşuda **156** document buldu.
+Ana sorgu bu koşuda **180** document buldu.
 
-- Metin field'ı (`products.product_name`) kelimelere bölünmüştür; `jacket` adında "jacket" geçen ürünleri
-  bulur. `keyword` field'ı (`category.keyword`) bölünmez; değer birebir yazılır.
-- `not` field'ı hiç olmayan document'leri de getirir; sonucu bir document açarak doğrulayın.
-- Joker (`Ed*`) küçük veride rahattır; büyük index'te baştaki joker (`*windows`) pahalıdır.
+- **Metin field'ı** (`products.product_name`) kelimelere bölünür; `jacket` adında geçen ürünleri bulur.
+  **`keyword` field'ı** (`category.keyword`) bölünmez; değer birebir yazılır.
+- **`not`** field'ı hiç olmayan document'leri de getirir; bir document açarak doğrulayın.
+- **Joker** (`Ed*`) küçük veride rahattır; baştaki joker (`*windows`) büyük index'te pahalıdır.
 
 ### 4. Aynı koşul, tıklayarak: filtre
 
-Arama çubuğunu temizleyin. Filtre ekleme düğmesine (3) basın; **Field** `customer_gender`, **Operator** `is`,
-**Value** `FEMALE` seçip **Add filter**'a basın. İkinci filtre: `taxful_total_price`, `is between`, alt sınır
-`100`, üst sınır boş:
+**Soru: Aynı koşulu yazmadan, tıklayarak kurabilir miyiz?**
+
+1. Arama çubuğunu temizleyin
+2. Filtre ekleme simgesi (3): **Field** `customer_gender`, **Operator** `is`, **Value** `FEMALE`, **Add filter**
+3. İkinci filtre: `taxful_total_price`, `is between`, alt sınır `100`, üst sınır boş
 
 ![Filtre: 3 filtre ekleme; field, operator, value](../../assets/screenshots/LAB-04/05-filtre.png)
 
@@ -167,41 +169,46 @@ Filtreler çubuğun altında birer etiket olur. Document sayısını Adım 3'tek
 
 | Yol | Koşul | Document (bu koşuda) |
 |---|---|---:|
-| KQL (Adım 3) | `taxful_total_price > 100` | 156 |
-| Filtre | `taxful_total_price: ≥ $100` | 168 |
+| KQL (Adım 3) | `taxful_total_price > 100` | 180 |
+| Filtre | `taxful_total_price: ≥ $100` | 196 |
 
-Fark tutarı tam 100 olan siparişlerdir: **is between** alt sınırı dahil eder (`>= 100`), KQL'deki `> 100`
-etmez. Etikete tıklayıp filtreyi geçici olarak kapatabilir (**Temporarily disable**) ya da tersine
-çevirebilirsiniz (**Exclude results**):
+- **Fark neden?** Tutarı tam 100 olan siparişler: **is between** alt sınırı dahil eder (`>= 100`), KQL'deki `> 100` etmez.
+- **Etiket menüsü:** filtreyi geçici kapatın (**Temporarily disable**) ya da tersine çevirin (**Exclude results**):
 
 ![Filtre etiketleri: iki filtre ve document sayısı](../../assets/screenshots/LAB-04/06-filtre-etiket.png)
 
 ### 5. Aramayı kaydedin
 
-Sağ üstte **Save** düğmesine basın; açılan pencerede başlığa (12) `Kadın 100 dolar üstü siparişler` yazıp
-**Save and add to library** ile kaydedin.
-Kaydedilen arama (Discover session) data view'ı, sorguyu ve filtreleri tutar; **Open** ile yeniden açılır ve
-panoya eklenebilir:
+**Soru: Bu aramayı yarın yeniden nasıl açarız?** Kaydederek.
+
+1. Sağ üstte **Save**
+2. Başlık (12): `Kadın 100 dolar üstü siparişler`
+3. **Save and add to library**
+
+Kaydedilen arama (Discover session) data view'ı, sorguyu ve filtreleri tutar; **Open** ile açılır, panoya eklenebilir:
 
 ![Discover Save: 12 başlık; altta Store time with Discover session](../../assets/screenshots/LAB-04/07-discover-kaydet.png)
 
-**Store time with Discover session** anahtarı varsayılan olarak kapalıdır: kayıtlı arama açıldığında o anki
-zaman kutusu geçerlidir. Açarsanız seçili zaman aralığı da aramayla saklanır.
+**Store time with Discover session** varsayılan olarak kapalıdır: kayıtlı arama açılınca o anki zaman kutusu geçerlidir.
+Açarsanız zaman aralığı da aramayla saklanır.
 
 ### 6. Arkada ne gidiyor? Inspect
 
-Kibana KQL'i ve filtreleri Elasticsearch'e Query DSL olarak gönderir. Görmek için sağ üstteki **⋮**
-menüsünden **Inspect tab** (13):
+**Soru: Kibana Elasticsearch'e ne gönderiyor?** KQL ve filtreler Query DSL'e çevrilir.
+
+1. Sağ üstteki **⋮** menüsü → **Inspect tab** (13)
 
 ![Discover menüsü: ⋮ düğmesi, 13 Inspect tab](../../assets/screenshots/LAB-04/08-discover-inspect-menu.png)
 
-Açılan **Inspector**'da **Request** (14) sekmesi gönderilen isteği (15) gösterir:
+2. **Inspector**'da **Request** (14): gönderilen istek (15)
 
 ![Inspector: 14 Request sekmesi, 15 gönderilen Query DSL](../../assets/screenshots/LAB-04/09-discover-inspect.png)
 
-Filtreler bir `bool` sorgusunun `filter` bölümüne dönüşmüştür: zaman kutusu `order_date` üzerinde bir `range`,
-`customer_gender` filtresi bir `match_phrase` (kelimeleri yazıldığı sırayla arar), fiyat filtresi bir `range`
-(`gte: 100`: 100 ve üstü).
+Filtreler bir `bool` sorgusunun `filter` bölümüne dönüştü:
+
+- **Zaman kutusu:** `order_date` üzerinde `range`
+- **`customer_gender`:** `match_phrase` (kelimeleri yazıldığı sırayla arar)
+- **Fiyat:** `range` (`gte: 100`: 100 ve üstü)
 
 <details>
 <summary><strong>Alıştırma: soru → KQL</strong></summary>
