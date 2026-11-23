@@ -15,7 +15,7 @@ devam eder.
 Bu labda kendi CA'sıyla TLS'li üç node'lu bir cluster kuracak, shard ve replica'ların node'lara nasıl dağıldığını
 görecek, bir node'u gerçekten durduracak ve aramaların node'lar arasında nasıl paylaşıldığını ölçeceğiz.
 
-![3-node cluster: shard dağılımı ve quorum](../../assets/infographics/10-cluster-shard-ve-quorum.png){width=60%}
+![3-node cluster: shard dağılımı ve quorum](../../assets/infographics/10-cluster-shard-ve-quorum.png)
 
 ---
 

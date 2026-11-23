@@ -14,7 +14,7 @@ gelir. Elasticsearch bunları olduğu gibi alırsa ciro toplanamaz, tarih aralı
 Bu labda Excel dosyasını CSV'ye çevirip Logstash ile okuyacak, Türkçe biçimi sayıya ve tarihe
 çevirecek ve Logstash'i yalnız kendi index'ine yazabilen bir kullanıcıyla bağlayacağız.
 
-![Excel'den Elasticsearch'e: CSV, Logstash ve yalnız yazma yetkili kullanıcı](../../assets/infographics/16-logstash-excel-csv.png){width=60%}
+![Excel'den Elasticsearch'e: CSV, Logstash ve yalnız yazma yetkili kullanıcı](../../assets/infographics/16-logstash-excel-csv.png)
 
 ---
 
@@ -299,13 +299,13 @@ echo "Kibana: http://$IP:5601   https://$H-kibana.devopsatolyesi.com"
 **Stack Management › Data Views › Create data view**: Name `excel-satislar` (1), Index pattern
 `excel-satislar` (2), Timestamp field `@timestamp` (3), **Save data view to Kibana** (4):
 
-![Data view: 1 ad, 2 index pattern, 3 @timestamp, 4 kaydet](../../assets/screenshots/LAB-12/01-dataview-excel.png){width=75%}
+![Data view: 1 ad, 2 index pattern, 3 @timestamp, 4 kaydet](../../assets/screenshots/LAB-12/01-dataview-excel.png)
 
 Discover'da `excel-satislar`'ı seçin. Faturalar 2026 yılına yayıldığı için zaman kutusundan (1)
 **Last 1 year**'ı seçin; varsayılan **Last 15 minutes** aralığında hiç document görünmez. Arama çubuğuna (2)
 `il : "İstanbul"` yazıp Enter'a basın: document sayısı 4 olur (3).
 
-![Discover: 1 Last 1 year, 2 il : "İstanbul", 3 document sayısı](../../assets/screenshots/LAB-12/02-discover-excel.png){width=75%}
+![Discover: 1 Last 1 year, 2 il : "İstanbul", 3 document sayısı](../../assets/screenshots/LAB-12/02-discover-excel.png)
 
 Faturaların tarihi sabittir (Ocak–Kasım 2026). Labı daha sonraki bir tarihte yapıyorsanız zaman
 kutusunda daha geniş bir aralık seçin.
@@ -328,17 +328,17 @@ Kibana menüsünden **Integrations › Upload file**. Index name olarak `excel-u
 dosyayı seçin (2). Kibana önizlemeyi gösterir (önizleme `@timestamp`'i saat dilimi göstermeden yazar); **Mappings** (3) sekmesinde `event_date`'i tarih olarak
 tanıdığını ve ondan bir `@timestamp` ürettiğini görürsünüz:
 
-![Upload file: 1 index adı, 2 dosya, 3 Mappings](../../assets/screenshots/LAB-12/03-upload-onizleme.png){width=75%}
+![Upload file: 1 index adı, 2 dosya, 3 Mappings](../../assets/screenshots/LAB-12/03-upload-onizleme.png)
 
 Önizlemenin altındaki **Advanced options**'ı açın: **Create data view** (4) işaretli kalsın; **Customize
 index settings** (5) ile ayarları yüklemeden önce değiştirebilirsiniz. Bu sefer varsayılanla devam edip
 adımın sonunda düzelteceğiz. **Import** (6):
 
-![Upload file: 4 data view, 5 index ayarları, 6 Import](../../assets/screenshots/LAB-12/04-upload-import.png){width=75%}
+![Upload file: 4 data view, 5 index ayarları, 6 Import](../../assets/screenshots/LAB-12/04-upload-import.png)
 
 Yükleme bitince Discover'da açma ve index'i yönetme bağlantıları (7) gelir:
 
-![Upload file: 7 sonuç bağlantıları](../../assets/screenshots/LAB-12/05-upload-sonuc.png){width=75%}
+![Upload file: 7 sonuç bağlantıları](../../assets/screenshots/LAB-12/05-upload-sonuc.png)
 
 | | Kibana › Upload file | Logstash (Adım 1-6) |
 |---|---|---|

@@ -16,7 +16,7 @@ Bu labda en az yetkili bir rol ve kullanıcı, yalnız yazabilen bir API key, fi
 güvenlik kuracak, rolü ekibin Kibana Space'ine bağlayacak; son adımda yalnız panoları görebilen, hiçbir şeyi
 değiştiremeyen bir rapor kullanıcısı açacağız.
 
-![Rol, API key, FLS/DLS ve Spaces ile çok ekipli erişim](../../assets/infographics/32-guvenlik-cok-ekip.png){width=60%}
+![Rol, API key, FLS/DLS ve Spaces ile çok ekipli erişim](../../assets/infographics/32-guvenlik-cok-ekip.png)
 
 ---
 
@@ -264,7 +264,7 @@ Tarayıcıda gizli (incognito) bir pencere açıp Kibana'ya `gvn_destek` / `Guve
 doğrudan `Destek ekibi` Space'ine düşer (1): erişebildiği tek Space budur, menüde yalnız Discover vardır.
 Discover'da `Destek talepleri` data view'ını (2) seçin ve zaman aralığını **Last 30 days** yapın:
 
-![Destek kullanıcısı: 1 Destek ekibi Space'i, 2 Destek talepleri data view'ı, 3 document sayısı 6, 4 e-posta ve telefon olmayan field listesi](../../assets/screenshots/LAB-20/01-destek-discover.png){width=75%}
+![Destek kullanıcısı: 1 Destek ekibi Space'i, 2 Destek talepleri data view'ı, 3 document sayısı 6, 4 e-posta ve telefon olmayan field listesi](../../assets/screenshots/LAB-20/01-destek-discover.png)
 
 Document sayısı (3) 6'dır: yalnız destek ekibinin talepleri. Field listesinde (4) `musteri_email` ve `telefon`
 yoktur; Kibana da Elasticsearch'teki rolün izin verdiğinden fazlasını göremez.
@@ -314,18 +314,18 @@ gvn_rapor: okuma 4675 yazma 403 pano 403
 Gizli pencerede `gvn_izleyici` / `Guvenlik2026!` ile girin. Bütün Space'leri okuyabildiği için önce Space seçim
 ekranı gelir; **Default**'u seçin ve **Dashboards › [eCommerce] Revenue Dashboard**'u açın:
 
-![viewer: 1 menüde bütün uygulamalar, 2 yalnız Share ve Export; Edit yok](../../assets/screenshots/LAB-20/02-izleyici-pano.png){width=75%}
+![viewer: 1 menüde bütün uygulamalar, 2 yalnız Share ve Export; Edit yok](../../assets/screenshots/LAB-20/02-izleyici-pano.png)
 
 Pano açılır ama **Edit** düğmesi yoktur (2). Menüde (1) Discover, Maps, Machine Learning, Dev Tools ve Stack
 Management de vardır; `viewer` hepsini salt okunur açar. Yalnız rapor gösterilecekse bu fazladır.
 
 Aynı panoyu `gvn_rapor` ile açın. Kullanıcı doğrudan Home'a düşer (tek Space'i Default):
 
-![gvn-rapor: 3 menüde yalnız Dashboards, 4 Share ve Export; Edit yok](../../assets/screenshots/LAB-20/03-rapor-pano.png){width=75%}
+![gvn-rapor: 3 menüde yalnız Dashboards, 4 Share ve Export; Edit yok](../../assets/screenshots/LAB-20/03-rapor-pano.png)
 
 Menüde (3) yalnız Dashboards vardır. Adres çubuğuna `/app/dev_tools` yazarsanız Kibana sayfayı açmaz:
 
-![gvn-rapor: 5 Dev Tools için yetki yok](../../assets/screenshots/LAB-20/04-rapor-devtools.png){width=75%}
+![gvn-rapor: 5 Dev Tools için yetki yok](../../assets/screenshots/LAB-20/04-rapor-devtools.png)
 
 Stack Management adresi (`/app/management`) de `Application not found` verir. Yalnız rapor gösterilecek
 kullanıcıya `viewer` yerine böyle dar bir rol verilir: Kibana'da hangi uygulamayı göreceğini rolün `kibana`

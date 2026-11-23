@@ -16,7 +16,7 @@ Bu labda Filebeat host'un oturum logunu ve iki demo servisin container logların
 container metriklerini toplayacak. Nginx satırını Filebeat'in kendisinde field'lara ayıracak, sonucu
 Discover'da tek sorguyla bulacağız.
 
-![Filebeat ve Metricbeat ile sunucudan log ve metrik toplama](../../assets/infographics/20-beats-log-metrik.png){width=60%}
+![Filebeat ve Metricbeat ile sunucudan log ve metrik toplama](../../assets/infographics/20-beats-log-metrik.png)
 
 ---
 
@@ -329,7 +329,7 @@ POST kbn:/api/data_views/data_view
 container.name : "nginx-beats-lab" and http.response.status_code >= 400
 ```
 
-![Discover: 1 Beats logları data view'ı, 2 sorgu, 3 beş 404 isteği](../../assets/screenshots/LAB-10/01-discover-404.png){width=75%}
+![Discover: 1 Beats logları data view'ı, 2 sorgu, 3 beş 404 isteği](../../assets/screenshots/LAB-10/01-discover-404.png)
 
 Beş document gelir (3): `trafik.sh`'nin attığı `/yok` istekleri.
 

@@ -15,7 +15,7 @@ Bu labda bir snapshot repository kuracak, elle snapshot alacak, bir document'i "
 adla geri yükleyecek, snapshot'ları SLM ile zamanlayıp saklama kuralıyla eskilerini sildirecek ve bakım öncesi bir
 node'u shard'lardan boşaltacağız.
 
-![Snapshot, SLM ve geri yükleme akışı](../../assets/infographics/35-cluster-snapshot-slm.png){width=60%}
+![Snapshot, SLM ve geri yükleme akışı](../../assets/infographics/35-cluster-snapshot-slm.png)
 
 ---
 

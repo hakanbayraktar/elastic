@@ -222,7 +222,7 @@ değiştirilecek bir istektir.
 Kibana 8'de **Stack Management › Upgrade Assistant** sayfasını açın. Sistem index'leri hazır (1), Elasticsearch'te
 engel yok (2) ve deprecation logları **Analyze logs in Discover** (3) ile açılır:
 
-![Upgrade Assistant: 1 sistem index'leri, 2 Elasticsearch No issues, 3 deprecation logları](../../../assets/screenshots/ADV-08/01-upgrade-assistant.png){width=75%}
+![Upgrade Assistant: 1 sistem index'leri, 2 Elasticsearch No issues, 3 deprecation logları](../../../assets/screenshots/ADV-08/01-upgrade-assistant.png)
 
 Kibana kutusundaki uyarı Kibana'nın Node.js çalışma zamanına (eski OpenSSL sağlayıcısı) aittir; verinize ya da
 isteklerinize değil.

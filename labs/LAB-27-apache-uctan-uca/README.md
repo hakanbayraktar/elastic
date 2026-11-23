@@ -16,7 +16,7 @@ ve Slack mesajı gelir; yönetime giden rapor PDF olarak hazırlanır.
 Bu labda bu zincirin tamamını tek seferde kuracak, bir arızayı kendimiz üretip alarmın Mailpit'e,
 gerçek e-posta kutusuna ve Slack kanalına geldiğini görecek, sonunda panoyu PDF rapor olarak alacağız.
 
-![Apache uçtan uca: Apache, Filebeat, Logstash, Elasticsearch, Kibana, alarm ve rapor](../../assets/infographics/21-apache-uctan-uca.png){width=60%}
+![Apache uçtan uca: Apache, Filebeat, Logstash, Elasticsearch, Kibana, alarm ve rapor](../../assets/infographics/21-apache-uctan-uca.png)
 
 ---
 
@@ -173,13 +173,13 @@ PASS Dashboard: apache-web-operations (5 Lens panels)
 
 Kibana'da **Analytics › Dashboards › Apache Web Trafiği ve GeoIP**:
 
-![Apache panosu: 1 dakikalık istek sayısı; yanında 5xx sayısı, altta en sorunlu endpoint'ler ve p95 yanıt süresi](../../assets/screenshots/LAB-27/01-pano.png){width=75%}
+![Apache panosu: 1 dakikalık istek sayısı; yanında 5xx sayısı, altta en sorunlu endpoint'ler ve p95 yanıt süresi](../../assets/screenshots/LAB-27/01-pano.png)
 
 Ziyaretçilerin nereden geldiğini haritada görmek için **Analytics › Maps › Create map**, **Add layer ›
 Clusters**, data view **Apache Web İstek ve Hata Logları**, **Add and close**. Haritayı `Apache ziyaretçileri`
 adıyla kaydedin; panoya **Add › From library** ile eklenebilir:
 
-![Harita: 1 Clusters katmanı; daireler ülkelere göre istek sayısını gösterir](../../assets/screenshots/LAB-27/02-harita.png){width=75%}
+![Harita: 1 Clusters katmanı; daireler ülkelere göre istek sayısını gösterir](../../assets/screenshots/LAB-27/02-harita.png)
 
 ### 4. Alarm: 5xx artınca e-posta (Mailpit)
 
@@ -272,7 +272,7 @@ arayüzü yalnız sunucudan açılır. Kendi bilgisayarınızdan bir SSH tüneli
 ssh -f -N -L 8025:127.0.0.1:8025 student@<sunucu-ip>
 ```
 
-![Mailpit: 1 alarm e-postası; sağda konu ve ölçülen değer](../../assets/screenshots/LAB-27/03-mailpit.png){width=75%}
+![Mailpit: 1 alarm e-postası; sağda konu ve ölçülen değer](../../assets/screenshots/LAB-27/03-mailpit.png)
 
 İşiniz bitince tüneli kapatın: `pkill -f "\-L 8025:127.0.0.1:8025"`.
 
@@ -413,7 +413,7 @@ requests=60 concurrency=8 ip=195.175.39.39 elapsed_seconds=0.34 statuses={503: 6
 Testte alarm 10 saniye içinde açıldı: önceki arıza 2 dakikalık pencerede hâlâ duruyorsa kural ilk kontrolde açar, durmuyorsa en geç 1 dakika sürer. E-posta kutunuza ve Slack kanalınıza `[ALARM] Apache 5xx artışı` mesajı düşer. Kibana'da **Stack Management ›
 Connectors** listesinde bu labın üç connector'ı görünür (başka labların connector'ları da listede olabilir):
 
-![Connector'lar: 1 Mailpit, 2 gerçek e-posta, 3 Slack](../../assets/screenshots/LAB-27/04-connectorlar.png){width=75%}
+![Connector'lar: 1 Mailpit, 2 gerçek e-posta, 3 Slack](../../assets/screenshots/LAB-27/04-connectorlar.png)
 
 Gerçek kanallara sonradan gereksiz mesaj gitmesin diye denemeden sonra kuralı kapatın. Kural silinmez;
 Stack Management › Rules'tan yeniden açılabilir:
@@ -444,12 +444,12 @@ Hesap parolanız kullanılmaz.
 
 Panoyu açın; üst menüde **Export › PDF reports**. Açılan panelin (1) altındaki **Export PDF** (2) düğmesine basın:
 
-![PDF: 1 Export dashboard as PDF paneli, 2 Export PDF](../../assets/screenshots/LAB-27/05-pdf-olustur.png){width=75%}
+![PDF: 1 Export dashboard as PDF paneli, 2 Export PDF](../../assets/screenshots/LAB-27/05-pdf-olustur.png)
 
 Rapor arka planda tarayıcıyla çizilir; birkaç saniye sonra **Stack Management › Reporting**'de görünür ve
 indirilir (3):
 
-![Reporting: 3 tamamlanan PDF](../../assets/screenshots/LAB-27/06-reporting.png){width=75%}
+![Reporting: 3 tamamlanan PDF](../../assets/screenshots/LAB-27/06-reporting.png)
 
 Raporun durumu ve boyutu Kibana'nın rapor kaydında da görülür:
 

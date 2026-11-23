@@ -16,7 +16,7 @@ Bu labda kontrollü bir saldırı senaryosunu Filebeat ve Logstash ile normalle�
 zenginleştirecek, beş tespit kuralıyla alarm üretecek, bir alarmı triyaj edecek, yanlış pozitifi ayarlayacak ve
 bir yapılandırma dosyasındaki değişikliği Auditbeat ile yakalayacağız.
 
-![SIEM hattı: senaryo logu, Logstash, zenginleştirme, tespit kuralları, alarm](../../assets/infographics/33-siem-tespit-hatti.png){width=60%}
+![SIEM hattı: senaryo logu, Logstash, zenginleştirme, tespit kuralları, alarm](../../assets/infographics/33-siem-tespit-hatti.png)
 
 ---
 
@@ -257,7 +257,7 @@ Beklenen çıktı:
 sayar; `critical` olan tek alarm ihlal alarmıdır (3). Aşağıdaki listede bir alarmı açınca kuralın triyaj notu ve
 olayın field'ları görünür:
 
-![Security › Alerts: 1 şiddet dağılımı, 2 kurala göre alarm sayısı, 3 ihlal alarmı](../../assets/screenshots/LAB-26/01-security-alerts.png){width=75%}
+![Security › Alerts: 1 şiddet dağılımı, 2 kurala göre alarm sayısı, 3 ihlal alarmı](../../assets/screenshots/LAB-26/01-security-alerts.png)
 
 Kibana, Alerts sayfası ilk açıldığında istisna listeleri için `.lists-default` ve `.items-default` data
 stream'lerini 1 replica ile kurar. Tek node'lu ana cluster'da replica'nın konacağı ikinci node yoktur, cluster

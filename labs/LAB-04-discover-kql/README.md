@@ -15,7 +15,7 @@ Bu labda Kibana'nın örnek e-ticaret verisini yükleyecek, Discover'da gezinece
 aynı koşulu tıklayarak filtreyle kuracak, aramayı kaydedecek ve Kibana'nın arkada Elasticsearch'e gönderdiği
 Query DSL'i Inspect ile göreceğiz.
 
-![Discover'da araştırma sırası: data view, zaman, sorgu, sonuç, Inspect](../../assets/infographics/40-discover-arastirma-akisi.png){width=60%}
+![Discover'da araştırma sırası: data view, zaman, sorgu, sonuç, Inspect](../../assets/infographics/40-discover-arastirma-akisi.png)
 
 ---
 
@@ -64,12 +64,12 @@ her sorguya zaman kutusunu da ekler: sonuç sayısı **sorgu + zaman aralığıd
 
 Kibana ana sayfasında **Try sample data** (1) bağlantısına basın:
 
-![Kibana sayfası: 1 Try sample data](../../assets/screenshots/LAB-04/01-sample-data-link.png){width=75%}
+![Kibana sayfası: 1 Try sample data](../../assets/screenshots/LAB-04/01-sample-data-link.png)
 
 Açılan **Sample data** sekmesinde **Sample eCommerce orders** kartındaki **Install data** (2) düğmesine basın.
 Kurulum bitince düğme **View data** olur:
 
-![Örnek veri kartları: 2 Install data](../../assets/screenshots/LAB-04/02-sample-data-install.png){width=75%}
+![Örnek veri kartları: 2 Install data](../../assets/screenshots/LAB-04/02-sample-data-install.png)
 
 Kibana `kibana_sample_data_ecommerce` index'ini, aynı adlı data view'ı ve hazır panoları kurar. Kaç sipariş
 geldiğini ve hangi tarih aralığında olduğunu kontrol edin: `size=0` document getirmez, yalnız özet döner;
@@ -115,7 +115,7 @@ gün önce, son sipariş 20 gün sonra. Discover'da **Last 30 days** yalnız ge�
 **Last 30 days**'i (4) seçin. Soldaki field listesinde (6) `customer_gender`'a tıklayın: en sık değerler ve
 oranları görünür. Bir satırın başındaki genişletme düğmesi (10) document'in bütün field'larını açar:
 
-![Discover: 1 data view, 4 zaman, 6 field listesi, 10 document açma](../../assets/screenshots/LAB-04/03-discover-tur.png){width=75%}
+![Discover: 1 data view, 4 zaman, 6 field listesi, 10 document açma](../../assets/screenshots/LAB-04/03-discover-tur.png)
 
 Üstteki sayı, seçili zaman aralığındaki document sayısıdır; histogram da aynı document'leri güne göre
 sayar.
@@ -132,7 +132,7 @@ customer_gender : "FEMALE" and taxful_total_price > 100
 
 **Ekranda:** **Documents** sekmesindeki sayı (8) cevaptır; histogram yalnız bu siparişleri gösterir:
 
-![Discover KQL: 2 sorgu, 8 document sayısı](../../assets/screenshots/LAB-04/04-discover-kql.png){width=75%}
+![Discover KQL: 2 sorgu, 8 document sayısı](../../assets/screenshots/LAB-04/04-discover-kql.png)
 
 Sorgunun parçaları: `customer_gender : "FEMALE"` bir `keyword` field'ında tam değer, `taxful_total_price > 100`
 sayı aralığı, `and` ikisinin birlikte sağlanması. "Son 30 gün" sorguda değil zaman kutusundadır.
@@ -161,7 +161,7 @@ Arama çubuğunu temizleyin. Filtre ekleme düğmesine (3) basın; **Field** `cu
 **Value** `FEMALE` seçip **Add filter**'a basın. İkinci filtre: `taxful_total_price`, `is between`, alt sınır
 `100`, üst sınır boş:
 
-![Filtre: 3 filtre ekleme; field, operator, value](../../assets/screenshots/LAB-04/05-filtre.png){width=75%}
+![Filtre: 3 filtre ekleme; field, operator, value](../../assets/screenshots/LAB-04/05-filtre.png)
 
 Filtreler çubuğun altında birer etiket olur. Document sayısını Adım 3'teki KQL sayısıyla karşılaştırın:
 
@@ -174,7 +174,7 @@ Fark tutarı tam 100 olan siparişlerdir: **is between** alt sınırı dahil ede
 etmez. Etikete tıklayıp filtreyi geçici olarak kapatabilir (**Temporarily disable**) ya da tersine
 çevirebilirsiniz (**Exclude results**):
 
-![Filtre etiketleri: iki filtre ve document sayısı](../../assets/screenshots/LAB-04/06-filtre-etiket.png){width=75%}
+![Filtre etiketleri: iki filtre ve document sayısı](../../assets/screenshots/LAB-04/06-filtre-etiket.png)
 
 ### 5. Aramayı kaydedin
 
@@ -183,7 +183,7 @@ Sağ üstte **Save** düğmesine basın; açılan pencerede başlığa (12) `Kad
 Kaydedilen arama (Discover session) data view'ı, sorguyu ve filtreleri tutar; **Open** ile yeniden açılır ve
 panoya eklenebilir:
 
-![Discover Save: 12 başlık; altta Store time with Discover session](../../assets/screenshots/LAB-04/07-discover-kaydet.png){width=75%}
+![Discover Save: 12 başlık; altta Store time with Discover session](../../assets/screenshots/LAB-04/07-discover-kaydet.png)
 
 **Store time with Discover session** anahtarı varsayılan olarak kapalıdır: kayıtlı arama açıldığında o anki
 zaman kutusu geçerlidir. Açarsanız seçili zaman aralığı da aramayla saklanır.
@@ -193,11 +193,11 @@ zaman kutusu geçerlidir. Açarsanız seçili zaman aralığı da aramayla sakla
 Kibana KQL'i ve filtreleri Elasticsearch'e Query DSL olarak gönderir. Görmek için sağ üstteki **⋮**
 menüsünden **Inspect tab** (13):
 
-![Discover menüsü: ⋮ düğmesi, 13 Inspect tab](../../assets/screenshots/LAB-04/08-discover-inspect-menu.png){width=75%}
+![Discover menüsü: ⋮ düğmesi, 13 Inspect tab](../../assets/screenshots/LAB-04/08-discover-inspect-menu.png)
 
 Açılan **Inspector**'da **Request** (14) sekmesi gönderilen isteği (15) gösterir:
 
-![Inspector: 14 Request sekmesi, 15 gönderilen Query DSL](../../assets/screenshots/LAB-04/09-discover-inspect.png){width=75%}
+![Inspector: 14 Request sekmesi, 15 gönderilen Query DSL](../../assets/screenshots/LAB-04/09-discover-inspect.png)
 
 Filtreler bir `bool` sorgusunun `filter` bölümüne dönüşmüştür: zaman kutusu `order_date` üzerinde bir `range`,
 `customer_gender` filtresi bir `match_phrase` (kelimeleri yazıldığı sırayla arar), fiyat filtresi bir `range`

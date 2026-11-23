@@ -14,7 +14,7 @@ JOIN ya yoktur ya da pahalıdır; aynı veri dört farklı biçimde modellenebil
 Bu labda aynı 5 müşteri ve 6 siparişi dört biçimde kuracak, her birinde aynı soruyu soracak ve verinin
 bir parçası değiştiğinde ne olduğunu göreceğiz.
 
-![İlişkisel veriyi Elasticsearch'te modellemenin dört yolu](../../assets/infographics/18-iliskisel-veri-modelleri.png){width=60%}
+![İlişkisel veriyi Elasticsearch'te modellemenin dört yolu](../../assets/infographics/18-iliskisel-veri-modelleri.png)
 
 ---
 

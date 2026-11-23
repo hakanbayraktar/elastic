@@ -263,27 +263,27 @@ Aynı soruyu tıklayarak grafiğe ve panoya çevirelim.
    Varsayılan **Last 15 minutes** aralığında grafik boş kalır.
 2. Soldaki field listesinde `category` field'ına (1) tıklayın, açılan pencerede **Visualize** (2):
 
-![Discover field penceresi: 1 category field'ı, 2 Visualize](../../assets/screenshots/LAB-07/02-field-visualize.png){width=75%}
+![Discover field penceresi: 1 category field'ı, 2 Visualize](../../assets/screenshots/LAB-07/02-field-visualize.png)
 
 3. Lens, kategori başına sipariş sayısını bar grafiği olarak açar (3). Yatay eksen kategoriler
    (`Top values of category.keyword`), dikey eksen kayıt sayısıdır. Sağ üstten **Save** (4):
 
-![Lens: 3 kategori bazında bar grafiği, 4 Save](../../assets/screenshots/LAB-07/03-lens-bar.png){width=75%}
+![Lens: 3 kategori bazında bar grafiği, 4 Save](../../assets/screenshots/LAB-07/03-lens-bar.png)
 
    Sağ paneldeki **Breakdown** (a) kutusuna tıklayıp `customer_gender` seçin: her çubuk cinsiyete
    göre iki renge bölünür (b). Breakdown, grafiğe ikinci bir gruplama ekler:
 
-![Lens breakdown: a Breakdown kutusu, b cinsiyete bölünmüş çubuklar](../../assets/screenshots/LAB-07/03b-lens-breakdown.png){width=75%}
+![Lens breakdown: a Breakdown kutusu, b cinsiyete bölünmüş çubuklar](../../assets/screenshots/LAB-07/03b-lens-breakdown.png)
 
 4. Title alanına `Kategori bazında sipariş` (5) yazın, **Add to dashboard** altında **New** (6)
    seçin, **Save and go to dashboard** (7):
 
-![Lens kaydetme: 5 başlık, 6 New dashboard, 7 Save and go to dashboard](../../assets/screenshots/LAB-07/04-lens-save.png){width=75%}
+![Lens kaydetme: 5 başlık, 6 New dashboard, 7 Save and go to dashboard](../../assets/screenshots/LAB-07/04-lens-save.png)
 
 5. Pano açılır ve grafik ilk panel olarak eklenir. Sağ üstteki **Save** (8) ile panoya
    `Satış özeti` adını verip kaydedin:
 
-![Pano: 8 Save, 9 eklenen panel](../../assets/screenshots/LAB-07/05-dashboard.png){width=75%}
+![Pano: 8 Save, 9 eklenen panel](../../assets/screenshots/LAB-07/05-dashboard.png)
 
 Pano kaydedildikten sonra **Dashboards** listesinden açılır; zaman aralığı değişince bütün paneller
 birlikte güncellenir. Aynı yolla ciro ya da günlük satış panelleri eklenir: Lens'te dikey eksene
@@ -359,11 +359,11 @@ Discover'da `Canlı siparişler` data view'ını seçin, zaman aralığını **L
 kutusunu yeniden açıp **Settings** (2) sekmesinde **Refresh every** anahtarını (3) açın ve değeri
 `10 seconds` yapın:
 
-![Otomatik yenileme: 2 Settings, 3 Refresh every anahtarı](../../assets/screenshots/LAB-07/06a-canli-ayar.png){width=75%}
+![Otomatik yenileme: 2 Settings, 3 Refresh every anahtarı](../../assets/screenshots/LAB-07/06a-canli-ayar.png)
 
 Histogram (4) her 10 saniyede kendiliğinden yenilenir ve sağ uçtaki çubuk büyür:
 
-![Canlı izleme: 1 Last 15 minutes, 4 dakikalık histogram](../../assets/screenshots/LAB-07/06-canli-discover.png){width=75%}
+![Canlı izleme: 1 Last 15 minutes, 4 dakikalık histogram](../../assets/screenshots/LAB-07/06-canli-discover.png)
 
 
 ### 6. Pano için veri hazırlama: doğru tip ve runtime field
@@ -411,7 +411,7 @@ POST kbn:/api/data_views/data_view/ff959d40-b880-11e8-a6d9-e546fe2bba5f/runtime_
 Discover'da `Kibana Sample Data eCommerce` data view'ını açın; field listesinde `siparis_saati` (1) görünür,
 tıklayınca en sık saatler gelir (2):
 
-![Runtime field: 1 siparis_saati field'ı, 2 en sık saatler](../../assets/screenshots/LAB-07/07-runtime-field.png){width=75%}
+![Runtime field: 1 siparis_saati field'ı, 2 en sık saatler](../../assets/screenshots/LAB-07/07-runtime-field.png)
 
 Runtime field her sorguda yeniden hesaplanır; sık kullanılan bir değer büyük veride yavaşlatır. O zaman
 field mapping'e eklenip veri ingest pipeline ile yazılırken doldurulur.

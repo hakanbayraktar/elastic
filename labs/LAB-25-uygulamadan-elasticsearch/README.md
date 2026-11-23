@@ -16,7 +16,7 @@ Bu labda Python client ile yalnız kendi index'ine yetkili bir API key kullanaca
 yazacak, hataları türüne göre yakalayacak, sonuçları `search_after` ile sayfalayacak, hangi hatanın
 tekrar denendiğini görecek ve tek document'i `index`, `get` ve `match` ile yazıp okuyacağız.
 
-![Uygulamadan Elasticsearch: Python client, kısıtlı API key, bulk, search_after ve yeniden deneme](../../assets/infographics/30-python-client.png){width=60%}
+![Uygulamadan Elasticsearch: Python client, kısıtlı API key, bulk, search_after ve yeniden deneme](../../assets/infographics/30-python-client.png)
 
 ---
 

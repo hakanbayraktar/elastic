@@ -13,9 +13,9 @@ yere **ana cluster** diyoruz. Bu labda ana cluster'ı kuruyor, Elasticsearch'e i
 Kibana'ya hem IP:port hem alan adıyla giriyor, 30 günlük deneme lisansını açıyor; son olarak bir ayarı
 API'den değiştirip geri alıyor, loglara bakıyor ve `elastic` parolasını yönetiyoruz.
 
-![Eğitimin ortak veri akışı: kaynak, toplama/dönüştürme, Elasticsearch, Kibana](../../assets/infographics/01-elastic-veri-akisi.png){width=60%}
+![Eğitimin ortak veri akışı: kaynak, toplama/dönüştürme, Elasticsearch, Kibana](../../assets/infographics/01-elastic-veri-akisi.png)
 
-![LAB-01 ana cluster'ı: Docker ağı, Elasticsearch, Kibana ve ona katılan lablar](../../assets/infographics/12-lab01-ana-cluster-mimarisi.png){width=60%}
+![LAB-01 ana cluster'ı: Docker ağı, Elasticsearch, Kibana ve ona katılan lablar](../../assets/infographics/12-lab01-ana-cluster-mimarisi.png)
 
 ---
 
@@ -372,15 +372,15 @@ Elasticsearch: http://<sunucu-ip>:9200   https://<sunucu>-elastic.devopsatolyesi
 IP'yi verir, dışarıdan açılmaz). Adreslerden birini tarayıcıda açın ve `elastic` /
 `DevOps2026!` ile giriş yapın:
 
-![Kibana giriş ekranı: 1 kullanıcı adı, 2 parola, 3 Log in](../../assets/screenshots/LAB-01/01-kibana-login.png){width=75%}
+![Kibana giriş ekranı: 1 kullanıcı adı, 2 parola, 3 Log in](../../assets/screenshots/LAB-01/01-kibana-login.png)
 
 İlk girişte çıkan karşılama kartında **Explore on my own** düğmesine basın. Kibana'nın bölümlerine
 sol üstteki menüden (1) ulaşılır. En sık kullanılanlar **Discover** (2, Analytics altında) ve
 **Dev Tools** (3, menünün en altında Management altında) kullanacağız:
 
-![Kibana menüsü: 1 menü düğmesi, 2 Discover](../../assets/screenshots/LAB-01/02-kibana-menu.png){width=75%}
+![Kibana menüsü: 1 menü düğmesi, 2 Discover](../../assets/screenshots/LAB-01/02-kibana-menu.png)
 
-![Kibana menüsünün alt kısmı: 3 Management altında Dev Tools](../../assets/screenshots/LAB-01/03-kibana-devtools.png){width=75%}
+![Kibana menüsünün alt kısmı: 3 Management altında Dev Tools](../../assets/screenshots/LAB-01/03-kibana-devtools.png)
 
 <details>
 <summary><strong>Alan adı açılmazsa / port kapalıysa</strong></summary>
@@ -433,7 +433,7 @@ Beklenen çıktı:
 Lisansın `"type" : "trial"` ve `"status" : "active"` göstermesi yeterlidir; deneme lisansı açıktır. Aynı bilgiyi
 Kibana'da **Stack Management › License Management** sayfasında görürsünüz:
 
-![License Management: 1 lisans türü Trial ve bitiş tarihi](../../assets/screenshots/LAB-01/04-license-trial.png){width=75%}
+![License Management: 1 lisans türü Trial ve bitiş tarihi](../../assets/screenshots/LAB-01/04-license-trial.png)
 
 ### 6. Ayar, log ve parola
 

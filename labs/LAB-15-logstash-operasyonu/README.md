@@ -17,7 +17,7 @@ Bu labda tek Logstash'ta iki pipeline çalıştıracağız. `ingest` olayları a
 DLQ'yu okur, document'i onarır ve yeniden yazar. Elasticsearch bağlantısını keserek bir çökmede hiçbir
 olayın kaybolmadığını, reddedilen document'in de geri geldiğini sayılarla göreceğiz.
 
-![Tek Logstash, iki pipeline: persistent queue ve dead letter queue](../../assets/infographics/19-logstash-pq-dlq.png){width=60%}
+![Tek Logstash, iki pipeline: persistent queue ve dead letter queue](../../assets/infographics/19-logstash-pq-dlq.png)
 
 ---
 

@@ -28,10 +28,14 @@ cd ~/elastic/labs/LAB-02-ilk-belgeler
 
 ---
 
-## Kavramlar: index, document, `_id`
+## Kavramlar
 
-| Kavram | Ne demek | İlişkisel veritabanında yakın karşılığı |
-|---|---|---|
+- **index:** document'lerin toplandığı yer (veritabanındaki tablo gibi)
+- **document:** tek bir JSON kaydı (satır gibi); içindeki anahtarlar **field**
+- **`_id`:** document'in kimliği; vermezseniz Elasticsearch üretir
+- **mapping:** field tipleri; vermezseniz Elasticsearch ilk değerden tahmin eder (dynamic mapping)
+
+---|---|---|
 | index | Aynı türden document'lerin toplandığı ad | tablo |
 | document | Tek bir JSON kaydı | satır |
 | field | Document'teki bir anahtar (`ad`, `fiyat`) | sütun |
@@ -60,7 +64,7 @@ Kibana menüsünden **Management › Dev Tools**'u açın.
 - **İstek biçimi:** ilk satırda `METOT /yol`, altında gerekiyorsa JSON gövde
 - **Parola yok:** Console, Kibana'ya giriş yaptığınız kullanıcıyla bağlanır
 
-![Dev Tools Console: 1 istek editörü, 2 gönder düğmesi, 3 yanıt](../../assets/screenshots/LAB-02/01-devtools-console.png){width=75%}
+![Dev Tools Console: 1 istek editörü, 2 gönder düğmesi, 3 yanıt](../../assets/screenshots/LAB-02/01-devtools-console.png)
 
 Bu labda `http` bloklarını Dev Tools'a, `bash` bloklarını terminale yapıştırın.
 
@@ -636,32 +640,31 @@ bu labda kullanıldı; yoğun yazmada her isteğe eklenmez.
 
 ### 5. Zaman damgalı veri: destek talepleri
 
-Bu kez her document'te olayın zamanı olan `@timestamp` field'ı var. Son 7 güne yayılmış 24 destek
-talebini kabukta üretiyoruz; `date -d "-N hours"` her talebe 7 saat arayla geriye giden bir zaman
-verir. `tarih_tr` field'ı aynı zamanı Türkçe biçimde (`21.11.2026 14:30`) taşır. Kanal ve konu `i%4` ile dört
-değer arasında sırayla döner; satırlar `~/talepler.ndjson` dosyasına yazılır. Her talep iki satırdır (eylem +
-document), yani dosya yine NDJSON'dur:
+Bu kez her document'te olayın zamanı olan `@timestamp` field'ı var. `tarih_tr` aynı zamanı Türkçe biçimde
+(`21.11.2026 13:15`) taşır. Dosyayı oluşturun (8 talep, her biri eylem satırı + document satırı):
 
 ```bash
-kanallar=(web mobil telefon e-posta); konular=("Şifre sıfırlama" "Fatura itirazı" "Kargo gecikmesi" "Uygulama hatası")
-for i in $(seq 0 23); do
-  ts=$(date -u -d "-$((i*7)) hours" +%Y-%m-%dT%H:%M:%SZ)
-  tr=$(date -d "-$((i*7)) hours" +"%d.%m.%Y %H:%M")
-  echo "{\"index\":{\"_index\":\"belge-talepler\",\"_id\":\"T$((1000+i))\"}}"
-  echo "{\"@timestamp\":\"$ts\",\"tarih_tr\":\"$tr\",\"kanal\":\"${kanallar[i%4]}\",\"konu\":\"${konular[i%4]}\",\"sure_dk\":$((5+i*3%40))}"
-done > ~/talepler.ndjson
-head -2 ~/talepler.ndjson
-```
-
-Beklenen çıktı:
-
-```text
+cat > sample-data/talepler.ndjson << 'EOF'
 {"index":{"_index":"belge-talepler","_id":"T1000"}}
-{"@timestamp":"2026-11-21T10:15:30Z","tarih_tr":"21.11.2026 13:15","kanal":"web","konu":"Şifre sıfırlama","sure_dk":5}
+{"@timestamp":"2026-11-21T10:15:00Z","tarih_tr":"21.11.2026 13:15","kanal":"web","konu":"Şifre sıfırlama","sure_dk":5}
+{"index":{"_index":"belge-talepler","_id":"T1001"}}
+{"@timestamp":"2026-11-20T13:40:00Z","tarih_tr":"20.11.2026 16:40","kanal":"mobil","konu":"Fatura itirazı","sure_dk":8}
+{"index":{"_index":"belge-talepler","_id":"T1002"}}
+{"@timestamp":"2026-11-19T08:05:00Z","tarih_tr":"19.11.2026 11:05","kanal":"telefon","konu":"Kargo gecikmesi","sure_dk":11}
+{"index":{"_index":"belge-talepler","_id":"T1003"}}
+{"@timestamp":"2026-11-18T15:30:00Z","tarih_tr":"18.11.2026 18:30","kanal":"e-posta","konu":"Uygulama hatası","sure_dk":14}
+{"index":{"_index":"belge-talepler","_id":"T1004"}}
+{"@timestamp":"2026-11-17T09:50:00Z","tarih_tr":"17.11.2026 12:50","kanal":"web","konu":"Şifre sıfırlama","sure_dk":17}
+{"index":{"_index":"belge-talepler","_id":"T1005"}}
+{"@timestamp":"2026-11-16T12:20:00Z","tarih_tr":"16.11.2026 15:20","kanal":"mobil","konu":"Fatura itirazı","sure_dk":20}
+{"index":{"_index":"belge-talepler","_id":"T1006"}}
+{"@timestamp":"2026-11-15T07:45:00Z","tarih_tr":"15.11.2026 10:45","kanal":"telefon","konu":"Kargo gecikmesi","sure_dk":23}
+{"index":{"_index":"belge-talepler","_id":"T1007"}}
+{"@timestamp":"2026-11-14T16:10:00Z","tarih_tr":"14.11.2026 19:10","kanal":"e-posta","konu":"Uygulama hatası","sure_dk":26}
+EOF
 ```
 
-Zamanlar komutu çalıştırdığınız ana göre üretilir; sizin değerleriniz farklı olur. `@timestamp`
-UTC'dir (`Z`), `tarih_tr` sunucunun yerel saatidir.
+`@timestamp` UTC'dir (`Z`), `tarih_tr` Türkiye saatidir (UTC+3).
 
 Index'i yalnız ayarla açıp (tek node: replica 0) document'leri yükleyin; field tiplerini
 Elasticsearch'e bırakıyoruz:
@@ -670,7 +673,7 @@ Elasticsearch'e bırakıyoruz:
 curl -s -u elastic:'DevOps2026!' -X PUT 'http://127.0.0.1:9200/belge-talepler' -H 'Content-Type: application/json' \
   -d '{"settings": {"number_of_replicas": 0}}'; echo
 curl -s -u elastic:'DevOps2026!' -X POST 'http://127.0.0.1:9200/_bulk?refresh=true&filter_path=errors' \
-  -H 'Content-Type: application/x-ndjson' --data-binary @"$HOME/talepler.ndjson"; echo
+  -H 'Content-Type: application/x-ndjson' --data-binary @sample-data/talepler.ndjson; echo
 ```
 
 Beklenen çıktı:
@@ -706,43 +709,52 @@ Beklenen çıktı:
 - `kanal`, `konu` → `text` + `.keyword`: metin hem kelime kelime aranabilsin (`text`) hem de
   tam değeriyle gruplanabilsin (`keyword`) diye iki biçimde saklanır.
 
-### 6. Discover: zaman field'lı ve zaman field'sız data view
+### 6. Discover: yüklediğimiz veriyi arayüzde görmek
 
-Discover bir index'e doğrudan değil, bir **data view** üzerinden bakar. Data view, hangi
-index(ler)in okunacağını ve (varsa) hangi field'ın zaman field'ı olduğunu söyler. **Index** veriyi Elasticsearch'te
-tutar; **data view** yalnız Kibana'nın ona nasıl bakacağını söyler. Data view'ı silmek veriyi silmez; `belge-*` gibi bir
-desenle birden çok index'e birlikte bakabilir.
+**Soru: Yüklediğimiz index'leri Discover'da nasıl görürüz?**
 
-**a) Zaman field'lı data view.** **Stack Management › Data Views › Create data view**: Name
-`belge-talepler` (1), Index pattern `belge-talepler` (2), Timestamp field `@timestamp` (3),
-**Save data view to Kibana** (4). Timestamp listesinde `tarih_tr` çıkmaz; listede yalnız `date`
-tipli field'lar bulunur.
+Discover index'i doğrudan açmaz; önce bir **data view** tanımlanır.
 
-![Data view oluşturma: 1 ad, 2 index pattern, 3 timestamp field'ı, 4 kaydet](../../assets/screenshots/LAB-02/02-dataview-talepler.png){width=75%}
+- **Data view:** Kibana'nın hangi index'lere bakacağını ve (varsa) zaman field'ını söyleyen tanım.
+- **Neden ayrı?** Veri index'te kalır; data view yalnız bakış açısıdır. Silmek veriyi silmez, `belge-*` gibi bir
+  desenle birden çok index'e birlikte bakabilir.
 
-Discover'ı açın ve sol üstteki **Data view** listesinden `belge-talepler`'i seçin. Varsayılan
-zaman aralığı **Last 15 minutes**'tır; talepler 7 saat arayla üretildiği için bu aralıkta en çok
-bir talep görünür. Zaman kutusuna (1) tıklayıp **Presets** listesinden **Last 7 days** (2) seçin:
+**a) Zaman field'lı data view**
 
-![Discover zaman seçici: 1 zaman aralığı kutusu, 2 Last 7 days](../../assets/screenshots/LAB-02/03-discover-zaman-secici.png){width=75%}
+1. **Stack Management › Data Views › Create data view**
+2. Name: `belge-talepler` (1)
+3. Index pattern: `belge-talepler` (2)
+4. Timestamp field: `@timestamp` (3). Listede yalnız `date` tipli field'lar çıkar; `tarih_tr` bu yüzden yok.
+5. **Save data view to Kibana** (4)
 
-Document sayısı 24 olur (3) ve histogram talepleri günlere dağılmış gösterir (4):
+![Data view oluşturma: 1 ad, 2 index pattern, 3 timestamp field'ı, 4 kaydet](../../assets/screenshots/LAB-02/02-dataview-talepler.png)
 
-![Discover: 3 document sayısı, 4 histogram](../../assets/screenshots/LAB-02/04-discover-talepler.png){width=75%}
+**Discover**'ı açın, sol üstteki **Data view** listesinden `belge-talepler`'i seçin.
+
+- Varsayılan aralık **Last 15 minutes**: talepler geçmiş tarihli olduğu için liste boş görünür.
+- Zaman kutusuna (1) tıklayın, **Presets** listesinden **Last 1 year** (2) seçin:
+
+![Discover zaman seçici: 1 zaman aralığı kutusu, 2 Last 1 year](../../assets/screenshots/LAB-02/03-discover-zaman-secici.png)
+
+Document sayısı 8 olur (3); histogram talepleri Kasım ayında gösterir (4):
+
+![Discover: 3 document sayısı, 4 histogram](../../assets/screenshots/LAB-02/04-discover-talepler.png)
 
 Zaman field'lı data view'da zaman seçici bir filtredir: aralığın dışındaki document index'te olsa da
 listelenmez. "Veri yüklendi ama Discover boş" durumunun en sık nedeni budur.
 
-**b) Zaman field'sız data view.** Aynı yoldan Name ve Index pattern `belge-urunler` ile yeni data
-view açın. Bu index'te `date` tipli field olmadığı için Timestamp field kutusu kapalı gelir ve altında
-"No matching data stream, index, or index alias has a timestamp field" yazar (3). Kaydedin (4).
+**b) Zaman field'sız data view**
 
-![Zaman field'sız data view: 3 timestamp field'ı yok, 4 kaydet](../../assets/screenshots/LAB-02/05-dataview-urunler.png){width=75%}
+1. Aynı yoldan Name ve Index pattern: `belge-urunler`
+2. Timestamp field kutusu kapalı gelir (3): bu index'te `date` tipli field yok.
+3. Kaydedin (4).
+
+![Zaman field'sız data view: 3 timestamp field'ı yok, 4 kaydet](../../assets/screenshots/LAB-02/05-dataview-urunler.png)
 
 Discover'da `belge-urunler`'i seçin (1): zaman kutusu ve histogram kaybolur, 7 document'in hepsi
 listelenir (2).
 
-![Discover zaman field'sız: 1 data view, 2 bütün document'ler](../../assets/screenshots/LAB-02/06-discover-urunler.png){width=75%}
+![Discover zaman field'sız: 1 data view, 2 bütün document'ler](../../assets/screenshots/LAB-02/06-discover-urunler.png)
 
 | | Zaman field'lı (`belge-talepler`) | Zaman field'sız (`belge-urunler`) |
 |---|---|---|

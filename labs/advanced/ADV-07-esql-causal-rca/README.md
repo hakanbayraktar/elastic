@@ -16,7 +16,7 @@ Bu labda 1000 olaylık bir arıza kaydını ES|QL ile adım adım daraltacağız
 kaç servisin bozulduğunu, her işlemde ilk hatayı hangi servisin verdiğini ve servisler arası çağrı yönünü çıkaracak,
 sonunda kök servisin neden çöktüğünü kendi field'larından okuyacağız.
 
-![Zincirleme arıza ve ES|QL ile kök neden](../../../assets/infographics/37-esql-kok-neden.png){width=60%}
+![Zincirleme arıza ve ES|QL ile kök neden](../../../assets/infographics/37-esql-kok-neden.png)
 
 ---
 

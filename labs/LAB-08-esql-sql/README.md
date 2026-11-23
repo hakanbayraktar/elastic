@@ -16,7 +16,7 @@ Bu labda e-ticaret verisini ES|QL ile süzecek, gruplayacak ve yeni sütun hesap
 field'ın sessizce yanlış sonuç verdiği tuzağı görecek; aynı soruyu Discover'da ES|QL moduyla ve SQL ile
 soracak, SQL'in arkadaki Query DSL'ini `_sql/translate` ile göreceğiz.
 
-![ES|QL pipeline'ı: FROM, WHERE, KEEP, SORT, LIMIT](../../assets/infographics/42-esql-pipeline.png){width=60%}
+![ES|QL pipeline'ı: FROM, WHERE, KEEP, SORT, LIMIT](../../assets/infographics/42-esql-pipeline.png)
 
 ---
 
@@ -211,7 +211,7 @@ Discover'da sağ üstteki **Query in ES|QL** düğmesi Discover'ı ES|QL moduna 
 FROM kibana_sample_data_ecommerce | STATS siparis = COUNT(*) BY day_of_week | SORT siparis DESC
 ```
 
-![Discover ES|QL modu: 1 Switch to Classic, 2 sorgu kutusu, 3 Search, 4 sonuç grafiği](../../assets/screenshots/LAB-08/01-discover-esql.png){width=75%}
+![Discover ES|QL modu: 1 Switch to Classic, 2 sorgu kutusu, 3 Search, 4 sonuç grafiği](../../assets/screenshots/LAB-08/01-discover-esql.png)
 
 Sonuç grafik (4) ve altında gruplar olarak gelir. Zaman kutusu **All time** olduğu için sayılar Adım 5'teki
 SQL ile aynıdır (Thursday 775, Friday 770…); zaman aralığı daraltılırsa sorgu yalnız o aralığı sayar. Klasik

@@ -434,15 +434,15 @@ def lab02(page):
     def pick_dv(name):
         pick_dataview(page, name); settle(page, 5)
 
-    # Adim 6a: Discover, Last 15 minutes -> Last 7 days
+    # Adim 6a: Discover, Last 15 minutes -> Last 1 year
     page.goto(BASE + "/app/discover", wait_until="domcontentloaded"); settle(page, 6)
     pick_dv("belge-talepler")
     page.locator('[data-test-subj="dateRangePickerControlButton"]').first.click(); time.sleep(1.5)
     shoot(page, lab, "03-discover-zaman-secici", [
         (("testsubj", "dateRangePickerInput"), 1, "left"),
-        (("testsubj", "dateRangePickerPresetItem-Last_7_days"), 2, "left"),
-    ], scroll_to=("testsubj", "dateRangePickerPresetItem-Last_7_days"))
-    page.locator('[data-test-subj="dateRangePickerPresetItem-Last_7_days"]').first.click(); settle(page, 6)
+        (("testsubj", "dateRangePickerPresetItem-Last_1_year"), 2, "left"),
+    ], scroll_to=("testsubj", "dateRangePickerPresetItem-Last_1_year"))
+    page.locator('[data-test-subj="dateRangePickerPresetItem-Last_1_year"]').first.click(); settle(page, 6)
     shoot(page, lab, "04-discover-talepler", [
         (("testsubj", "discoverQueryHits"), 3, "down"),
         (("testsubj", "unifiedHistogramChart"), 4, None),

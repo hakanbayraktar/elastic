@@ -16,7 +16,7 @@ Bu labda bir data stream'in yalnız ekleme kuralını ölçecek, kişisel veriyi
 silecek, eski veriyi ILM politikası yazmadan Data Stream Lifecycle (DSL) ile sildirecek ve ILM ile yönetilen bir
 stream'i DSL'e geçireceğiz.
 
-![Data stream kuralları ve Data Stream Lifecycle](../../../assets/infographics/36-data-stream-kurallari-dsl.png){width=60%}
+![Data stream kuralları ve Data Stream Lifecycle](../../../assets/infographics/36-data-stream-kurallari-dsl.png)
 
 ---
 

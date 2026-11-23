@@ -15,7 +15,7 @@ birleştirme veri aktarılırken yapılır ve her sipariş müşterisi ve ürün
 Bu labda Logstash'in `jdbc` input'u JOIN'li tek bir SQL'i düzenli aralıklarla çalıştıracak, yalnız
 değişen satırları alacak ve aynı siparişi tekrar yazdığında kopya açmayacak.
 
-![MySQL'den Elasticsearch'e: JOIN'li SQL, Logstash JDBC ve artımlı aktarım](../../assets/infographics/17-logstash-mysql-jdbc.png){width=60%}
+![MySQL'den Elasticsearch'e: JOIN'li SQL, Logstash JDBC ve artımlı aktarım](../../assets/infographics/17-logstash-mysql-jdbc.png)
 
 ---
 

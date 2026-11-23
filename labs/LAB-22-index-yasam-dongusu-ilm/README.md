@@ -15,7 +15,7 @@ elle yapmak yerine Elasticsearch'e bir politika olarak verilir.
 Bu labda şablonla bir data stream kuracak, ILM politikasıyla rollover, warm ve delete fazlarını tetikleyecek
 ve eski verinin kendiliğinden silinişini son duruma kadar izleyeceğiz.
 
-![Template, data stream ve ILM: hot, warm, delete](../../assets/infographics/31-ilm-yasam-dongusu.png){width=60%}
+![Template, data stream ve ILM: hot, warm, delete](../../assets/infographics/31-ilm-yasam-dongusu.png)
 
 ---
 

@@ -17,7 +17,7 @@ Bu labda Fleet Server ve bir ajanı container olarak kuracak, ajanın sunucuyu i
 Kibana'dan değiştirecek, **Add integrations** ile Nginx loglarını ekleyecek ve CPU'ya kısa bir yük verip bir
 Lens panosunda göreceğiz.
 
-![Fleet Server, Elastic Agent ve politika akışı](../../assets/infographics/15-fleet-agent-policy-akisi.png){width=60%}
+![Fleet Server, Elastic Agent ve politika akışı](../../assets/infographics/15-fleet-agent-policy-akisi.png)
 
 ---
 
@@ -145,7 +145,7 @@ Satırların sırası sizde farklı olabilir.
 Aynı listeyi **Management › Fleet › Agents**'ta görün: `linux-agent-01` satırında (1) durum `Healthy`,
 politika `Lab Linux sunucu`. **Last activity** birkaç saniye öncesini gösterir: ajan düzenli check-in yapıyor.
 
-![Fleet › Agents: 1 linux-agent-01 Healthy](../../assets/screenshots/LAB-11/01-fleet-agents.png){width=75%}
+![Fleet › Agents: 1 linux-agent-01 Healthy](../../assets/screenshots/LAB-11/01-fleet-agents.png)
 
 ### 3. Politikada ne var?
 
@@ -237,21 +237,21 @@ Beklenen çıktı:
 1. **Management › Fleet › Agent policies**'te **Lab Linux sunucu** politikasını açın ve `system-lab`
    integration'ına (1) tıklayın.
 
-   ![Politika sayfası: 1 system-lab](../../assets/screenshots/LAB-11/02-policy-system.png){width=75%}
+   ![Politika sayfası: 1 system-lab](../../assets/screenshots/LAB-11/02-policy-system.png)
 
 2. **Collect metrics from System instances** satırında **Change defaults**'a (2) tıklayın. Altında
    **Proc Filesystem Directory** değeri `/hostfs`'tir: betiğin verdiği ayar.
 
-   ![Change defaults: 2 düğme; Proc Filesystem Directory /hostfs](../../assets/screenshots/LAB-11/03-change-defaults-hostfs.png){width=75%}
+   ![Change defaults: 2 düğme; Proc Filesystem Directory /hostfs](../../assets/screenshots/LAB-11/03-change-defaults-hostfs.png)
 
 3. **System process metrics** satırının **Period** değerini (3) `10s` yerine `30s` yapın ve sağ alttaki
    **Save integration**'a (4) basın.
 
-   ![Period 30s ve Save integration](../../assets/screenshots/LAB-11/04-process-period-save.png){width=75%}
+   ![Period 30s ve Save integration](../../assets/screenshots/LAB-11/04-process-period-save.png)
 
 4. Onay penceresinde **Save and deploy changes**'e (5) basın; pencere değişikliğin kaç ajanı etkileyeceğini söyler.
 
-   ![Save and deploy changes onayı](../../assets/screenshots/LAB-11/05-save-and-deploy.png){width=75%}
+   ![Save and deploy changes onayı](../../assets/screenshots/LAB-11/05-save-and-deploy.png)
 
 Ajanın yeni revision'a geçmesini bekleyin:
 
@@ -280,17 +280,17 @@ okuyor, yeni bir bağlama gerekmez.
 1. Kibana ana sayfasında **Add integrations**'a basın, arama kutusuna `nginx` yazın (1) ve **Nginx (ECS)**
    kartını (2) açın; sonra **Add Nginx (ECS)** (3).
 
-   ![Integrations: 1 arama, 2 Nginx (ECS) kartı](../../assets/screenshots/LAB-11/06-integrations-nginx.png){width=75%}
+   ![Integrations: 1 arama, 2 Nginx (ECS) kartı](../../assets/screenshots/LAB-11/06-integrations-nginx.png)
 
 2. **Integration name** `nginx-lab` (4). Sunucunun Nginx'inde metrik ucu (`stub_status`) yok:
    **Collect metrics from Nginx instances** anahtarını (5) kapatın, yalnız loglar kalsın.
 
-   ![Add Nginx: 4 integration adı, 5 metrikler kapalı](../../assets/screenshots/LAB-11/07-nginx-ayar.png){width=75%}
+   ![Add Nginx: 4 integration adı, 5 metrikler kapalı](../../assets/screenshots/LAB-11/07-nginx-ayar.png)
 
 3. **Where to add this integration?** altında **Existing hosts** (6), **Agent policies** listesinden
    **Lab Linux sunucu** (7), sonra **Save and continue** (8). Onay penceresinde **Save and deploy changes**.
 
-   ![Existing hosts: 6 sekme, 7 Lab Linux sunucu, 8 Save and continue](../../assets/screenshots/LAB-11/08-nginx-politika.png){width=75%}
+   ![Existing hosts: 6 sekme, 7 Lab Linux sunucu, 8 Save and continue](../../assets/screenshots/LAB-11/08-nginx-politika.png)
 
 Politika revision'ı yine artar; ajan yetişince Nginx logları gelir:
 
@@ -421,19 +421,19 @@ Yüzdeler sunucunun o anki yüküne göre sizde farklıdır (burada 2 çekirdek 
    `data_stream.dataset : "system.cpu" and data_stream.namespace : "fleetlab"` (2). Soldaki listeden
    `system.cpu.total.norm.pct`'yi **+** ile ekleyin: zamana göre bir **Line** grafiği gelir.
 
-   ![Lens: 1 metrics-*, 2 sorgu, sol listede system.cpu.total.norm.pct](../../assets/screenshots/LAB-11/09-lens-cpu.png){width=75%}
+   ![Lens: 1 metrics-*, 2 sorgu, sol listede system.cpu.total.norm.pct](../../assets/screenshots/LAB-11/09-lens-cpu.png)
 
 2. Sağdaki **Median of system.cpu.total.norm.pct**'ye tıklayın, **Average** (3) seçin ve **Name** kutusuna
    `Sunucu CPU (%)` (4) yazın; **Close**, sonra **Save and return**.
 
-   ![Dimension: 3 Average, 4 Name](../../assets/screenshots/LAB-11/10-lens-average.png){width=75%}
+   ![Dimension: 3 Average, 4 Name](../../assets/screenshots/LAB-11/10-lens-average.png)
 
 3. Panoyu **Save** ile `Sunucu CPU (Fleet)` adıyla kaydedin; **Store time with dashboard** (5) açık olsun, pano
    her açılışta son 15 dakikayı göstersin.
 
-   ![Pano kaydı: 5 Store time with dashboard](../../assets/screenshots/LAB-11/11-pano-kaydet.png){width=75%}
+   ![Pano kaydı: 5 Store time with dashboard](../../assets/screenshots/LAB-11/11-pano-kaydet.png)
 
-   ![Pano: CPU çizgisinde yük penceresi](../../assets/screenshots/LAB-11/12-pano-cpu.png){width=75%}
+   ![Pano: CPU çizgisinde yük penceresi](../../assets/screenshots/LAB-11/12-pano-cpu.png)
 
 Çizgide yükün başladığı ve bittiği an görünür. Bu sunucuda yükten önce %44, yük sırasında %75 ölçüldü: 4 çekirdeğin
 2'si %80 yüklenince ortalama yaklaşık 30-40 puan artar. Sunucunun o anki işine göre sayılar sizde farklıdır.

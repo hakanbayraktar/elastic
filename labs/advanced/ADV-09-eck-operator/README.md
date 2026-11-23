@@ -16,7 +16,7 @@ Kibana istiyorum" diye iki kısa kaynak yazarsınız, gerisini operatör üretir
 kuracak, ürettiklerine bakacak, TLS'i doğrulanmış biçimde kullanacak, pod'u silip verinin kaldığını görecek ve
 Kibana'ya SSH tüneliyle gireceğiz.
 
-![ECK: istenen durum, operatör ve ürettiği Kubernetes nesneleri](../../../assets/infographics/39-eck-operator.png){width=60%}
+![ECK: istenen durum, operatör ve ürettiği Kubernetes nesneleri](../../../assets/infographics/39-eck-operator.png)
 
 ---
 
@@ -316,7 +316,7 @@ Tarayıcıda `https://127.0.0.1:30086` adresini açın. Sertifika operatörün k
 uyarı verir; devam edin. Kullanıcı `elastic`, parola Adım 4'teki `$PW`'dir (sunucuda `echo "$PW"` ile görün).
 **Stack Management › Index Management**'ta `eck-siparis` index'ini (1) ve document sayısını (2) görün:
 
-![ECK Kibana: Index Management'ta eck-siparis, 3 document](../../../assets/screenshots/ADV-09/01-index-management.png){width=75%}
+![ECK Kibana: Index Management'ta eck-siparis, 3 document](../../../assets/screenshots/ADV-09/01-index-management.png)
 
 İşiniz bitince tüneli kendi bilgisayarınızda kapatın: `pkill -f "\-L 30086:127.0.0.1:30086"`.
 

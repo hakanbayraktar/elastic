@@ -207,7 +207,7 @@ Kibana'da **Stack Management › Index Management** listesinde arama kutusuna (1
 bu index'in satırında (2) sağlık ve document sayısı sütunları boş kalır: shard hiçbir node'da olmadığı için
 Elasticsearch bu index'in istatistiğini veremez. Listede sağlığı boş görünen bir index, red'in ilk işaretidir:
 
-![Index Management: 1 arama kutusu, 2 saglik-arizali satırı; sağlık ve document sayısı boş](../../assets/screenshots/LAB-21/01-index-management-red.png){width=75%}
+![Index Management: 1 arama kutusu, 2 saglik-arizali satırı; sağlık ve document sayısı boş](../../assets/screenshots/LAB-21/01-index-management-red.png)
 
 ### 4. Red'in nedenini sormak ve düzeltmek
 

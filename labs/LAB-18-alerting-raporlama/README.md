@@ -88,16 +88,16 @@ POST kbn:/api/data_views/data_view
 Create map**, zaman aralığı **Last 7 days**, **Add layer**. **Clusters** (1) yakın noktaları sayıyla
 gruplar; **Documents** (2) her document'i ayrı nokta çizer:
 
-![Katman türü: 1 Clusters, 2 Documents](../../assets/screenshots/LAB-18/01-maps-katman-turu.png){width=75%}
+![Katman türü: 1 Clusters, 2 Documents](../../assets/screenshots/LAB-18/01-maps-katman-turu.png)
 
 **Clusters**'ı seçin, data view olarak `Apache logları (alarm)` (3), **Add and close** (4):
 
-![Katman: 3 data view, 4 Add and close](../../assets/screenshots/LAB-18/02-maps-veri.png){width=75%}
+![Katman: 3 data view, 4 Add and close](../../assets/screenshots/LAB-18/02-maps-veri.png)
 
 Cluster'lar şehirlerde toplanır; sayı o bölgedeki istek sayısıdır (5). Haritayı **Save** ile `Ziyaretçi haritası`
 adıyla kaydedin; Library'ye kaydedilir ve oradan panoya eklenebilir.
 
-![Harita: 5 katman ve cluster sayıları](../../assets/screenshots/LAB-18/03-maps-kumeler.png){width=75%}
+![Harita: 5 katman ve cluster sayıları](../../assets/screenshots/LAB-18/03-maps-kumeler.png)
 
 Aynı soru sorguyla: İstanbul merkezine 500 km içinde kaç istek var, bunların kaçı şehrin kendisinden (50 km)?
 
@@ -163,9 +163,9 @@ POST kbn:/api/alerting/rule/alarm-5xx
 Kural **Stack Management › Rules** altında görünür; aynı kuralı arayüzden kurarken dolduracağınız
 field'lar:
 
-![Kural formu: 1 kural türü, 2 index, 3 eşik](../../assets/screenshots/LAB-18/04-kural-formu.png){width=75%}
+![Kural formu: 1 kural türü, 2 index, 3 eşik](../../assets/screenshots/LAB-18/04-kural-formu.png)
 
-![Kural formu: 4 aksiyon ve connector](../../assets/screenshots/LAB-18/04b-kural-aksiyon.png){width=75%}
+![Kural formu: 4 aksiyon ve connector](../../assets/screenshots/LAB-18/04b-kural-aksiyon.png)
 
 ### 5. Arızayı üretin ve alarmı izleyin
 
@@ -188,7 +188,7 @@ Beklenen çıktı:
 Kural bir sonraki çalışmasında (en çok 1 dakika) eşiği aşan sayıyı gördü ve aksiyon document'i yazdı. Zaman
 sizde farklıdır. Kural sayfasında bir aktif alarm görünür (1):
 
-![Kural ayrıntısı: 1 aktif alarm](../../assets/screenshots/LAB-18/05-kural-aktif.png){width=75%}
+![Kural ayrıntısı: 1 aktif alarm](../../assets/screenshots/LAB-18/05-kural-aktif.png)
 
 5 dakikalık pencere arızayı geride bırakınca alarm kendiliğinden kapanır:
 
@@ -218,29 +218,29 @@ http.response.status_class : "5xx"
 Üst menüde **⋮ › Export**: **CSV** (2) raporu hemen üretir; **Schedule export** (3) aynı raporu belirli
 aralıkla e-postayla gönderir (e-posta connector'ı gerekir). **CSV**'yi seçip **Generate CSV**'ye basın:
 
-![Discover: 1 sorgu, 2 CSV, 3 Schedule export](../../assets/screenshots/LAB-18/06-discover-export.png){width=75%}
+![Discover: 1 sorgu, 2 CSV, 3 Schedule export](../../assets/screenshots/LAB-18/06-discover-export.png)
 
 Rapor arka planda hazırlanır; **Stack Management › Reporting**'de listelenir ve oradan indirilir (4). 99
 satır: geçmişteki 59 hata ve arızanın 40'ı. **Done, warnings detected**: sütun adı `@timestamp` `@` ile
 başlar; Excel böyle başlayan hücreyi formül sanabileceği için Kibana raporu işaretler.
 
-![Reporting: 4 tamamlanan CSV raporu](../../assets/screenshots/LAB-18/07-reporting.png){width=75%}
+![Reporting: 4 tamamlanan CSV raporu](../../assets/screenshots/LAB-18/07-reporting.png)
 
 **PDF: panonun çıktısı.** Yöneticiye giden rapor genelde panonun PDF'idir (deneme lisansı gerekir; LAB-01'de
 açıldı). **Dashboards › Create dashboard**, üst menüde **Add** (5); açılan panelin kütüphane sekmesinde Adım 2'deki
 `Ziyaretçi haritası`'nı seçin ve panoyu **Save** ile `Alarm panosu` adıyla kaydedin:
 
-![Pano: 5 Add, kütüphane sekmesi ve Ziyaretçi haritası](../../assets/screenshots/LAB-18/08-pano-library.png){width=75%}
+![Pano: 5 Add, kütüphane sekmesi ve Ziyaretçi haritası](../../assets/screenshots/LAB-18/08-pano-library.png)
 
 **Exit edit** ile düzenleme modundan çıkın; üst menüde **Export › PDF** (6), açılan pencerede **Export PDF** (7):
 
-![Export PDF: 6 PDF, 7 Export PDF](../../assets/screenshots/LAB-18/09-pdf-export.png){width=75%}
+![Export PDF: 6 PDF, 7 Export PDF](../../assets/screenshots/LAB-18/09-pdf-export.png)
 
 PDF arka planda bir tarayıcıyla çizilir; bu sunucuda birkaç dakika içinde hazırlandı (yaklaşık 490 KB, tek sayfa
 olmayan bir pano için daha uzun sürer). **Stack Management › Reporting**'de **Alarm panosu** satırı **Done** olur, türü
 **PDF** (8); **Download report** ile indirilir:
 
-![Reporting: 8 Alarm panosu PDF raporu](../../assets/screenshots/LAB-18/10-reporting-pdf.png){width=75%}
+![Reporting: 8 Alarm panosu PDF raporu](../../assets/screenshots/LAB-18/10-reporting-pdf.png)
 
 <details>
 <summary><strong>Slack ve e-posta connector'ı</strong></summary>
@@ -248,12 +248,12 @@ olmayan bir pano için daha uzun sürer). **Stack Management › Reporting**'de 
 Slack için Slack'te bir **Incoming Webhook** URL'i üretilir; Kibana'da **Stack Management › Connectors ›
 Create connector › Slack** ile ad ve Webhook URL girilir:
 
-![Slack connector formu](../../assets/screenshots/LAB-18/13-connector-create-slack.png){width=75%}
+![Slack connector formu](../../assets/screenshots/LAB-18/13-connector-create-slack.png)
 
 E-posta için **Email** connector'ında gönderen adres, SMTP sunucusu (ör. `smtp.resend.com`, 465), kullanıcı
 ve parola girilir:
 
-![E-posta connector formu](../../assets/screenshots/LAB-18/14-connector-email-resend.png){width=75%}
+![E-posta connector formu](../../assets/screenshots/LAB-18/14-connector-email-resend.png)
 
 Kurala ikinci bir action olarak eklenir; mesajda aynı değişkenler kullanılır
 (`{{rule.name}}`, `{{context.value}}`, `{{context.link}}`). Linklerin dolu gelmesi için Kibana'da

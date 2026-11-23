@@ -16,7 +16,7 @@ Bu labda bir kind cluster'ı kuracak, her node'a bir Filebeat kopyası yerleşti
 loglarını ana cluster'a gönderecek, her kaydı namespace, pod ve container bilgisiyle zenginleştirecek ve çok satırlı bir
 Python hatasını tek document'te birleştireceğiz.
 
-![Kubernetes pod logları: kind node, Filebeat DaemonSet, ana cluster](../../../assets/infographics/38-k8s-pod-loglari.png){width=60%}
+![Kubernetes pod logları: kind node, Filebeat DaemonSet, ana cluster](../../../assets/infographics/38-k8s-pod-loglari.png)
 
 ---
 

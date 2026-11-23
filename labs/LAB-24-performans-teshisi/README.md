@@ -15,7 +15,7 @@ Bu labda 200 bin ürünlük bir index'te slow log ile yavaş sorguyu ve onu gön
 ile `must` ve `filter` farkını, joker karakterli sorgunun maliyetini ölçecek ve uzun süren bir sorguyu Tasks API ile
 bulup iptal edeceğiz. Son adımda Stack Monitoring ile cluster'ı sürekli izleyeceğiz.
 
-![Yavaş sorgu teşhisi: slow log, Profile API, Tasks](../../assets/infographics/34-performans-teshisi.png){width=60%}
+![Yavaş sorgu teşhisi: slow log, Profile API, Tasks](../../assets/infographics/34-performans-teshisi.png)
 
 ---
 
@@ -253,7 +253,7 @@ alarmları LAB-18'de kuruyoruz, burada **No** deyip **Continue**'ya basın. **Cl
 Elasticsearch kutusunun **Overview** bölümü (1) cluster'ın durumunu, sürümünü ve lisansını, **Nodes** (2) node
 sayısını gösterir:
 
-![Stack Monitoring: 1 Elasticsearch Overview, 2 Nodes](../../assets/screenshots/LAB-24/01-izleme-ozet.png){width=75%}
+![Stack Monitoring: 1 Elasticsearch Overview, 2 Nodes](../../assets/screenshots/LAB-24/01-izleme-ozet.png)
 
 
 **Nodes** bağlantısına tıklayın. Üstteki şerit cluster'ın özetini (Status, Nodes, Indices, JVM Heap, Total shards,
@@ -262,7 +262,7 @@ shard sayısı, **CPU Usage**, **JVM Heap** ve **Disk Free Space** değerleri ya
 **CPU Usage** `N/A` görünür: container'ın CPU bilgisini Elasticsearch okuyamıyor. Node adına tıklarsanız o node'un
 grafikleri açılır; slow log "hangi sorgu" sorusunu, bu ekran "hangi node, ne zaman" sorusunu cevaplar:
 
-![Nodes: 3 node satırı, CPU, yük, JVM heap ve disk](../../assets/screenshots/LAB-24/02-izleme-nodes.png){width=75%}
+![Nodes: 3 node satırı, CPU, yük, JVM heap ve disk](../../assets/screenshots/LAB-24/02-izleme-nodes.png)
 
 
 Cluster'da yerleşemeyen bir replica varsa **Health** `Missing replica shards` (yellow) gösterir; Nodes sayfasındaki

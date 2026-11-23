@@ -295,12 +295,12 @@ SDK'sı koyar.
 Kibana menüsünden **Observability › APM › Service inventory**. İki servis (1) görünür; **Failed transaction rate** (2)
 beş siparişten birinin hatalı olduğunu gösterir:
 
-![Service inventory: 1 iki servis, 2 hatalı işlem oranı](../../../assets/screenshots/ADV-02/01-service-inventory.png){width=75%}
+![Service inventory: 1 iki servis, 2 hatalı işlem oranı](../../../assets/screenshots/ADV-02/01-service-inventory.png)
 
 Hatalı siparişin akışını açmak için trace kimliğiyle gidin: `http://<Kibana>/app/apm/link-to/trace/0f927e9d6892d8ca9613aef16cbbae30`.
 Akışta checkout span'inin altında payment span'i (3) ve hata durumu görünür:
 
-![Trace akışı: 3 checkout altında payment span'i](../../../assets/screenshots/ADV-02/02-trace-akisi.png){width=75%}
+![Trace akışı: 3 checkout altında payment span'i](../../../assets/screenshots/ADV-02/02-trace-akisi.png)
 
 ---
 

@@ -14,7 +14,7 @@ tam değer ve metin aramasını ayıracak, koşulları `bool` ile birleştirecek
 sayfalayacak ve sonuçların neden o sırada geldiğini (skor) göreceğiz. Lab bir soruyla biter: aynı isim
 neden bir sorguda bulunur, ötekinde bulunmaz?
 
-![İki tür sorgu: full-text ve term-level](../../assets/infographics/41-query-dsl-iki-tur.png){width=60%}
+![İki tür sorgu: full-text ve term-level](../../assets/infographics/41-query-dsl-iki-tur.png)
 
 ---
 

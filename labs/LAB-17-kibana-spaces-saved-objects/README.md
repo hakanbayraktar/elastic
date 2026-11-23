@@ -67,7 +67,7 @@ Kibana menüsünden **Stack Management › Spaces › Create space**. **Name** a
 (Elasticsearch, Observability ve Security görünümleri menüyü o çözüme göre hazır daraltır.) **Avatar** bölümünde
 baş harfleri `SE` yapıp bir renk seçebilirsiniz.
 
-![Create space: 1 ad, 2 URL identifier, 3 Solution view](../../assets/screenshots/LAB-17/01-space-olustur.png){width=75%}
+![Create space: 1 ad, 2 URL identifier, 3 Solution view](../../assets/screenshots/LAB-17/01-space-olustur.png)
 
 Sayfanın altındaki **Create space** ile kaydedin. Spaces listesinde Default'un yanında `Satış ekibi` görünür.
 
@@ -77,14 +77,14 @@ Spaces listesinde `Satış ekibi`'ni açın. **Set feature visibility** bölüm�
 **Security** kategorilerinin kutusunu (4) kaldırın; **Analytics** kategorisini açıp **Machine Learning**'i de
 kaldırın. **Apply changes** ile kaydedin:
 
-![Feature visibility: 4 kaldırılan kategoriler](../../assets/screenshots/LAB-17/02-space-ozellik.png){width=75%}
+![Feature visibility: 4 kaldırılan kategoriler](../../assets/screenshots/LAB-17/02-space-ozellik.png)
 
 Sol üstteki Space seçicisinden (5) `Satış ekibi`'ne geçin ve menüyü açın. Default Space'in menüsüyle
 karşılaştırın:
 
-![Default Space menüsü: Observability, Security ve Machine Learning var](../../assets/screenshots/LAB-17/03-menu-default.png){width=75%}
+![Default Space menüsü: Observability, Security ve Machine Learning var](../../assets/screenshots/LAB-17/03-menu-default.png)
 
-![Satış ekibi menüsü: 5 Space seçici, 6 sadeleşmiş menü](../../assets/screenshots/LAB-17/04-menu-satis.png){width=75%}
+![Satış ekibi menüsü: 5 Space seçici, 6 sadeleşmiş menü](../../assets/screenshots/LAB-17/04-menu-satis.png)
 
 Satış ekibi menüsünde Observability (APM, Logs, Infrastructure, SLOs…), Security (Detections, Timelines…),
 Machine Learning, Alerts ve Cases yoktur; Discover, Dashboards, Maps ve Stack Management yerindedir.
@@ -98,11 +98,11 @@ Yeni Space boştur: panolar ve data view'lar Space'e aittir. Default Space'e dö
 Saved objects** açın. `[eCommerce] Revenue Dashboard` satırının sonundaki **Actions** menüsünden **Copy to
 spaces** (7):
 
-![Saved objects: 7 Copy to spaces](../../assets/screenshots/LAB-17/05-copy-menu.png){width=75%}
+![Saved objects: 7 Copy to spaces](../../assets/screenshots/LAB-17/05-copy-menu.png)
 
 Açılan pencerede hedef olarak `Satış ekibi`'ni (8) seçin ve **Copy to 1 space** (9) deyin:
 
-![Copy to space: 8 hedef Space, 9 kopyala](../../assets/screenshots/LAB-17/06-copy-hedef.png){width=75%}
+![Copy to space: 8 hedef Space, 9 kopyala](../../assets/screenshots/LAB-17/06-copy-hedef.png)
 
 Pencerede sonuç olarak pano ve ilişkili dört nesnesi (data view, saved search, harita, Markdown paneli)
 görünür; **Finish** ile kapatın. **Include related saved objects** varsayılan olarak açıktır: panonun panelleri
@@ -114,7 +114,7 @@ Copy to space aynı Kibana içinde çalışır. Panoyu başka bir Kibana'ya (ör
 yedeklemek için dosyaya aktarılır. Saved objects listesinde (arama: `Revenue`) `[eCommerce] Revenue Dashboard` satırını işaretleyin
 (10) ve tablonun üstünde **Delete**'in yanındaki **Export** düğmesine basın. Açılan kutuda **Include related objects** (11) açık kalsın; **Export** (12):
 
-![Export: 10 seçilen pano, 11 ilişkili nesneler, 12 dışa aktar](../../assets/screenshots/LAB-17/07-export.png){width=75%}
+![Export: 10 seçilen pano, 11 ilişkili nesneler, 12 dışa aktar](../../assets/screenshots/LAB-17/07-export.png)
 
 Tarayıcı `export.ndjson` dosyasını kendi bilgisayarınıza indirir. Her satır bir saved object'tir:
 
@@ -147,7 +147,7 @@ Space seçicisinden `Pazarlama`'ya geçin, **Stack Management › Saved objects 
 
 **Check for existing objects** seçili kalsın, **Import** (15):
 
-![Import: 13 dosya, 14 çakışma seçenekleri, 15 içe aktar](../../assets/screenshots/LAB-17/08-import.png){width=75%}
+![Import: 13 dosya, 14 çakışma seçenekleri, 15 içe aktar](../../assets/screenshots/LAB-17/08-import.png)
 
 Sonuç penceresi `5 objects imported`, `5 new` der; **Done** ile kapatın. Pazarlama Space'i boş olduğu için
 çakışma yoktu.
@@ -157,7 +157,7 @@ Sonuç penceresi `5 objects imported`, `5 new` der; **Done** ile kapatın. Pazar
 Adres çubuğunda Space adresin içindedir. `http://<IP>:5601/s/pazarlama/app/dashboards` adresini açın ve
 `[eCommerce] Revenue Dashboard`'u (16) tıklayın; paneller veriyle gelir (17):
 
-![Pazarlama Space'i: 16 içe aktarılan pano, 17 veriyle gelen paneller](../../assets/screenshots/LAB-17/09-pazarlama-pano.png){width=75%}
+![Pazarlama Space'i: 16 içe aktarılan pano, 17 veriyle gelen paneller](../../assets/screenshots/LAB-17/09-pazarlama-pano.png)
 
 Üç Space'te üç ayrı pano kopyası var; biri değişince ötekiler değişmez. Veri ise tek: hepsi aynı
 `kibana_sample_data_ecommerce` index'ini okur.
