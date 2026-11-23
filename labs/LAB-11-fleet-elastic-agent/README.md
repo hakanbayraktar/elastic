@@ -374,6 +374,29 @@ Beklenen çıktı:
 
 </details>
 
+<details>
+<summary><strong>Integration'ın hazır panosunu açmak</strong></summary>
+
+Integration yalnız veri toplama ayarı değildir; kurulunca kendi hazır panolarını, index şablonlarını ve ingest
+pipeline'larını da getirir. Pano kurmadan veriye hemen bakmanın en kısa yolu budur (Grafana'daki hazır pano
+galerisinin Kibana'daki karşılığı).
+
+1. **Management › Integrations › Installed integrations › Nginx (ECS)**, **Assets** sekmesi (1)
+2. **Dashboards** altında **[Logs Nginx] Overview** (2):
+
+![Nginx (ECS) Assets: 1 Assets sekmesi, 2 hazır pano](../../assets/screenshots/LAB-11/08a-nginx-assets.png)
+
+3. Pano (3) açılır; zaman aralığını **Last 7 days** yapın. Harita ziyaretçilerin ülkesini, alttaki paneller durum
+   kodlarını ve en çok istenen adresleri gösterir:
+
+![Hazır pano: 3 [Logs Nginx] Overview](../../assets/screenshots/LAB-11/08b-nginx-hazir-pano.png)
+
+- **Managed:** hazır panolar integration'a aittir, doğrudan değiştirilmez; değiştirmek için panonun menüsünden kopyası
+  (**Duplicate**) alınır.
+- **Başka integration'lar:** System, MySQL, Apache gibi her integration'ın **Assets** sekmesinde kendi panoları vardır.
+
+</details>
+
 ### 7. CPU yükü ve Lens panosu
 
 System integration'ı CPU'yu 10 saniyede bir `metrics-system.cpu-fleetlab`'e yazar. `stress-ng` ile kısa ve

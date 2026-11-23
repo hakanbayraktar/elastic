@@ -120,6 +120,24 @@ def lab11_pano(page):
     print("pano kaydedildi")
 
 
+def lab11_hazir(page):
+    """Adim 6 kutusu: integration'in hazir panosunu Assets sekmesinden acmak."""
+    page.goto(k.BASE + "/app/integrations/detail/nginx/assets", wait_until="domcontentloaded"); k.settle(page, 8)
+    pano = '[data-test-subj="fleetAssetsAccordion.content.dashboard.[Logs Nginx] Overview"]'
+    k.shoot(page, LAB, "08a-nginx-assets", [
+        (("testsubj", "tab-assets"), 1, "down"),
+        (("css", pano), 2, "left")])
+    page.locator(pano + " a").first.click()
+    page.wait_for_url("**/app/dashboards#/view/**", timeout=60000, wait_until="commit")
+    pg = page; k.settle(pg, 8)
+    pg.locator('[data-test-subj="superDatePickerToggleQuickMenuButton"], [data-test-subj="dateRangePickerControlButton"]').first.click(); time.sleep(1.5)
+    pg.locator('[data-test-subj="dateRangePickerPresetItem-Last_7_days"], [data-test-subj="superDatePickerCommonlyUsed_Last_7 days"]').first.click(); k.settle(pg, 10)
+    pg.mouse.move(800, 60); time.sleep(1)
+    print("pano:", pg.url.replace(k.BASE, "")[:70], "panel:", pg.locator('[data-test-subj="dashboardPanel"]').count(),
+          "hata:", pg.locator('[data-test-subj="embeddableError"]').count())
+    k.shoot(pg, LAB, "08b-nginx-hazir-pano", [(("css", '[data-test-subj="breadcrumbs"] [data-test-subj="breadcrumb last"], [data-test-subj="breadcrumbs"]'), 3, "down")])
+
+
 if __name__ == "__main__":
     import sys
     parca = sys.argv[1] if len(sys.argv) > 1 else "1"
@@ -127,5 +145,5 @@ if __name__ == "__main__":
         br = pw.chromium.launch(channel="chrome")
         page = br.new_page(viewport={"width": 1600, "height": 900}, device_scale_factor=k.SCALE)
         k.login(page)
-        {"1": lab11, "nginx": lab11_nginx, "pano": lab11_pano}[parca](page)
+        {"1": lab11, "nginx": lab11_nginx, "hazir": lab11_hazir, "pano": lab11_pano}[parca](page)
         br.close()
