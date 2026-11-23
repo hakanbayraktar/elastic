@@ -34,7 +34,7 @@ node'a repo gerekmez; onlara komutlar node-1'den gider):
 ```bash
 export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
 sudo -E apt-get update -qq && sudo -E apt-get install -y -qq git jq >/dev/null
-[ -d ~/elastic ] || git clone -q https://gitlab.com/devops-monitoring/elastic.git ~/elastic
+[ -d ~/elastic ] || git clone -q https://github.com/hakanbayraktar/elk.git ~/elastic
 git -C ~/elastic log --oneline -1
 ```
 

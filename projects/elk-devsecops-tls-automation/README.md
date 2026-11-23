@@ -23,7 +23,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker.io docker-comp
 sudo usermod -aG docker "$USER"
 sudo sysctl -w vm.max_map_count=262144
 echo "vm.max_map_count=262144" | sudo tee /etc/sysctl.d/99-elasticsearch.conf
-git clone https://gitlab.com/devops-monitoring/elastic.git ~/elastic
+git clone https://github.com/hakanbayraktar/elk.git ~/elastic
 ```
 
 `usermod` grubu bir sonraki oturumda geçerli olur: bağlantıyı kapatıp yeniden bağlanın, sonra
