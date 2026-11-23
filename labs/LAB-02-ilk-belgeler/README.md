@@ -35,22 +35,11 @@ cd ~/elastic/labs/LAB-02-ilk-belgeler
 - **`_id`:** document'in kimliği; vermezseniz Elasticsearch üretir
 - **mapping:** field tipleri; vermezseniz Elasticsearch ilk değerden tahmin eder (dynamic mapping)
 
----|---|---|
-| index | Aynı türden document'lerin toplandığı ad | tablo |
-| document | Tek bir JSON kaydı | satır |
-| field | Document'teki bir anahtar (`ad`, `fiyat`) | sütun |
-| `_id` | Document'in index içindeki kimliği; verilmezse Elasticsearch üretir | birincil anahtar |
-| mapping | Her field'ın tipi (`text`, `keyword`, `date`, `float`) | şema |
-| inverted index | Her terimin hangi document'lerde geçtiğini tutan dizin; arama bunun üzerinden yapılır | kitabın arkasındaki dizin |
-| data view | Kibana'nın bir ya da birden çok index'e nasıl bakacağını tutan tanım; veri taşımaz | view (görünüm) |
-
-Fark: index'i ve mapping'i önceden tanımlamak zorunlu değildir. İlk document geldiğinde Elasticsearch
-index'i açar ve field tiplerini değerden tahmin eder (dynamic mapping). Bu kolaylık, Adım 5'te
-göreceğimiz tarih tuzağının da kaynağıdır.
-
 ---
 
 ## Adım Adım Uygulama Rehberi
+
+`http` bloklarını Kibana Dev Tools'a, `bash` bloklarını terminale yapıştırın.
 
 ### 1. Dev Tools'u açın
 
@@ -65,8 +54,6 @@ Kibana menüsünden **Management › Dev Tools**'u açın.
 - **Parola yok:** Console, Kibana'ya giriş yaptığınız kullanıcıyla bağlanır
 
 ![Dev Tools Console: 1 istek editörü, 2 gönder düğmesi, 3 yanıt](../../assets/screenshots/LAB-02/01-devtools-console.png)
-
-Bu labda `http` bloklarını Dev Tools'a, `bash` bloklarını terminale yapıştırın.
 
 ### 2. Document ekleyin: Dev Tools ve curl
 
@@ -88,8 +75,11 @@ PUT /belge-urunler
 {"acknowledged": true, "shards_acknowledged": true, "index": "belge-urunler"}
 ```
 
-**Dev Tools ile document ekleme.** `_id`'yi siz verirseniz `PUT`, Elasticsearch üretsin isterseniz `POST` kullanılır. İsteğin sonundaki
-`?filter_path=...` yanıttan yalnız yazdığınız field'ları bırakır; yanıt kısa ve okunur kalır:
+**Dev Tools ile document ekleme.**
+
+- **`PUT`:** `_id`'yi siz verirsiniz
+- **`POST`:** `_id`'yi Elasticsearch üretir
+- **`?filter_path=...`:** yanıtta yalnız yazdığınız field'lar kalır
 
 ```http
 PUT /belge-urunler/_doc/1?filter_path=_id,_version,result
@@ -117,12 +107,11 @@ POST /belge-urunler/_doc
 }
 ```
 
-İkinci yanıtta `_id` yerine `"_id": "Xk3...` gibi 20 karakterlik rastgele bir değer görürsünüz.
-Veritabanından gelen kayıtlarda kendi anahtarınızı `_id` yapmak, aynı kaydın iki kez
-yüklenmesini önler (aynı `_id` ikinci kez gelince yeni document açılmaz, eskisi güncellenir).
+Yanıttaki `_id` 20 karakterlik rastgele bir değerdir (`"Xk3..."`). Veritabanından gelen kayıtlarda kendi
+anahtarınızı `_id` yapın: aynı kayıt ikinci kez gelince yeni document açılmaz, eskisi güncellenir.
 
-**curl ile document ekleme.** Aynı istek terminalden `curl` ile. Dev Tools'tan farkı: adres ve kullanıcı/parola açıkça yazılır,
-JSON gövdesi için `Content-Type` başlığı verilir:
+**curl ile document ekleme.** Aynı istek terminalden. Farkı: adres, kullanıcı/parola ve `Content-Type` başlığı
+açıkça yazılır:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -X PUT 'http://127.0.0.1:9200/belge-urunler/_doc/2?filter_path=_id,result' \
@@ -136,12 +125,11 @@ Beklenen çıktı:
 {"_id":"2","result":"created"}
 ```
 
-Dev Tools ile curl aynı REST API'yi çağırır: Dev Tools denemek için, curl betik ve otomasyon için
-pratiktir.
+İkisi aynı REST API'yi çağırır: Dev Tools denemek için, curl betik ve otomasyon için.
 
 ### 3. Okuyun, güncelleyin, silin
 
-Document'i `_id`'siyle okuyun:
+**Okuyun.** Document'i `_id`'siyle getirin:
 
 ```http
 GET /belge-urunler/_doc/1?filter_path=_version,found,_source
@@ -160,7 +148,9 @@ GET /belge-urunler/_doc/1?filter_path=_version,found,_source
 }
 ```
 
-`_source`, gönderdiğiniz JSON'un aynısıdır. Yalnız bazı field'ları güncellemek için `_update`:
+`_source`, gönderdiğiniz JSON'un aynısıdır.
+
+**Güncelleyin.** Yalnız bazı field'ları değiştirmek için `_update`:
 
 ```http
 POST /belge-urunler/_update/1?filter_path=_version,result
@@ -177,7 +167,7 @@ POST /belge-urunler/_update/1?filter_path=_version,result
 
 `_version` her değişiklikte bir artar.
 
-Silme ve silindiğini kontrol etme:
+**Silin.** Silin, sonra okumayı deneyin:
 
 ```http
 DELETE /belge-urunler/_doc/2?filter_path=result
@@ -187,7 +177,6 @@ DELETE /belge-urunler/_doc/2?filter_path=result
 {"result": "deleted"}
 ```
 
-Silinen document'i okumayı deneyin:
 
 <!-- runner:expect-fail -->
 ```http
@@ -222,9 +211,9 @@ yanıtlarında `filter_path` uygulanmaz, bu yüzden burada `jq` kullandık.
 </details>
 
 <details>
-<summary><strong>Document var mı? Gövdesiz kontrol: <code>HEAD</code></strong></summary>
+<summary><strong>Okumanın diğer yolları: <code>HEAD</code>, <code>_source</code>, <code>_mget</code></strong></summary>
 
-Uygulama yalnız "bu `_id` var mı" diye soruyorsa document'in tamamını çekmesine gerek yoktur. `HEAD` isteği gövde
+**Var mı? `HEAD`.** Uygulama yalnız "bu `_id` var mı" diye soruyorsa document'in tamamını çekmesine gerek yoktur. `HEAD` isteği gövde
 döndürmez, yalnız durum kodu: `200` var, `404` yok. Dev Tools'a yapıştırın:
 
 ```http
@@ -255,12 +244,7 @@ Beklenen çıktı:
 Aynı istek index için de çalışır (`HEAD /belge-urunler`): index'i açmadan önce varlığını kontrol etmek
 için kullanılır.
 
-</details>
-
-<details>
-<summary><strong>Yalnız document'in kendisi: <code>_source</code> ve field seçimi</strong></summary>
-
-Adımın başındaki `GET _doc` isteğinde yanıtı `filter_path` ile kısalttık. Süzülmemiş yanıtta ürünün yanında
+**Yalnız document: `_source`.** Adımın başındaki `GET _doc` isteğinde yanıtı `filter_path` ile kısalttık. Süzülmemiş yanıtta ürünün yanında
 `_index`, `_id`, `_version`, `_seq_no` gibi Elasticsearch'ün kendi bilgileri de gelir. Ürün sayfası yalnız ürünü
 gösterecekse bu bilgilere ihtiyaç yoktur; `_source` adresi yalnız sizin gönderdiğiniz JSON'u döndürür:
 
@@ -285,12 +269,7 @@ GET /belge-urunler/_source/1?_source_includes=ad,fiyat
 
 Tersi de olur: `?_source_excludes=stok,kategori` bu iki field'ı çıkarır, aynı sonucu verir.
 
-</details>
-
-<details>
-<summary><strong>Birden fazla document'i tek istekte okumak: <code>_mget</code></strong></summary>
-
-Sepet sayfası birkaç ürünü birlikte gösterecek. Her ürün için ayrı `GET`, ürün sayısı kadar istek demektir;
+**Birden fazla document: `_mget`.** Sepet sayfası birkaç ürünü birlikte gösterecek. Her ürün için ayrı `GET`, ürün sayısı kadar istek demektir;
 `_mget` hepsini tek istekte getirir. Örnekteki `99` bilerek verilmiş, olmayan bir `_id`:
 
 ```http
@@ -314,9 +293,9 @@ Olmayan ürün isteğin tamamını bozmaz: o satırda `found: false` döner, di�
 </details>
 
 <details>
-<summary><strong>İki kişi aynı document'i güncellerse: <code>if_seq_no</code></strong></summary>
+<summary><strong>Sürüm kontrolü: <code>if_seq_no</code> ve <code>version_type=external</code></strong></summary>
 
-Senaryo: iki kişi kulaklığın fiyatını aynı anda düzenliyor. Ayşe ürünü ekranında açar. O sırada Mehmet fiyatı
+**İki kişi aynı document'i güncellerse: `if_seq_no`.** Senaryo: iki kişi kulaklığın fiyatını aynı anda düzenliyor. Ayşe ürünü ekranında açar. O sırada Mehmet fiyatı
 değiştirip kaydeder. Ayşe ekranındaki eski bilgiyle kaydederse Mehmet'in değişikliği kimseye haber verilmeden
 kaybolur.
 
@@ -365,12 +344,7 @@ POST /belge-urunler/_update/1?if_seq_no=3&if_primary_term=1&filter_path=_version
 {"_version": 3, "result": "updated"}
 ```
 
-</details>
-
-<details>
-<summary><strong>Sürüm numarasını dış sistem verirse: <code>version_type=external</code></strong></summary>
-
-Ürünler bir veritabanından aktarılıyor ve her kaydın veritabanında bir sürüm numarası var. Aktarım sırası
+**Sürüm numarasını dış sistem verirse: `version_type=external`.** Ürünler bir veritabanından aktarılıyor ve her kaydın veritabanında bir sürüm numarası var. Aktarım sırası
 karışır da eski sürüm yenisinden sonra gelirse, eski bilgi yenisini ezmemelidir. `version_type=external` ile
 sürüm numarasını Elasticsearch değil siz verirsiniz; Elasticsearch yalnız elindekinden büyük sürümü kabul eder.
 Bu kutu kendi index'ini açar:
@@ -481,21 +455,6 @@ cat > sample-data/urunler.ndjson << 'EOF'
 EOF
 ```
 
-İlk dört satıra bakın:
-
-```bash
-head -4 sample-data/urunler.ndjson
-```
-
-Beklenen çıktı:
-
-```text
-{ "index": { "_index": "belge-urunler", "_id": "3" } }
-{ "ad": "Bluetooth Hoparlör", "kategori": "Elektronik", "fiyat": 899.90, "stok": 35 }
-{ "index": { "_index": "belge-urunler", "_id": "4" } }
-{ "ad": "Çelik Tencere Seti", "kategori": "Mutfak", "fiyat": 2499.00, "stok": 12 }
-```
-
 Dosyayı `_bulk` ile yükleyin, ardından index'teki document sayısına bakın:
 
 ```bash
@@ -511,15 +470,10 @@ Beklenen çıktı:
 {"count":7}
 ```
 
-- `--data-binary`: dosyayı satır sonlarıyla birlikte gönderir. `-d` satır sonlarını silerdi ve
-  NDJSON bozulurdu.
-- `errors: false`: hiçbir document reddedilmedi. `true` olsaydı hangi satırın neden reddedildiği
-  `items` içinde yazardı; `_bulk` bir satır hatalı diye diğerlerini geri almaz.
-- `filter_path=errors,items.*.result`: yanıtta yalnız genel hata durumu ve her satırın sonucu kalır; `jq -c`
-  yanıtı tek satırda gösterir.
-- `refresh=true`: yüklenen document'lerin aramada hemen görünmesi için (aşağıdaki not).
-- `_count`: index'teki document sayısını verir.
-- Sayım 7: Adım 2'deki 3 document, Adım 3'te silinen 1, `_bulk` ile gelen 5.
+- **`--data-binary`:** satır sonlarını korur; `-d` silerdi ve NDJSON bozulurdu.
+- **`errors: false`:** hiçbir satır reddedilmedi; `true` olsaydı nedeni `items` içinde yazardı.
+- **`refresh=true`:** yüklenenler aramada hemen görünsün diye.
+- **`_count` → 7:** 3 eklendi, 1 silindi, 5 geldi.
 
 <details>
 <summary><strong>Kimliği bilinen document'leri aramak: <code>ids</code></strong></summary>
@@ -700,14 +654,10 @@ Beklenen çıktı:
 {"tarih_tr":"text","keyword":"keyword"}
 ```
 
-- `@timestamp` → `date`: değer ISO 8601 biçiminde (`2026-11-21T11:30:00Z`) olduğu için
-  Elasticsearch tarih olarak tanıdı.
-- `tarih_tr` → `text`: `21.11.2026 14:30` varsayılan tarih biçimlerinden biri değil; aynı zamanı
-  taşısa da düz metin sayıldı. Bu field'la tarih aralığı sorgulanamaz, zaman çizelgesi çizilemez.
-  Excel ve veritabanından gelen tarihlerde bu sık olur; çözüm mapping'de tarih `format`'ı vermek ya da
-  veriyi Logstash `date` filtresiyle dönüştürmektir.
-- `kanal`, `konu` → `text` + `.keyword`: metin hem kelime kelime aranabilsin (`text`) hem de
-  tam değeriyle gruplanabilsin (`keyword`) diye iki biçimde saklanır.
+- **`@timestamp` → `date`:** ISO 8601 biçimi (`2026-11-21T10:15:00Z`) tarih olarak tanındı.
+- **`tarih_tr` → `text`:** `21.11.2026 13:15` varsayılan bir tarih biçimi değil, düz metin kaldı; bu field'la
+  zaman aralığı sorgulanamaz. Çözüm: mapping'de tarih `format`'ı vermek.
+- **`kanal`, `konu` → `text` + `.keyword`:** hem kelimeyle aranır hem tam değerle gruplanır.
 
 ### 6. Discover: yüklediğimiz veriyi arayüzde görmek
 
