@@ -5,6 +5,7 @@ Kullanim (yerelde; LAB-04 ornek verisi kurulu):
     KB_BASE=http://127.0.0.1:25601 python3 scripts/screenshots/shots_lab08.py
 Cikti: assets/screenshots/LAB-08/01-discover-esql.png; dugme adlari stdout'a yazilir.
 """
+import sys
 import time
 
 import kibana_shots as k
@@ -39,10 +40,40 @@ def lab08(page):
     ])
 
 
+
+def lab08pano(page):
+    """Adim 4 kutusu: ES|QL sorgusunu panoya panel olarak eklemek (Add > Visualization (query))."""
+    page.goto(k.BASE + "/app/dashboards#/create", wait_until="domcontentloaded"); k.settle(page, 6)
+    page.locator('[data-test-subj="dashboardAddTopNavButton"]').first.click(); time.sleep(2)
+    k.shoot(page, LAB, "02-pano-add-query", [
+        (("testsubj", "dashboardAddTopNavButton"), 1, "down"),
+        (("testsubj", "create-action-Visualization (query)"), 2, "left")])
+    page.locator('[data-test-subj="create-action-Visualization (query)"]').first.click(); k.settle(page, 8)
+    ed = page.locator('[data-test-subj="ESQLEditor"] .monaco-editor').first
+    ed.click(); time.sleep(0.5)
+    page.keyboard.press("ControlOrMeta+a"); page.keyboard.press("Delete"); time.sleep(0.5)
+    page.keyboard.insert_text(SORGU); time.sleep(1)
+    page.locator('[data-test-subj="ESQLEditor-run-query-button"]').first.click(); k.settle(page, 6)
+    k.shoot(page, LAB, "03-pano-esql-panel", [
+        (("testsubj", "ESQLEditor"), 1, "down"),
+        (("testsubj", "ESQLEditor-run-query-button"), 2, "down"),
+        (("testsubj", "lnsChartSwitchPopover"), 3, "left"),
+        (("testsubj", "applyFlyoutButton"), 4, "up")])
+    page.locator('[data-test-subj="applyFlyoutButton"]').first.click(); k.settle(page, 6)
+    page.locator('[data-test-subj="dashboardInteractiveSaveMenuItem"]').first.click(); time.sleep(2)
+    page.locator('[data-test-subj="savedObjectTitle"]').fill("ES|QL özeti")
+    page.locator('[data-test-subj="confirmSaveSavedObjectButton"]').first.click(); k.settle(page, 6)
+    page.mouse.move(800, 60); time.sleep(1)
+    print("panel sayisi:", page.locator('[data-test-subj="dashboardPanel"]').count())
+    k.shoot(page, LAB, "04-pano-esql", [(("css", '[data-test-subj="dashboardPanel"]'), 1, "right")])
+
 if __name__ == "__main__":
     with sync_playwright() as pw:
         br = pw.chromium.launch(channel="chrome")
         page = br.new_page(viewport={"width": 1600, "height": 900}, device_scale_factor=k.SCALE)
         k.login(page)
-        lab08(page)
+        if len(sys.argv) > 1 and sys.argv[1] == "pano":
+            lab08pano(page)
+        else:
+            lab08(page)
         br.close()

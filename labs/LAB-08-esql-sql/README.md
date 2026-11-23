@@ -8,13 +8,11 @@
 
 ## Bu lab ne öğretiyor?
 
-Query DSL güçlüdür ama okunması zordur: "son siparişlerden kadın müşterilerin 100 dolar üstü olanlarını
-tutara göre sırala, beşini göster" sorusu iç içe JSON olur. ES|QL aynı soruyu soldan sağa okunan bir
-pipeline olarak yazar: kaynak, süz, sütun seç, sırala. SQL bilenler için de `_sql` API'si vardır.
-
-Bu labda e-ticaret verisini ES|QL ile süzecek, gruplayacak ve yeni sütun hesaplayacak; çok değerli bir
-field'ın sessizce yanlış sonuç verdiği tuzağı görecek; aynı soruyu Discover'da ES|QL moduyla ve SQL ile
-soracak, SQL'in arkadaki Query DSL'ini `_sql/translate` ile göreceğiz.
+- ES|QL: soruyu soldan sağa okunan bir pipeline olarak yazmak
+- Filtrelemek, gruplamak, yeni sütun hesaplamak (`WHERE`, `STATS`, `EVAL`)
+- Çok değerli field'ın sessizce yanlış sonuç verdiği tuzak
+- Discover'da ES|QL ve sonucu panoya eklemek
+- Aynı soru SQL ile; SQL'in arkasındaki Query DSL
 
 ![ES|QL pipeline'ı: FROM, WHERE, KEEP, SORT, LIMIT](../../assets/infographics/42-esql-pipeline.png)
 
@@ -38,28 +36,23 @@ Beklenen çıktı:
 
 ---
 
-## Kavramlar: ES|QL pipeline'ı
+## Kavramlar
 
-| Komut | Ne yapar | SQL karşılığı |
-|---|---|---|
-| `FROM` | Kaynağı seçer; her zaman ilk satır | `FROM` |
-| `WHERE` | Satırları süzer | `WHERE` |
-| `KEEP` | Yalnız bu sütunları, bu sırayla bırakır | `SELECT a, b` |
-| `SORT` / `LIMIT` | Sıralar / satır sayısını sınırlar (varsayılan 1000) | `ORDER BY` / `LIMIT` |
-| `STATS … BY` | Gruplar ve hesaplar; sonra satırlar özet tablodur | `GROUP BY` |
-| `EVAL` | Yeni sütun hesaplar | `SELECT ifade AS ad` |
-
-Her adım bir öncekinin çıktısını alır. Dev Tools'ta `POST /_query?format=txt`, sonucu tablo olarak verir.
+- **ES|QL:** Elasticsearch'ün pipeline sorgu dili; komutlar `|` ile bağlanır, her komut bir öncekinin tablosunu alır
+- **`FROM` · `WHERE` · `KEEP`:** kaynak (hep ilk satır) · satırları filtreler · yalnız bu sütunları bırakır
+- **`SORT` · `LIMIT`:** sıralar · satır sayısını sınırlar (verilmezse en çok 1000 satır)
+- **`STATS … BY` · `EVAL`:** gruplar ve hesaplar (SQL'deki `GROUP BY`) · yeni sütun hesaplar
+- **Dev Tools'ta:** `POST /_query?format=txt` sonucu tablo olarak verir
 
 ---
 
 ## Adım Adım Uygulama Rehberi
 
-Bu labda `http` bloklarını Kibana › Dev Tools'a yapıştırın.
+`http` bloklarını Kibana › Dev Tools'a yapıştırın.
 
-### 1. İlk pipeline: süz, seç, sırala
+### 1. İlk pipeline: filtrele, seç, sırala
 
-Kadın müşterilerin 100 dolardan pahalı siparişleri, en pahalı beşi:
+**Soru: Bir soruyu ES|QL ile nasıl yazarız?** Kadın müşterilerin 100 dolardan pahalı siparişleri, en pahalı beşi:
 
 ```http
 POST /_query?format=txt
@@ -86,9 +79,10 @@ Beklenen çıktı:
 727629         |Rabbia Al Sharp    |250.0
 ```
 
-`WHERE` iki koşulu `AND` ile birleştirir; `customer_gender` ve `taxful_total_price` tek değerli field'lardır,
-`==` ve `>` doğrudan çalışır. Aynı koşul LAB-04'teki KQL sorgusudur (`customer_gender : "FEMALE" and
-taxful_total_price > 100`). Kaç sipariş olduğunu `STATS` söyler (zaman sınırı yok, bütün index; LAB-04'teki 156 yalnız son 30 gündü):
+- **`WHERE`:** iki koşulu `AND` ile birleştirir; iki field da tek değerli, `==` ve `>` doğrudan çalışır.
+- **Aynı soru KQL'de:** `customer_gender : "FEMALE" and taxful_total_price > 100`.
+
+**Kaç sipariş?** `STATS` sayar; zaman sınırı yok, bütün index:
 
 ```http
 POST /_query?format=txt
@@ -105,7 +99,8 @@ Beklenen çıktı:
 
 ### 2. Tuzak: çok değerli field
 
-Bir sipariş birden çok kategoriye ait olabilir; `category` çok değerlidir:
+**Soru: Bir field birden çok değer taşırsa ne olur?** Bir sipariş birden çok kategoriye ait olabilir; `category`
+çok değerlidir:
 
 ```http
 POST /_query?format=txt
@@ -123,7 +118,7 @@ Beklenen çıktı:
 2              |4
 ```
 
-"Women's Clothing içeren siparişler" sorusunu üç biçimde sayın:
+**"Women's Clothing içeren siparişler" sorusunu üç biçimde sayın:**
 
 ```http
 POST /_query?format=txt
@@ -150,15 +145,16 @@ match_phrase   : 1903
 
 Üç sorgunun tek satırlık sonucu yan yana yazıldı.
 
-- `==`: çok değerli bir field'ı karşılaştırmak `null` üretir ve o satır sessizce düşer; yalnız tek
-  kategorili siparişler sayılır. Hata gelmez, sonuç eksik gelir.
-- `MATCH`: metin araması; "clothing" kelimesi Men's Clothing'i, "women's" Women's Shoes'u da yakalar.
-- `MATCH_PHRASE`: ifade yan yana geçmeli; doğru sayı. Discover'da KQL `category : "Women's Clothing"`
-  ile aynıdır.
+- **`==` (768):** çok değerli field'da `null` üretir, satır sessizce düşer; yalnız tek kategorili siparişler sayılır.
+  Hata gelmez, sonuç eksik gelir.
+- **`MATCH` (4425):** metin araması; "clothing" Men's Clothing'i, "women's" Women's Shoes'u da yakalar.
+- **`MATCH_PHRASE` (1903):** ifade yan yana geçmeli; doğru sayı. KQL'deki `category : "Women's Clothing"` ile aynı.
 
 ### 3. Gruplamak ve yeni sütun: `STATS` ve `EVAL`
 
-Kategori bazında sipariş sayısı ve ortalama sepet (LAB-07'deki `terms` + `avg` sorusu):
+**Soru: Gruplamak ve yeni sütun üretmek nasıl olur?**
+
+**`STATS … BY`:** kategori bazında sipariş sayısı ve ortalama sepet:
 
 ```http
 POST /_query?format=txt
@@ -175,10 +171,11 @@ Beklenen çıktı:
 1136           |92.85          |Women's Shoes
 ```
 
-`category.keyword` da çok değerlidir: iki kategorili bir sipariş iki gruba birden sayılır; grupların toplamı
-4675'ten büyüktür. Adım 2'deki tuzağın gruplamadaki karşılığıdır.
+**Gruplamada da aynı tuzak:** `category.keyword` çok değerli; iki kategorili sipariş iki gruba birden sayılır, grupların
+toplamı 4675'ten büyük çıkar.
 
-`EVAL` yeni sütun üretir; sonra o sütunla gruplanabilir. Sepeti üç bantlara ayıralım:
+**`EVAL`:** yeni sütun üretir, sonra onunla gruplanır. `CASE(koşul, değer, koşul, değer, aksi)` ilk tutan koşulun
+değerini verir. Sepeti üç banda ayıralım:
 
 ```http
 POST /_query?format=txt
@@ -204,8 +201,10 @@ Beklenen çıktı:
 
 ### 4. Discover'da ES|QL
 
-Discover'da sağ üstteki **Query in ES|QL** düğmesi Discover'ı ES|QL moduna alır; düğmenin yerinde artık
-**Switch to Classic** (1) görünür. Sorgu kutusuna (2) şunu yazıp **Search**'e (3) basın:
+**Soru: ES|QL'i arayüzden nasıl kullanırız?**
+
+1. **Discover**'da sağ üstteki **Query in ES|QL**: Discover ES|QL moduna geçer; yerinde **Switch to Classic** (1) görünür
+2. Sorgu kutusuna (2) şunu yazın, **Search** (3):
 
 ```text
 FROM kibana_sample_data_ecommerce | STATS siparis = COUNT(*) BY day_of_week | SORT siparis DESC
@@ -213,13 +212,35 @@ FROM kibana_sample_data_ecommerce | STATS siparis = COUNT(*) BY day_of_week | SO
 
 ![Discover ES|QL modu: 1 Switch to Classic, 2 sorgu kutusu, 3 Search, 4 sonuç grafiği](../../assets/screenshots/LAB-08/01-discover-esql.png)
 
-Sonuç grafik (4) ve altında gruplar olarak gelir. Zaman kutusu **All time** olduğu için sayılar Adım 5'teki
-SQL ile aynıdır (Thursday 775, Friday 770…); zaman aralığı daraltılırsa sorgu yalnız o aralığı sayar. Klasik
-Discover'a **Switch to Classic** (1) ile dönülür.
+- **Sonuç:** grafik (4) ve altında gruplar. Zaman kutusu **All time** olduğu için sayılar Adım 5'teki SQL ile aynıdır
+  (Thursday 775, Friday 770…); aralık daraltılırsa sorgu yalnız o aralığı sayar.
+- **Klasik Discover'a dönüş:** **Switch to Classic** (1).
+
+<details>
+<summary><strong>ES|QL sorgusunu panoya eklemek</strong></summary>
+
+Bir ES|QL sorgusu panoda doğrudan panel olur; Lens'te eksen seçmeye gerek kalmaz.
+
+1. **Dashboards › Create dashboard**, sonra **Add** (1) › **Visualization (query)** (2):
+
+![Pano: 1 Add, 2 Visualization (query)](../../assets/screenshots/LAB-08/02-pano-add-query.png)
+
+2. Sorgu kutusuna (1) Adım 4'teki sorguyu yazın, **Search** (2). Kibana sonuca uygun grafiği seçer; türünü (3)
+   değiştirebilirsiniz. **Apply and close** (4):
+
+![ES|QL paneli: 1 sorgu, 2 Search, 3 grafik türü, 4 Apply and close](../../assets/screenshots/LAB-08/03-pano-esql-panel.png)
+
+3. Sağ üstten **Save**: başlık `ES|QL özeti`, **Save**. Panel (1) panoda durur:
+
+![ES|QL özeti panosu: 1 gün bazında sipariş paneli](../../assets/screenshots/LAB-08/04-pano-esql.png)
+
+SQL sorgusunun panoya doğrudan eklenme yolu yoktur; aynı soru ES|QL'e çevrilip eklenir.
+
+</details>
 
 ### 5. Aynı soru SQL ile
 
-`_sql` API'si veriyi SQL ile sorgular. Gün bazında sipariş sayısı, ilk üç gün:
+**Soru: SQL bilenler ne yapar?** `_sql` API'si veriyi SQL ile sorgular. Gün bazında sipariş sayısı, ilk üç gün:
 
 ```http
 POST /_sql?format=txt
@@ -236,12 +257,12 @@ Friday         |770
 Saturday       |736
 ```
 
-SQL'de çok değerli bir field'ı seçmek hata verir; `category` yerine tek değerli field'larla çalışın.
-`_sql` ve ES|QL aynı veriyi okur, sayılar aynıdır.
+- **Kısıt:** SQL'de çok değerli bir field'ı seçmek hata verir; tek değerli field'larla çalışın.
+- **Sayılar aynı:** `_sql` ve ES|QL aynı veriyi okur.
 
 ### 6. SQL'in arkasındaki Query DSL: `_sql/translate`
 
-Elasticsearch SQL'i Query DSL'e çevirip çalıştırır. Çeviriyi görmek için:
+**Soru: SQL arkada neye dönüşür?** Elasticsearch SQL'i Query DSL'e çevirip çalıştırır. Çeviriyi görmek için:
 
 ```http
 POST /_sql/translate
@@ -295,15 +316,27 @@ POST /_sql/translate
 }
 ```
 
-`WHERE` bir `bool` sorgusuna (`term` + `range`), `ORDER BY` bir `sort`'a, `LIMIT` `size`'a dönüşür:
-LAB-05'te elle yazdığınız Query DSL'in aynısı. ES|QL ise Query DSL'e çevrilmez; kendi motoruyla çalışır.
+- **`WHERE`** → `bool` (`term` + `range`) · **`ORDER BY`** → `sort` · **`LIMIT`** → `size`; Query DSL'de elle yazdığınızın aynısı.
+- **ES|QL** Query DSL'e çevrilmez; kendi motoruyla çalışır.
 
 ---
 
 ## Temizlik
 
-Bu lab yalnız okur, kaynak oluşturmaz; temizlenecek bir şey yoktur. Örnek e-ticaret verisi sonraki
-lablarda kullanılır.
+Örnek e-ticaret verisi sonraki lablarda kullanılır, silinmez. Yalnız Adım 4'teki kutuda oluşturduğunuz `ES|QL özeti`
+panosunu siler:
+
+```bash
+./teardown.sh
+```
+
+Beklenen çıktı:
+
+```text
+dashboard 'ES|QL özeti' -> 200
+```
+
+Kutuyu yapmadıysanız çıktı boştur.
 
 ---
 
