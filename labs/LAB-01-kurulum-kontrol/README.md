@@ -73,7 +73,7 @@ listeleniyorsa yukarıdaki uyarıdaki komutla native servisleri durdurun.
 - Repoyu sunucuya indirin (bir kez):
 
 ```bash
-git clone https://github.com/hakanbayraktar/elk.git ~/elastic
+git clone https://github.com/hakanbayraktar/elastic.git ~/elastic
 cd ~/elastic/labs/LAB-01-kurulum-kontrol
 ```
 
