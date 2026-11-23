@@ -66,7 +66,9 @@ def ozellik(page):
         (("testsubj", "featureCategoryCheckbox_securitySolution"), None, "left"),
         (("testsubj", "featureCheckbox_ml"), None, "left"),
     ], scroll_to=("testsubj", "featureCategoryCheckbox_observability"))
-    page.locator('[data-test-subj="save-space-button"]').first.click(); time.sleep(2)
+    kaydet = page.locator('[data-test-subj="save-space-button"]')
+    if kaydet.count():  # ayar zaten kayitliysa (ikinci kosu) dugme cikmaz
+        kaydet.first.click(); time.sleep(2)
     for t in ("Update space", "Confirm", "Apply changes"):
         b = page.get_by_role("button", name=t)
         if b.count() and b.first.is_visible():
@@ -75,6 +77,9 @@ def ozellik(page):
     # menuler
     for space, ad in (("", "03-menu-default"), ("/s/satis-ekibi", "04-menu-satis")):
         page.goto(k.BASE + space + "/app/home", wait_until="domcontentloaded"); k.settle(page, 6)
+        for t in ("Explore on my own", "Skip"):  # yeni Space'in karsilama ekrani tiklamayi engelliyor
+            try: page.get_by_text(t, exact=True).first.click(timeout=2000); k.settle(page, 3)
+            except Exception: pass
         page.locator('[data-test-subj="toggleNavButton"]').first.click(); time.sleep(2)
         menu = sorted(set(a.inner_text().strip() for a in page.locator("nav a, nav button").all() if a.is_visible() and a.inner_text().strip()))
         print(ad, "menu:", menu)
@@ -149,11 +154,52 @@ def dogrula(page):
     ])
 
 
+def sil(page):
+    """Kutu: Pazarlama'da haritayi silmek ve panoda eksik paneli gormek."""
+    page.goto(k.BASE + "/s/pazarlama/app/management/kibana/objects", wait_until="domcontentloaded"); k.settle(page, 6)
+    page.locator('[data-test-subj="savedObjectSearchBar"]').first.fill("Orders by Country"); page.keyboard.press("Enter"); k.settle(page, 4)
+    kutu = page.locator('[data-test-subj^="checkboxSelectRow-map:"]').first
+    kutu.click(); time.sleep(1.5)
+    print("sil dugmeleri:", subj(page, "delete"))
+    k.shoot(page, LAB, "10-sil-harita", [
+        (("css", '[data-test-subj^="checkboxSelectRow-map:"]'), 1, "right"),
+        (("testsubj", "savedObjectsManagementDelete"), 2, "down")])
+    page.locator('[data-test-subj="savedObjectsManagementDelete"]').first.click(); time.sleep(2)
+    print("onay:", subj(page, "confirm", "delete"))
+    page.locator('[data-test-subj="confirmModalConfirmButton"]').first.click(); k.settle(page, 4)
+    page.goto(k.BASE + "/s/pazarlama/app/dashboards", wait_until="domcontentloaded"); k.settle(page, 6)
+    page.get_by_text(PANO, exact=True).first.click(); k.settle(page, 12)
+    hata = page.locator('[data-test-subj="embeddableError"], [data-test-subj="embeddableStackError"], [data-test-subj="embeddablePanelError"]')
+    print("hatali panel:", hata.count(), subj(page, "error"))
+    k.shoot(page, LAB, "11-eksik-panel", [(("css", '[data-test-subj="embeddableError"], [data-test-subj="embeddableStackError"], [data-test-subj="embeddablePanelError"]'), 3, "left")])
+
+
+def geri(page):
+    """Kutu: ayni export dosyasini Pazarlama'ya yeniden yuklemek (cakismalarin uzerine yaz)."""
+    page.goto(k.BASE + "/s/pazarlama/app/management/kibana/objects", wait_until="domcontentloaded"); k.settle(page, 6)
+    page.locator('[data-test-subj="importObjects"]').first.click(); time.sleep(2)
+    page.locator('[role="dialog"] input[type="file"]').first.set_input_files(EXPORT); time.sleep(2)
+    print("secenekler:", subj(page, "overwrite", "conflict", "import"))
+    page.locator('label[for="overwriteEnabled"]').first.click(); time.sleep(1)  # Automatically overwrite conflicts
+    k.shoot(page, LAB, "12-geri-yukle", [
+        (("css", '[role="dialog"] input[type="file"]'), 4, "left"),
+        (("css", 'label[for="overwriteEnabled"]'), 5, "left"),
+        (("testsubj", "importSavedObjectsImportBtn"), 6, "up")])
+    page.locator('[data-test-subj="importSavedObjectsImportBtn"]').first.click(); time.sleep(6)
+    print("import sonucu:", page.locator('[role="dialog"]').first.inner_text()[:400].replace("\n", " | "))
+    for t in ("importSavedObjectsDoneBtn", "importSavedObjectsConfirmBtn"):
+        if page.locator(f'[data-test-subj="{t}"]').count(): page.locator(f'[data-test-subj="{t}"]').first.click(); time.sleep(2)
+    page.goto(k.BASE + "/s/pazarlama/app/dashboards", wait_until="domcontentloaded"); k.settle(page, 6)
+    page.get_by_text(PANO, exact=True).first.click(); k.settle(page, 12)
+    hata = page.locator('[data-test-subj="embeddableError"], [data-test-subj="embeddableStackError"], [data-test-subj="embeddablePanelError"]').count()
+    print("hatali panel (geri sonrasi):", hata)
+
+
 if __name__ == "__main__":
     parca = sys.argv[1]
     with sync_playwright() as pw:
         br = pw.chromium.launch(channel="chrome")
         page = br.new_page(viewport={"width": 1600, "height": 900}, device_scale_factor=k.SCALE, accept_downloads=True)
         k.login(page)
-        {"olustur": olustur, "ozellik": ozellik, "kopya": kopya, "export": export, "import": import_, "dogrula": dogrula}[parca](page)
+        {"olustur": olustur, "ozellik": ozellik, "kopya": kopya, "export": export, "import": import_, "dogrula": dogrula, "sil": sil, "geri": geri}[parca](page)
         br.close()

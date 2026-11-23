@@ -162,6 +162,34 @@ Adres çubuğunda Space adresin içindedir. `http://<IP>:5601/s/pazarlama/app/da
 Üç Space'te üç ayrı pano kopyası var; biri değişince ötekiler değişmez. Veri ise tek: hepsi aynı
 `kibana_sample_data_ecommerce` index'ini okur.
 
+<details>
+<summary><strong>Silinen bir nesneyi yedekten geri getirmek</strong></summary>
+
+Adım 4'teki `export.ndjson` aynı zamanda bir yedektir. Biri panodaki bir nesneyi yanlışlıkla silerse aynı dosyayla geri
+gelir. Pazarlama Space'inde deneyin; Default'taki örnek pano etkilenmez.
+
+**Silin.** Pazarlama'da **Stack Management › Saved objects**, arama: `Orders by Country`. Haritayı işaretleyin (1),
+**Delete** (2), onay penceresinde yine **Delete**:
+
+![Saved objects: 1 harita, 2 Delete](../../assets/screenshots/LAB-17/10-sil-harita.png)
+
+**Panoya bakın.** `[eCommerce] Revenue Dashboard`'u açın: harita paneli (3) boş kalır ve **Not Found** yazar:
+
+![Pano: 3 silinen nesnenin paneli hata veriyor](../../assets/screenshots/LAB-17/11-eksik-panel.png)
+
+**Geri yükleyin.** Saved objects › **Import**, aynı `export.ndjson` dosyası (4). Bu kez Space dolu, dosyadaki nesnelerin
+çoğu zaten var: **Automatically overwrite conflicts** (5) seçin, **Import** (6):
+
+![Import: 4 aynı dosya, 5 çakışmaların üzerine yaz, 6 içe aktar](../../assets/screenshots/LAB-17/12-geri-yukle.png)
+
+Sonuç penceresi `5 objects imported`, `1 new`, `4 overwritten` der: silinen harita yeni olarak geldi, öteki dördü
+dosyadaki hâline döndü. Panoyu yeniden açın; bütün paneller veriyle gelir.
+
+- **Neden üzerine yaz?** **Request action on conflict** seçilirse her var olan nesne için tek tek sorulur.
+- **Yedek alışkanlığı:** önemli panoları değiştirmeden önce Export ile dosyaya alın.
+
+</details>
+
 <details><summary><strong>Aynı işler API ile: otomasyon</strong></summary>
 
 Test ortamından üretime taşımayı bir betiğe koymak için aynı üç işlem API ile yapılır. Panoyu ilişkili
