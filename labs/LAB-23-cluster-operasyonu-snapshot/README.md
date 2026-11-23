@@ -24,7 +24,7 @@ node'u shard'lardan boşaltacağız.
 - LAB-19'un 3-node cluster'ı çalışıyor ve `cluster-urunler` index'inde 6 document var.
 - LAB-19'u atladıysanız önce onun Adım 1, 2 ve 4'ünü çalıştırın.
 
-CA'yı ve parolayı bu kabuğa yükleyip cluster'a bakın:
+CA'yı ve parolayı bu shell'e yükleyip cluster'a bakın:
 
 ```bash
 cd ~/elastic/labs/LAB-23-cluster-operasyonu-snapshot

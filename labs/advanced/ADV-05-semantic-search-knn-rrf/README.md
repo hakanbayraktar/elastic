@@ -141,7 +141,7 @@ curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/vektor-runbook/_mapping?
 
 ### 3. BM25 ve semantik arama yan yana
 
-Arama metnini bu kabukta saklayın ve iki aramayı karşılaştırın:
+Arama metnini bu shell oturumunda saklayın ve iki aramayı karşılaştırın:
 
 ```bash
 export Q="RAM ve bellek tükenmesi nedeniyle öldürülen konteynerler"

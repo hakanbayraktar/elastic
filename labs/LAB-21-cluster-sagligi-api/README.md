@@ -363,7 +363,7 @@ node'larda yeniden kurmaya kalkar; bu ağ ve disk yükü demektir ve node bir da
 önce replica yerleşimini kapatırsınız (`primaries`: yalnız primary shard'lar yerleşir), node'u yeniden başlatır,
 katılmasını bekler ve ayarı geri alırsınız. Bu adım LAB-19'daki 3-node cluster'ı kullanır; komutlar onun dizininden çalışır.
 
-CA'yı ve parolayı kabuğa yükleyin, yerleşimi kısıtlayın:
+CA'yı ve parolayı shell'e yükleyin, yerleşimi kısıtlayın:
 
 ```bash
 cd ../LAB-19-3-node-tls-cluster

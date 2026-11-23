@@ -412,7 +412,7 @@ GET excel-uygulama-loglari/_search?size=0&filter_path=aggregations.gun.buckets.k
 {"aggregations":{"gun":{"buckets":[{"key_as_string":"2026-02-26","doc_count":290},{"key_as_string":"2026-02-27","doc_count":275},{"key_as_string":"2026-02-28","doc_count":557},{"key_as_string":"2026-03-01","doc_count":290},{"key_as_string":"2026-03-02","doc_count":294},{"key_as_string":"2026-03-03","doc_count":294}]}}}
 ```
 
-Yıl 2026 oldu ve 29 Şubat kovası yok: o günün 274 document'i 28 Şubat'a eklendi (283 + 274 = 557). Yükleme sırasında
+Yıl 2026 oldu ve 29 Şubat bucket'ı yok: o günün 274 document'i 28 Şubat'a eklendi (283 + 274 = 557). Yükleme sırasında
 çevirmek isteseydiniz aynı script bir ingest pipeline'a konur ve `index.default_pipeline` ayarıyla index'e
 bağlanırdı.
 

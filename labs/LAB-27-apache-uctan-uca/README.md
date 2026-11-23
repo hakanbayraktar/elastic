@@ -324,7 +324,7 @@ ALARM_TO=sizin@adresiniz.com
 
 Değerleri ortama alın ve iki connector'ı kurun. Anahtar komut satırına yazılmaz, çünkü komut satırı çalışırken
 `ps` ile başkalarına görünür: `jq` JSON'u ortam değişkeninden (`$ENV`) üretir, `scripts/kbn.sh` onu standart
-girdiden Kibana API'sine gönderir. En sondaki `unset` anahtarları kabuktan siler; `ALARM_TO` kalır:
+girdiden Kibana API'sine gönderir. En sondaki `unset` anahtarları shell'den siler; `ALARM_TO` kalır:
 
 ```bash
 set -a; . ~/.lab24-gizli; set +a
@@ -490,7 +490,7 @@ SLO: apache-web-gecikme-500ms
 ```
 
 Kibana'da **Machine Learning › Anomaly Detection › Jobs** işi, **Observability › SLOs** iki hedefi gösterir.
-İş 5 dakikalık kovalarla öğrendiği için anlamlı sonuç birkaç saat veri biriktikten sonra gelir. Temizlik ikisini
+İş 5 dakikalık bucket'larla öğrendiği için anlamlı sonuç birkaç saat veri biriktikten sonra gelir. Temizlik ikisini
 de siler.
 
 </details>
