@@ -8,11 +8,11 @@
 
 ## Bu lab ne öğretiyor?
 
-Elasticsearch'e veri, HTTP üzerinden JSON document olarak yazılır. Aynı isteği Kibana'nın Dev Tools
-ekranından da terminalden `curl` ile de gönderebilirsiniz. Bu labda bir ürün kataloğu ve bir destek
-talebi listesi yükleyip document'leri okuyacak, güncelleyecek ve sileceğiz. Ardından ikisine Discover'da
-bakacağız: zaman damgalı veri zaman çizelgesinde görünür, zaman damgasız veri görünmez. Neden
-böyle olduğu ve Elasticsearch'ün tarih field'ını nasıl tanıdığı labın asıl konusu.
+- HTTP/JSON ile veri yazma
+- Dev Tools ve curl kullanımı
+- CRUD işlemleri
+- Discover'da veri görüntüleme
+- Tarih field'ı ve zaman çizelgesi
 
 ---
 
@@ -46,7 +46,7 @@ göreceğimiz tarih tuzağının da kaynağıdır.
 
 ## Adım Adım Uygulama Rehberi
 
-### 1. Dev Tools'u açın
+### 1. Dev Tools'u açın *
 
 Kibana menüsünden **Management › Dev Tools**. Üstte kullanım verisi uyarısı çıkarsa **Dismiss**,
 editördeki örnek istekleri silmek için **Clear this input** düğmesine basın. Soldaki editöre istek
@@ -58,7 +58,7 @@ giriş yaptığınız kullanıcıyla Elasticsearch'e iletir; parola yazmazsını
 
 Bu labda `http` bloklarını Dev Tools'a, `bash` bloklarını terminale yapıştırın.
 
-### 2. Document ekleyin: Dev Tools ve curl
+### 2. Document ekleyin: Dev Tools ve curl *
 
 Önce index'i açın. Yedek kopya (replica) primary'nin başka bir node'daki kopyasıdır; ana cluster tek
 node olduğu için replica'yı yerleştirecek yer yoktur ve sayısını sıfır veriyoruz:
@@ -128,7 +128,7 @@ Beklenen çıktı:
 Dev Tools ile curl aynı REST API'yi çağırır: Dev Tools denemek için, curl betik ve otomasyon için
 pratiktir.
 
-### 3. Okuyun, güncelleyin, silin
+### 3. Okuyun, güncelleyin, silin *
 
 Document'i `_id`'siyle okuyun:
 
@@ -165,6 +165,27 @@ POST /belge-urunler/_update/1?filter_path=_version,result
 ```
 
 `_version` her değişiklikte bir artar.
+
+Silme ve silindiğini kontrol etme:
+
+```http
+DELETE /belge-urunler/_doc/2?filter_path=result
+```
+
+```json
+{"result": "deleted"}
+```
+
+Silinen document'i okumayı deneyin:
+
+<!-- runner:expect-fail -->
+```http
+GET /belge-urunler/_doc/2?filter_path=found
+```
+
+```json
+{"found": false}
+```
 
 <details>
 <summary><strong>Document varsa üzerine yazmamak: <code>_create</code></strong></summary>
@@ -418,28 +439,7 @@ GET /belge-surum/_source/m1
 
 </details>
 
-Silme ve silindiğini kontrol etme:
-
-```http
-DELETE /belge-urunler/_doc/2?filter_path=result
-```
-
-```json
-{"result": "deleted"}
-```
-
-Silinen document'i okumayı deneyin:
-
-<!-- runner:expect-fail -->
-```http
-GET /belge-urunler/_doc/2?filter_path=found
-```
-
-```json
-{"found": false}
-```
-
-### 4. Toplu yükleme: `_bulk`
+### 4. Toplu yükleme: `_bulk` *
 
 Document'leri tek tek göndermek her biri için ayrı HTTP isteği demektir. `_bulk` çok document'i tek
 istekte yükler. Gövde NDJSON biçimindedir: her document için önce bir **eylem satırı**, sonra
@@ -620,7 +620,7 @@ bu labda kullanıldı; yoğun yazmada her isteğe eklenmez.
 
 </details>
 
-### 5. Zaman damgalı veri: destek talepleri
+### 5. Zaman damgalı veri: destek talepleri *
 
 Bu kez her document'te olayın zamanı olan `@timestamp` field'ı var. Son 7 güne yayılmış 24 destek
 talebini kabukta üretiyoruz; `date -d "-N hours"` her talebe 7 saat arayla geriye giden bir zaman
@@ -691,7 +691,7 @@ Beklenen çıktı:
 - `kanal`, `konu` → `text` + `.keyword`: metin hem kelime kelime aranabilsin (`text`) hem de
   tam değeriyle gruplanabilsin (`keyword`) diye iki biçimde saklanır.
 
-### 6. Discover: zaman field'lı ve zaman field'sız data view
+### 6. Discover: zaman field'lı ve zaman field'sız data view *
 
 Discover bir index'e doğrudan değil, bir **data view** üzerinden bakar. Data view, hangi
 index(ler)in okunacağını ve (varsa) hangi field'ın zaman field'ı olduğunu söyler.
@@ -740,6 +740,9 @@ listelenir (2).
 Bir mağazanın stok index'i üzerinde, uygulamaların en sık yaptığı güncellemeleri Dev Tools'ta deneyin. Bu adım
 kendi index'ini (`belge-stok`) açar; önceki adımların verisine dokunmaz.
 
+<details>
+<summary><strong>Hazırlık: <code>belge-stok</code> index'i</strong></summary>
+
 ```http
 PUT /belge-stok
 { "settings": { "number_of_replicas": 0 } }
@@ -749,7 +752,12 @@ PUT /belge-stok
 {"acknowledged": true, "shards_acknowledged": true, "index": "belge-stok"}
 ```
 
-**`_bulk` 200 döndü diye her satır yazılmış değildir.** İki ürün ekleyin; üçüncü satır `create` ile `p1`'i
+</details>
+
+<details>
+<summary><strong><code>_bulk</code> 200 döndü diye her satır yazılmış değildir</strong></summary>
+
+İki ürün ekleyin; üçüncü satır `create` ile `p1`'i
 yeniden eklemeye çalışsın (`create` "yalnız yoksa ekle" demektir):
 
 ```http
@@ -769,7 +777,12 @@ POST /belge-stok/_bulk?refresh=true&filter_path=errors,items.*._id,items.*.statu
 İstek bütün olarak başarılıdır; ama `errors: true` ve üçüncü satırın `status: 409` değeri o satırın yazılmadığını
 söyler. `_bulk` sonrası her zaman `errors` field'ına bakın.
 
-**Upsert: varsa güncelle, yoksa oluştur.** Uygulama ürünün index'te olup olmadığını bilmeden stok bilgisini
+</details>
+
+<details>
+<summary><strong>Upsert: varsa güncelle, yoksa oluştur</strong></summary>
+
+Uygulama ürünün index'te olup olmadığını bilmeden stok bilgisini
 gönderiyor. `doc` ürün varsa uygulanacak değişikliktir, `upsert` ürün yoksa yazılacak document'tir. `p3` henüz yok:
 
 ```http
@@ -809,7 +822,12 @@ POST /belge-stok/_update/p3?filter_path=result,_version
 {"_version":2,"result":"noop"}
 ```
 
-**Script: mevcut değere göre güncelleme.** İki USB bellek satıldı: stok 2 azalmalı, satış 2 artmalı. Yeni değeri
+</details>
+
+<details>
+<summary><strong>Script: mevcut değere göre güncelleme</strong></summary>
+
+İki USB bellek satıldı: stok 2 azalmalı, satış 2 artmalı. Yeni değeri
 uygulamada hesaplayıp göndermek, o arada başka bir satış olursa yanlış sonuç verir. Script hesabı Elasticsearch'te,
 document'in o anki değeri üzerinde yapar. `ctx._source` document'in kendisi, `params` dışarıdan verilen değerdir:
 
@@ -837,7 +855,12 @@ GET /belge-stok/_source/p2
 {"ad":"USB Bellek","stok":3,"satis":2}
 ```
 
-**`refresh`: yazdığım hemen aranabilsin mi?** Yazılan document yaklaşık bir saniye sonra aramada görünür. Bu labda
+</details>
+
+<details>
+<summary><strong><code>refresh=wait_for</code>: yazdığım hemen aranabilsin mi?</strong></summary>
+
+Yazılan document yaklaşık bir saniye sonra aramada görünür. Bu labda
 `?refresh=true` ile hemen görünür yaptık; bu her istekte zorla yenileme yapar ve yoğun yazmada yavaştır.
 `?refresh=wait_for` zorlamaz, bir sonraki olağan yenilemeyi bekleyip öyle döner:
 
@@ -850,7 +873,12 @@ POST /belge-stok/_update/p1?refresh=wait_for&filter_path=result
 {"result":"updated"}
 ```
 
-**`_update_by_query`: koşula uyan bütün document'leri güncellemek.** Stoğu 10'un altına düşen ürünleri
+</details>
+
+<details>
+<summary><strong><code>_update_by_query</code>: koşula uyan bütün document'leri güncellemek</strong></summary>
+
+Stoğu 10'un altına düşen ürünleri
 `azaliyor: true` diye işaretleyeceğiz. Toplu değişiklikten önce aynı sorguyla kaç document etkileneceğine bakın:
 
 ```http
@@ -887,7 +915,12 @@ GET /belge-stok/_search?filter_path=hits.hits._id,hits.hits._source
 {"hits":{"hits":[{"_id":"p2","_source":{"satis":2,"ad":"USB Bellek","azaliyor":true,"stok":3}}]}}
 ```
 
-**`_delete_by_query`: koşula uyan bütün document'leri silmek.** Hiç satılmamış ürünleri kaldıralım. Silme geri
+</details>
+
+<details>
+<summary><strong><code>_delete_by_query</code>: koşula uyan bütün document'leri silmek</strong></summary>
+
+Hiç satılmamış ürünleri kaldıralım. Silme geri
 alınmaz; önce sayın:
 
 ```http
@@ -922,6 +955,8 @@ GET /belge-stok/_search?filter_path=hits.hits._id,hits.hits._source.ad
 ```
 
 Satışı olmayan `p3` (Klavye) silindi; `p1` (bir satış) ve `p2` (iki satış) kaldı.
+
+</details>
 
 ## Temizlik
 
