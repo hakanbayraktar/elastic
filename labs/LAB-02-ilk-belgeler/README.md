@@ -46,7 +46,7 @@ göreceğimiz tarih tuzağının da kaynağıdır.
 
 ## Adım Adım Uygulama Rehberi
 
-### 1. Dev Tools'u açın *
+### 1. Dev Tools'u açın
 
 Kibana menüsünden **Management › Dev Tools**. Üstte kullanım verisi uyarısı çıkarsa **Dismiss**,
 editördeki örnek istekleri silmek için **Clear this input** düğmesine basın. Soldaki editöre istek
@@ -58,10 +58,11 @@ giriş yaptığınız kullanıcıyla Elasticsearch'e iletir; parola yazmazsını
 
 Bu labda `http` bloklarını Dev Tools'a, `bash` bloklarını terminale yapıştırın.
 
-### 2. Document ekleyin: Dev Tools ve curl *
+### 2. Document ekleyin: Dev Tools ve curl
 
-Önce index'i açın. Yedek kopya (replica) primary'nin başka bir node'daki kopyasıdır; ana cluster tek
-node olduğu için replica'yı yerleştirecek yer yoktur ve sayısını sıfır veriyoruz:
+Önce index'i açın. Index shard'lara bölünür: asıl shard'a primary, başka bir node'daki kopyasına replica denir.
+Küçük veri için tek shard yeter (`number_of_shards: 1`). Ana cluster tek node olduğu için replica'yı koyacak yer
+yoktur; sayısını sıfır veriyoruz, yoksa index sarı (yellow) görünür:
 
 ```http
 PUT /belge-urunler
@@ -128,7 +129,7 @@ Beklenen çıktı:
 Dev Tools ile curl aynı REST API'yi çağırır: Dev Tools denemek için, curl betik ve otomasyon için
 pratiktir.
 
-### 3. Okuyun, güncelleyin, silin *
+### 3. Okuyun, güncelleyin, silin
 
 Document'i `_id`'siyle okuyun:
 
@@ -439,11 +440,18 @@ GET /belge-surum/_source/m1
 
 </details>
 
-### 4. Toplu yükleme: `_bulk` *
+### 4. Toplu yükleme: `_bulk`
 
 Document'leri tek tek göndermek her biri için ayrı HTTP isteği demektir. `_bulk` çok document'i tek
-istekte yükler. Gövde NDJSON biçimindedir: her document için önce bir **eylem satırı**, sonra
-**document satırı**; her satır tek satırlık JSON'dur ve dosya yeni satırla biter.
+istekte yükler. Gövdesi **NDJSON**'dur (newline-delimited JSON): her satır kendi başına tam bir JSON'dur,
+satırlar yeni satırla ayrılır ve dosya da yeni satırla biter. Elasticsearch gövdeyi tek parça çözmeden satır
+satır okur; binlerce document belleği şişirmeden işlenir. Her document iki satırdır:
+
+- **eylem satırı:** ne yapılacak, nereye: `{ "index": { "_index": "belge-urunler", "_id": "3" } }`
+- **document satırı:** document'in kendisi: `{ "ad": "Bluetooth Hoparlör", ... }`
+
+Eylem `index` (yaz, varsa üzerine yaz), `create` (yalnız yoksa yaz), `update` (kısmi güncelle) ya da `delete`
+(yalnız eylem satırı, document satırı yok) olabilir.
 
 Önce örnek veri dosyasını oluşturun (5 ürün, her biri eylem satırı + document satırı):
 
@@ -620,12 +628,13 @@ bu labda kullanıldı; yoğun yazmada her isteğe eklenmez.
 
 </details>
 
-### 5. Zaman damgalı veri: destek talepleri *
+### 5. Zaman damgalı veri: destek talepleri
 
 Bu kez her document'te olayın zamanı olan `@timestamp` field'ı var. Son 7 güne yayılmış 24 destek
 talebini kabukta üretiyoruz; `date -d "-N hours"` her talebe 7 saat arayla geriye giden bir zaman
 verir. `tarih_tr` field'ı aynı zamanı Türkçe biçimde (`21.11.2026 14:30`) taşır. Kanal ve konu `i%4` ile dört
-değer arasında sırayla döner; satırlar `~/talepler.ndjson` dosyasına yazılır:
+değer arasında sırayla döner; satırlar `~/talepler.ndjson` dosyasına yazılır. Her talep iki satırdır (eylem +
+document), yani dosya yine NDJSON'dur:
 
 ```bash
 kanallar=(web mobil telefon e-posta); konular=("Şifre sıfırlama" "Fatura itirazı" "Kargo gecikmesi" "Uygulama hatası")
@@ -691,7 +700,7 @@ Beklenen çıktı:
 - `kanal`, `konu` → `text` + `.keyword`: metin hem kelime kelime aranabilsin (`text`) hem de
   tam değeriyle gruplanabilsin (`keyword`) diye iki biçimde saklanır.
 
-### 6. Discover: zaman field'lı ve zaman field'sız data view *
+### 6. Discover: zaman field'lı ve zaman field'sız data view
 
 Discover bir index'e doğrudan değil, bir **data view** üzerinden bakar. Data view, hangi
 index(ler)in okunacağını ve (varsa) hangi field'ın zaman field'ı olduğunu söyler.
@@ -740,9 +749,6 @@ listelenir (2).
 Bir mağazanın stok index'i üzerinde, uygulamaların en sık yaptığı güncellemeleri Dev Tools'ta deneyin. Bu adım
 kendi index'ini (`belge-stok`) açar; önceki adımların verisine dokunmaz.
 
-<details>
-<summary><strong>Hazırlık: <code>belge-stok</code> index'i</strong></summary>
-
 ```http
 PUT /belge-stok
 { "settings": { "number_of_replicas": 0 } }
@@ -752,12 +758,7 @@ PUT /belge-stok
 {"acknowledged": true, "shards_acknowledged": true, "index": "belge-stok"}
 ```
 
-</details>
-
-<details>
-<summary><strong><code>_bulk</code> 200 döndü diye her satır yazılmış değildir</strong></summary>
-
-İki ürün ekleyin; üçüncü satır `create` ile `p1`'i
+**`_bulk` 200 döndü diye her satır yazılmış değildir.** İki ürün ekleyin; üçüncü satır `create` ile `p1`'i
 yeniden eklemeye çalışsın (`create` "yalnız yoksa ekle" demektir):
 
 ```http
@@ -777,12 +778,7 @@ POST /belge-stok/_bulk?refresh=true&filter_path=errors,items.*._id,items.*.statu
 İstek bütün olarak başarılıdır; ama `errors: true` ve üçüncü satırın `status: 409` değeri o satırın yazılmadığını
 söyler. `_bulk` sonrası her zaman `errors` field'ına bakın.
 
-</details>
-
-<details>
-<summary><strong>Upsert: varsa güncelle, yoksa oluştur</strong></summary>
-
-Uygulama ürünün index'te olup olmadığını bilmeden stok bilgisini
+**Upsert: varsa güncelle, yoksa oluştur.** Uygulama ürünün index'te olup olmadığını bilmeden stok bilgisini
 gönderiyor. `doc` ürün varsa uygulanacak değişikliktir, `upsert` ürün yoksa yazılacak document'tir. `p3` henüz yok:
 
 ```http
@@ -821,8 +817,6 @@ POST /belge-stok/_update/p3?filter_path=result,_version
 ```json
 {"_version":2,"result":"noop"}
 ```
-
-</details>
 
 <details>
 <summary><strong>Script: mevcut değere göre güncelleme</strong></summary>
