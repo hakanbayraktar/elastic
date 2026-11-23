@@ -1,0 +1,14 @@
+# Stack Monitoring icin Metricbeat: Elasticsearch'in kendi durum bilgisini toplar (xpack.enabled) ve
+# .monitoring-es-8-mb data stream'ine yazar. Kibana > Stack Monitoring bu veriyi okur.
+metricbeat.modules:
+  - module: elasticsearch
+    xpack.enabled: true                     # Stack Monitoring'in bekledigi biçimde yaz
+    period: 10s
+    hosts: ["http://elasticsearch-lab00:9200"]
+    username: "izleme_mb"
+    password: "Izleme2026!"
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch-lab00:9200"]
+  username: "izleme_mb"
+  password: "Izleme2026!"

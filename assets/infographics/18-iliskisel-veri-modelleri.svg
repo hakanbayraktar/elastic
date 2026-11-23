@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">İlişkisel veriyi Elasticsearch'te modellemenin dört yolu</title>
+  <desc id="desc">Aynı müşteri ve sipariş verisi dört biçimde: denormalize belge, nested kalemler, join alanıyla parent ve child belgeler, ES|QL LOOKUP JOIN ile ayrı lookup index'i. Her biri için ne zaman uygun olduğu ve bedeli; altta object alanının düzleşme hatası örneği.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 16px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 17px Arial,sans-serif; fill:#2e7d32 }
+    .bad { font:700 17px Arial,sans-serif; fill:#bd271e }
+  </style>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">İlişkisel veriyi modellemenin dört yolu</text>
+  <text x="60" y="116" class="sub">Elasticsearch'te JOIN pahalıdır ya da yoktur; birleştirme ya yazarken ya da sorgu anında yapılır.</text>
+
+  <rect x="60" y="160" rx="14" width="355" height="500" class="card"/>
+  <rect x="60" y="160" rx="14" width="355" height="50" fill="#005571"/><rect x="60" y="192" width="355" height="18" fill="#005571"/>
+  <text x="80" y="193" class="head">1 · Denormalize</text>
+  <text x="80" y="244" class="mono">siparis S-2</text>
+  <text x="80" y="268" class="mono">  musteri: {ad, il}</text>
+  <text x="80" y="292" class="mono">  kalemler: [...]</text>
+  <text x="80" y="340" class="ok">+ En hızlı arama</text>
+  <text x="80" y="366" class="ok">+ Her şey tek belgede</text>
+  <text x="80" y="406" class="bad">− Müşteri adı değişince</text>
+  <text x="80" y="430" class="bad">  bütün siparişleri</text>
+  <text x="80" y="454" class="bad">  güncellenir</text>
+  <text x="80" y="510" class="small">Varsayılan seçim.</text>
+  <text x="80" y="536" class="small">Ayrıntı nadiren değişiyorsa</text>
+  <text x="80" y="562" class="small">ve okuma yazmadan çoksa.</text>
+
+  <rect x="435" y="160" rx="14" width="355" height="500" class="card"/>
+  <rect x="435" y="160" rx="14" width="355" height="50" fill="#0b6e99"/><rect x="435" y="192" width="355" height="18" fill="#0b6e99"/>
+  <text x="455" y="193" class="head">2 · nested</text>
+  <text x="455" y="244" class="mono">kalemler: nested</text>
+  <text x="455" y="268" class="mono">  {urun, adet} ayrı</text>
+  <text x="455" y="292" class="mono">  gizli belge</text>
+  <text x="455" y="340" class="ok">+ Kalem içi koşul doğru</text>
+  <text x="455" y="366" class="ok">+ inner_hits eşleşen kalem</text>
+  <text x="455" y="406" class="bad">− Her kalem ayrı belge sayılır</text>
+  <text x="455" y="430" class="bad">− Mapping yerinde değişmez:</text>
+  <text x="455" y="454" class="bad">  yeni index + _reindex</text>
+  <text x="455" y="510" class="small">Dizi içinde "aynı öğede</text>
+  <text x="455" y="536" class="small">iki koşul" aranıyorsa.</text>
+
+  <rect x="810" y="160" rx="14" width="355" height="500" class="card"/>
+  <rect x="810" y="160" rx="14" width="355" height="50" fill="#6b5b95"/><rect x="810" y="192" width="355" height="18" fill="#6b5b95"/>
+  <text x="830" y="193" class="head">3 · join (parent/child)</text>
+  <text x="830" y="244" class="mono">m3 (musteri)</text>
+  <text x="830" y="268" class="mono">  ├ S-2 (siparis)</text>
+  <text x="830" y="292" class="mono">  └ S-3 (siparis)</text>
+  <text x="830" y="340" class="ok">+ Ebeveyn ayrı güncellenir</text>
+  <text x="830" y="366" class="ok">+ has_child / has_parent</text>
+  <text x="830" y="406" class="bad">− Aynı shard: routing şart</text>
+  <text x="830" y="430" class="bad">− Sorgular yavaş, bellek ister</text>
+  <text x="830" y="454" class="bad">− Tek index, tek ilişki ağacı</text>
+  <text x="830" y="510" class="small">Çocuklar çok ve sık</text>
+  <text x="830" y="536" class="small">değişiyorsa; nadir seçim.</text>
+
+  <rect x="1185" y="160" rx="14" width="355" height="500" class="card"/>
+  <rect x="1185" y="160" rx="14" width="355" height="50" fill="#5aa454"/><rect x="1185" y="192" width="355" height="18" fill="#5aa454"/>
+  <text x="1205" y="193" class="head">4 · LOOKUP JOIN</text>
+  <text x="1205" y="244" class="mono">FROM model-satislar</text>
+  <text x="1205" y="268" class="mono">| LOOKUP JOIN</text>
+  <text x="1205" y="292" class="mono">  model-musteriler</text>
+  <text x="1205" y="340" class="ok">+ Müşteri değişince sonuç</text>
+  <text x="1205" y="366" class="ok">  hemen değişir</text>
+  <text x="1205" y="392" class="ok">+ Satışlar yeniden yazılmaz</text>
+  <text x="1205" y="432" class="bad">− Yalnız ES|QL'de</text>
+  <text x="1205" y="456" class="bad">− Lookup index: tek shard</text>
+  <text x="1205" y="510" class="small">Küçük, değişen boyut</text>
+  <text x="1205" y="536" class="small">tabloları (müşteri, servis)</text>
+  <text x="1205" y="562" class="small">için analizde.</text>
+
+  <rect x="60" y="700" rx="14" width="1480" height="240" class="card"/>
+  <text x="90" y="748" class="h2">object tuzağı: diziler düzleşir</text>
+  <text x="90" y="796" class="mono">S-1  kalemler: [ {urun: "Kulaklık", adet: 1}, {urun: "Akıllı Saat", adet: 5} ]</text>
+  <text x="90" y="830" class="mono">     object olarak saklanan:  kalemler.urun = [Kulaklık, Akıllı Saat]   kalemler.adet = [1, 5]</text>
+  <text x="90" y="876" class="body">"Kulaklık ve adet 5" sorgusu S-1'i de bulur: <tspan class="bad">3 sonuç</tspan>. nested ile yalnız gerçekten 5 kulaklık olan S-2: <tspan class="ok">1 sonuç</tspan>.</text>
+  <text x="90" y="912" class="small">Hangi değerin hangi öğeye ait olduğu bilgisi object'te kaybolur.</text>
+</svg>

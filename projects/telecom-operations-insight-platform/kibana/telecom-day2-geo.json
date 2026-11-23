@@ -1,0 +1,29 @@
+{
+  "type": "data_table",
+  "title": "API | Sentetik coğrafi dağılım",
+  "query": {
+    "language": "kql",
+    "expression": "event.dataset: \"telecom.day2\" AND service.name: \"edge-proxy\""
+  },
+  "data_source": {
+    "type": "data_view_reference",
+    "ref_id": "telecom-events-lab"
+  },
+  "rows": [
+    {
+      "operation": "terms",
+      "fields": [
+        "client.geo.country_name"
+      ],
+      "limit": 10,
+      "label": "Sentetik bölge"
+    }
+  ],
+  "metrics": [
+    {
+      "operation": "count",
+      "label": "Proxy isteği"
+    }
+  ],
+  "description": "Reserved test IP'leriyle eşleşen sentetik konumlar; gerçek GeoIP sonucu değildir."
+}

@@ -1,0 +1,6 @@
+# Logstash 9.x: eski http.host / http.port ayarlari kaldirildi (servis acilmaz);
+# API ayarlari api.http.* altindadir.
+api.http.host: "0.0.0.0"
+pipeline.workers: 2
+pipeline.batch.size: 125
+xpack.monitoring.enabled: false

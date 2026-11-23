@@ -1,0 +1,22 @@
+{"index": {"_id": "m1"}}
+{"ad": "Ağaoğlu Yapı", "il": "İstanbul", "iliski": {"name": "musteri"}}
+{"index": {"_id": "m2"}}
+{"ad": "Şimşek Lojistik", "il": "Ankara", "iliski": {"name": "musteri"}}
+{"index": {"_id": "m3"}}
+{"ad": "Öztürk Gıda", "il": "İzmir", "iliski": {"name": "musteri"}}
+{"index": {"_id": "m4"}}
+{"ad": "Çınar Eğitim", "il": "Bursa", "iliski": {"name": "musteri"}}
+{"index": {"_id": "m5"}}
+{"ad": "Güneş Enerji", "il": "Antalya", "iliski": {"name": "musteri"}}
+{"index": {"_id": "S-1", "routing": "m1"}}
+{"siparis_id": "S-1", "durum": "kargoda", "tutar": 12294.5, "iliski": {"name": "siparis", "parent": "m1"}}
+{"index": {"_id": "S-2", "routing": "m3"}}
+{"siparis_id": "S-2", "durum": "hazırlanıyor", "tutar": 6497.5, "iliski": {"name": "siparis", "parent": "m3"}}
+{"index": {"_id": "S-3", "routing": "m3"}}
+{"siparis_id": "S-3", "durum": "teslim edildi", "tutar": 698.0, "iliski": {"name": "siparis", "parent": "m3"}}
+{"index": {"_id": "S-4", "routing": "m2"}}
+{"siparis_id": "S-4", "durum": "kargoda", "tutar": 3998.8, "iliski": {"name": "siparis", "parent": "m2"}}
+{"index": {"_id": "S-5", "routing": "m5"}}
+{"siparis_id": "S-5", "durum": "teslim edildi", "tutar": 28499.9, "iliski": {"name": "siparis", "parent": "m5"}}
+{"index": {"_id": "S-6", "routing": "m3"}}
+{"siparis_id": "S-6", "durum": "kargoda", "tutar": 4344.0, "iliski": {"name": "siparis", "parent": "m3"}}

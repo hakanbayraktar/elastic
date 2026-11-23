@@ -1,0 +1,18 @@
+{
+  "type": "pie",
+  "title": "NovaShop | Kategori Bazında Satış Dağılımı",
+  "query": {"language": "kql", "expression": ""},
+  "data_source": {"type": "data_view_reference", "ref_id": "novashop-orders"},
+  "slices": {
+    "operation": "terms",
+    "fields": ["category.keyword"],
+    "limit": 10,
+    "label": "Kategori"
+  },
+  "metrics": [{
+    "operation": "sum",
+    "field": "taxful_total_price",
+    "label": "Kategori Cirosu ($)"
+  }],
+  "description": "Kategorilerin toplam ciro içindeki yüzdesel payı."
+}

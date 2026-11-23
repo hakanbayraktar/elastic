@@ -1,0 +1,32 @@
+name: logstash-excel-lab
+
+services:
+  # CSV dosyasini okuyup Elasticsearch'e yazan Logstash. Ana cluster'in Docker agina katilir.
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.5.5
+    container_name: logstash-excel-lab
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9603:9600"   # Logstash API (pipeline sayaclari); yalniz sunucudan
+    environment:
+      ES_HOST: http://elasticsearch-lab00:9200
+      # Logstash 'elastic' ile degil, yalniz excel-* index'lerine yazabilen kullaniciyla baglanir.
+      LS_USER: excel_logstash
+      LS_PASSWORD: Excel2026!
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./pipeline/excel.conf:/usr/share/logstash/pipeline/excel.conf:ro
+      - ./data:/data:ro
+      # Okunan dosyanin kaydi (sincedb) burada tutulur; konteyner yeniden baslayinca dosya tekrar okunmaz.
+      - logstash-data:/usr/share/logstash/data
+    networks:
+      - elastic_net
+
+volumes:
+  logstash-data:
+
+networks:
+  elastic_net:
+    external: true
+    name: elastic-lab00_default

@@ -1,0 +1,168 @@
+# ==============================================================================
+# NovaCommerce: Arama Çubuğu (Search Bar) & 4-Clause Bool Query Mimarisi
+# Mimari: Kurumsal E-Ticaret Çoklu Clause (Relevance) Arama Modeli
+# ==============================================================================
+
+###
+# GİRİŞ: Neden 4 Farklı Clause?
+# Kullanıcının ne yazacağını kestiremeyiz:
+# 1. "dres" diye yazmaya devam eden kullanıcı -> Edge N-Gram Match yakalar (Clause 1)
+# 2. "Casual Summer Dress" diye tam adı yazan kullanıcı -> Exact Match listenin en tepesine fırlar (Clause 2)
+# 3. "Oceanavigations Dress" yazan kullanıcı -> Brand ve Product kelime sırasını koruyarak yakalar (Clause 3)
+# 4. "Summer Dress" yazan kullanıcı -> Tam sıralı cümle eşleşmesi yakalar (Clause 4)
+
+###
+# ÖRNEK 1: Tam 4-Clause Arama Çubuğu / Autocomplete Sorgusu
+# Kullanıcı "cas" yazdı:
+GET /ecommerce_search_products/_search
+{
+  "size": 20,
+  "_source": [
+    "product_id",
+    "product_name",
+    "brand",
+    "category",
+    "price",
+    "search_autocomplete"
+  ],
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "search_autocomplete.autocomplete": {
+              "query": "cas",
+              "operator": "and",
+              "boost": 5
+            }
+          }
+        },
+        {
+          "term": {
+            "search_autocomplete.keyword": {
+              "value": "cas",
+              "boost": 100
+            }
+          }
+        },
+        {
+          "multi_match": {
+            "query": "cas",
+            "fields": [
+              "product_name",
+              "brand"
+            ],
+            "type": "phrase",
+            "slop": 5,
+            "boost": 5
+          }
+        },
+        {
+          "match_phrase": {
+            "search_autocomplete": "cas"
+          }
+        }
+      ]
+    }
+  }
+}
+
+###
+# ÖRNEK 2: Kullanıcı Tam Bir Ürün Adı Yazdığında (Clause 2 Etkisi)
+# "Casual Dress" tam adı yazıldığında term clause (+100 boost) devreye girer:
+GET /ecommerce_search_products/_search
+{
+  "size": 5,
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "search_autocomplete.autocomplete": {
+              "query": "Casual Dress",
+              "operator": "and",
+              "boost": 5
+            }
+          }
+        },
+        {
+          "term": {
+            "search_autocomplete.keyword": {
+              "value": "Casual Dress",
+              "boost": 100
+            }
+          }
+        },
+        {
+          "multi_match": {
+            "query": "Casual Dress",
+            "fields": [
+              "product_name",
+              "brand"
+            ],
+            "type": "phrase",
+            "slop": 5,
+            "boost": 5
+          }
+        },
+        {
+          "match_phrase": {
+            "search_autocomplete": "Casual Dress"
+          }
+        }
+      ]
+    }
+  }
+}
+
+###
+# ÖRNEK 3: Slop Toleransı ile Marka + Ürün Araması (Clause 3 Etkisi)
+# "Elitelligence Shoes" araması: Araya kelimeler girse bile slop: 5 sayesinde bulunur
+GET /ecommerce_search_products/_search
+{
+  "size": 5,
+  "query": {
+    "multi_match": {
+      "query": "Elitelligence Shoes",
+      "fields": [
+        "product_name",
+        "brand"
+      ],
+      "type": "phrase",
+      "slop": 5,
+      "boost": 5
+    }
+  }
+}
+
+###
+# ÖRNEK 4: Search Explain ile Skor Dağılımını İnceleme
+# Neden bu ürün 1. sırada çıktı? Her bir clause ne kadar katkı yaptı?
+GET /ecommerce_search_products/_search
+{
+  "explain": true,
+  "size": 1,
+  "query": {
+    "bool": {
+      "should": [
+        {
+          "match": {
+            "search_autocomplete.autocomplete": {
+              "query": "dress",
+              "operator": "and",
+              "boost": 5
+            }
+          }
+        },
+        {
+          "term": {
+            "search_autocomplete.keyword": {
+              "value": "dress",
+              "boost": 100
+            }
+          }
+        }
+      ]
+    }
+  }
+}

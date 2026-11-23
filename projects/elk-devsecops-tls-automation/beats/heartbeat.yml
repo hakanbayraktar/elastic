@@ -1,0 +1,30 @@
+heartbeat.monitors:
+  - type: http
+    id: es-tls-monitor
+    name: "Elasticsearch HTTPS Endpoint"
+    schedule: '@every 10s'
+    urls: ["https://elasticsearch:9200"]
+    ssl.certificate_authorities: ["/etc/certs/ca/ca.crt"]
+    check.response.status: [200, 401]
+
+  - type: http
+    id: kb-tls-monitor
+    name: "Kibana HTTPS Endpoint"
+    schedule: '@every 10s'
+    urls: ["https://kibana:5601"]
+    ssl.certificate_authorities: ["/etc/certs/ca/ca.crt"]
+    check.response.status: [200, 302]
+
+  - type: tcp
+    id: ls-tls-monitor
+    name: "Logstash Beats SSL Port"
+    schedule: '@every 10s'
+    hosts: ["logstash:5044"]
+    ssl.certificate_authorities: ["/etc/certs/ca/ca.crt"]
+
+output.elasticsearch:
+  hosts: ["https://elasticsearch:9200"]
+  ssl.enabled: true
+  ssl.certificate_authorities: ["/etc/certs/ca/ca.crt"]
+  username: "elastic"
+  password: "${ELASTIC_PASSWORD}"

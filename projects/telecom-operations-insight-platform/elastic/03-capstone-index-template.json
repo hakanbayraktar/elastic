@@ -1,0 +1,15 @@
+{
+  "index_patterns": ["logs-telecom.capstone-prod"],
+  "priority": 350,
+  "data_stream": {},
+  "composed_of": ["lab04-telecom-capstone-mappings"],
+  "template": {
+    "settings": {
+      "index.number_of_shards": 1,
+      "index.number_of_replicas": 0,
+      "index.default_pipeline": "lab04-telecom-capstone-v1",
+      "index.lifecycle.name": "lab04-telecom-capstone-retention"
+    }
+  },
+  "_meta": {"owner": "LAB-04", "training_profile": "telecom-capstone", "synthetic_only": true}
+}

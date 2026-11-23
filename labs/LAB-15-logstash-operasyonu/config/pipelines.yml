@@ -1,0 +1,10 @@
+# Her pipeline kendi id'si, config dosyasi, kuyrugu ve isci sayisiyla calisir.
+- pipeline.id: ingest
+  path.config: "/usr/share/logstash/pipeline/ingest.conf"
+  queue.type: persisted                 # olaylar diske yazilir; cokme ve kesintide kaybolmaz
+  queue.max_bytes: 256mb
+  dead_letter_queue.enable: true        # Elasticsearch'in reddettigi (400/404) belgeler diske
+  dead_letter_queue.flush_interval: 5000  # acik DLQ dosyasi 5 sn'de kapanir, okunabilir olur
+- pipeline.id: dlq-onarim
+  path.config: "/usr/share/logstash/pipeline/dlq-onarim.conf"
+  pipeline.workers: 1                   # kuyruk bellekte (varsayilan memory)

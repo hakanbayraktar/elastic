@@ -1,0 +1,164 @@
+{
+  "index_patterns": [
+    "apache-web-*"
+  ],
+  "priority": 200,
+  "template": {
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "event": {
+          "properties": {
+            "dataset": {
+              "type": "keyword"
+            },
+            "module": {
+              "type": "keyword"
+            },
+            "duration": {
+              "type": "long"
+            },
+            "kind": {
+              "type": "keyword"
+            }
+          }
+        },
+        "source": {
+          "properties": {
+            "ip": {
+              "type": "ip"
+            },
+            "nat": {
+              "properties": {
+                "ip": {
+                  "type": "ip"
+                }
+              }
+            },
+            "geo": {
+              "properties": {
+                "continent_code": {
+                  "type": "keyword"
+                },
+                "continent_name": {
+                  "type": "keyword"
+                },
+                "country_iso_code": {
+                  "type": "keyword"
+                },
+                "country_name": {
+                  "type": "keyword"
+                },
+                "region_iso_code": {
+                  "type": "keyword"
+                },
+                "region_name": {
+                  "type": "keyword"
+                },
+                "city_name": {
+                  "type": "keyword"
+                },
+                "location": {
+                  "type": "geo_point"
+                },
+                "timezone": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "http": {
+          "properties": {
+            "request": {
+              "properties": {
+                "id": {
+                  "type": "keyword"
+                },
+                "method": {
+                  "type": "keyword"
+                },
+                "referrer": {
+                  "type": "wildcard"
+                }
+              }
+            },
+            "response": {
+              "properties": {
+                "status_code": {
+                  "type": "short"
+                },
+                "body": {
+                  "properties": {
+                    "bytes": {
+                      "type": "long"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "url": {
+          "properties": {
+            "path": {
+              "type": "keyword"
+            },
+            "original": {
+              "type": "wildcard"
+            }
+          }
+        },
+        "user_agent": {
+          "properties": {
+            "original": {
+              "type": "wildcard"
+            }
+          }
+        },
+        "apache": {
+          "properties": {
+            "remote_ip": {
+              "type": "ip"
+            },
+            "ident": {
+              "type": "keyword"
+            },
+            "auth_user": {
+              "type": "keyword"
+            }
+          }
+        },
+        "labels": {
+          "properties": {
+            "training_lab": {
+              "type": "keyword"
+            },
+            "synthetic_client_profile": {
+              "type": "keyword"
+            },
+            "forwarded_ip_used": {
+              "type": "boolean"
+            }
+          }
+        },
+        "error": {
+          "properties": {
+            "type": {
+              "type": "keyword"
+            },
+            "message": {
+              "type": "text"
+            }
+          }
+        }
+      }
+    },
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    }
+  }
+}

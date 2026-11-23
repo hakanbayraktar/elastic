@@ -1,0 +1,20 @@
+# Dosya butunlugu izleme (FIM): izlenen dizinde olusturma, degistirme, silme olaylari.
+auditbeat.modules:
+  - module: file_integrity
+    paths:
+      - /izlenen
+    scan_at_start: true          # baslangicta bir temel (baseline) alir; sonraki olaylar degisikliklerdir
+
+setup.ilm.enabled: false
+setup.template.name: "siem-fim"
+setup.template.pattern: "siem-fim-*"
+setup.template.settings:
+  index.number_of_replicas: 0   # tek node'lu ana cluster: replica atanamaz, cluster yellow kalmasin
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch-lab00:9200"]
+  username: "elastic"
+  password: "DevOps2026!"
+  index: "siem-fim-auditbeat"      # data stream adi (Auditbeat veriyi data stream olarak yazar)
+
+logging.level: warning

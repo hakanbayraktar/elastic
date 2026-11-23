@@ -1,0 +1,54 @@
+### ==============================================================================
+### NovaShop E-Commerce · Dashboard, Analitik ve PDF Satış Raporlama
+### ==============================================================================
+### Bu dosyayı Kibana Dev Tools Console üzerinden veya cURL ile çalıştırabilirsiniz.
+### "kbn:" öneki ile başlayan istekler doğrudan Kibana API'sine yönlendirilir.
+### ==============================================================================
+
+### ------------------------------------------------------------------------------
+### 1. DASHBOARD NESNESİNİ KONTROL EDİN
+### ------------------------------------------------------------------------------
+GET kbn:/api/saved_objects/dashboard/novashop-ecommerce-analytics
+
+### ------------------------------------------------------------------------------
+### 2. KİBANA ÖRNEK E-TİCARET GELİR DASHBOARD'UNU KONTROL EDİN
+### ------------------------------------------------------------------------------
+GET kbn:/api/saved_objects/dashboard/722b74f0-b882-11e8-a6d9-e546fe2bba5f
+
+### ------------------------------------------------------------------------------
+### 3. ANLIK PDF SATIŞ RAPORU ÜRETME (Kibana Reporting API)
+### ------------------------------------------------------------------------------
+### NovaShop Satış Analitiği Dashboard'unun yüksek çözünürlüklü PDF kopyasını üretir.
+### Dönen yanıttaki "path" değerini indirme adımında kullanın.
+POST kbn:/api/reporting/generate/printablePdf?jobParams=(browserTimezone:Europe%2FIstanbul,layout:(dimensions:(height:1200,width:1800),id:preserve_layout),objectType:dashboard,relativeUrls:!(%27/app/dashboards%23/view/novashop-ecommerce-analytics%27),title:%27NovaShop_Sales_Analytics_Report%27)
+
+### ------------------------------------------------------------------------------
+### 4. ÖRNEK GELİR DASHBOARD'U İÇİN PDF RAPORU ÜRETME
+### ------------------------------------------------------------------------------
+POST kbn:/api/reporting/generate/printablePdf?jobParams=(browserTimezone:Europe%2FIstanbul,layout:(dimensions:(height:1200,width:1800),id:preserve_layout),objectType:dashboard,relativeUrls:!(%27/app/dashboards%23/view/722b74f0-b882-11e8-a6d9-e546fe2bba5f%27),title:%27eCommerce_Revenue_Dashboard%27)
+
+### ------------------------------------------------------------------------------
+### 5. PDF RAPORUNU İNDİRME (cURL Örneği)
+### ------------------------------------------------------------------------------
+### Terminalde çalıştırmak için (JOB_ID yerine 3. veya 4. adımdaki ID'yi yazın):
+### curl -s -u elastic:DevOps2026! -H "kbn-xsrf: true" \
+###   http://localhost:5601/api/reporting/jobs/download/<JOB_ID> -o novashop-haftalik-rapor.pdf
+
+### ------------------------------------------------------------------------------
+### 6. DASHBOARD ANNOTATION GROUPS: SİSTEM VE KAMPANYA OLAYLARINI İNCELEME
+### ------------------------------------------------------------------------------
+### Satış grafiğinin üzerine dikey çizgi ve bayraklar olarak düşecek olay kayıtları
+GET novashop-events/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    { "@timestamp": "desc" }
+  ]
+}
+
+### ------------------------------------------------------------------------------
+### 7. ANNOTATION DATA VIEW NESNESİNİ KONTROL ETME
+### ------------------------------------------------------------------------------
+GET kbn:/api/data_views/data_view/novashop-events-dataview

@@ -1,0 +1,57 @@
+name: logstash-siem-lab
+
+services:
+  # Ayristirma hatti: Filebeat'ten gelen auth satirlarini ECS guvenlik olaylarina cevirir.
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.5.5
+    container_name: logstash-siem-lab
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9602:9600"   # Logstash API (sayaclar); Beats girdisi (5044) host'a acilmaz
+    environment:
+      ES_HOST: http://elasticsearch-lab00:9200
+      ES_USER: elastic
+      ELASTIC_PASSWORD: DevOps2026!
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - logstash-data:/usr/share/logstash/data
+    networks: [elastic_net]
+
+  # Senaryo logunu toplayan Filebeat.
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:9.5.5
+    container_name: filebeat-siem-lab
+    user: root
+    command: ["filebeat", "-e", "--strict.perms=false"]
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./data:/data:ro
+      - filebeat-data:/usr/share/filebeat/data
+    depends_on: [logstash]
+    restart: unless-stopped
+    networks: [elastic_net]
+
+  # Dosya butunlugu izleyen Auditbeat (yalniz labin izlenen/ dizini).
+  auditbeat:
+    image: docker.elastic.co/beats/auditbeat:9.5.5
+    container_name: auditbeat-siem-lab
+    user: root
+    command: ["auditbeat", "-e", "--strict.perms=false"]
+    volumes:
+      - ./auditbeat/auditbeat.yml:/usr/share/auditbeat/auditbeat.yml:ro
+      - ./izlenen:/izlenen:ro
+      - auditbeat-data:/usr/share/auditbeat/data
+    restart: unless-stopped
+    networks: [elastic_net]
+
+volumes:
+  logstash-data:
+  filebeat-data:
+  auditbeat-data:
+
+networks:
+  elastic_net:
+    external: true
+    name: elastic-lab00_default

@@ -1,0 +1,29 @@
+metricbeat.modules:
+  - module: system
+    period: 10s
+    hostfs: "/hostfs"                    # host'un /proc ve cgroup'u buraya baglandi
+    metricsets: ["cpu", "memory", "load", "process"]
+    process.include_top_n: { by_cpu: 5, by_memory: 5 }
+  - module: system
+    period: 1m
+    hostfs: "/hostfs"
+    metricsets: ["filesystem"]
+    processors:
+      - drop_event.when.regexp:
+          system.filesystem.mount_point: '^/(sys|cgroup|proc|dev|etc|host|lib|snap|run|boot)($|/)'
+  - module: docker
+    period: 10s
+    hosts: ["unix:///var/run/docker.sock"]
+    metricsets: ["container", "cpu", "memory"]
+
+processors:
+  - add_host_metadata: ~
+
+setup.template.enabled: false
+setup.ilm.enabled: false
+
+output.elasticsearch:
+  hosts: ["http://127.0.0.1:9200"]
+  username: "elastic"
+  password: "DevOps2026!"
+  index: "beats-metric-%{+yyyy.MM.dd}"

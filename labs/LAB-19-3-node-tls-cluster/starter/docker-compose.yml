@@ -1,0 +1,160 @@
+name: elastic-cluster
+services:
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5
+    user: '0'
+    volumes:
+    - certs:/certs
+    - snapshots:/mnt/elasticsearch-snapshots
+    - ./instances.yml:/instances.yml:ro
+    command:
+    - bash
+    - -ec
+    - 'if [ ! -f /certs/es-a/es-a.crt ]; then
+
+      bin/elasticsearch-certutil ca --silent --pem -out /certs/ca.zip
+
+      unzip -q /certs/ca.zip -d /certs
+
+      bin/elasticsearch-certutil cert --silent --pem --in /instances.yml --ca-cert /certs/ca/ca.crt --ca-key /certs/ca/ca.key
+      -out /certs/nodes.zip
+
+      unzip -q /certs/nodes.zip -d /certs
+
+      fi
+
+      chown -R 1000:0 /certs /mnt/elasticsearch-snapshots
+
+      find /certs -type d -exec chmod 750 {} "+"
+
+      find /certs -type f -exec chmod 640 {} "+"
+
+      '
+    environment:
+      ES_JAVA_OPTS: -Xms128m -Xmx256m
+    mem_limit: 512m
+  es-a:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5
+    environment:
+      cluster.name: elastic-cluster
+      node.name: es-a
+      node.roles: master,data_content,data_hot,remote_cluster_client
+      discovery.seed_hosts: es-a,es-b,es-c
+      cluster.initial_master_nodes: es-a,es-b,es-c
+      xpack.security.enabled: 'true'
+      xpack.license.self_generated.type: basic
+      ELASTIC_PASSWORD: ${CLUSTER_ELASTIC_PASSWORD:?export CLUSTER_ELASTIC_PASSWORD}
+      ES_JAVA_OPTS: -Xms384m -Xmx384m
+      path.repo: /mnt/elasticsearch-snapshots
+      xpack.security.transport.ssl.enabled: 'true'
+      xpack.security.transport.ssl.verification_mode: certificate
+      xpack.security.transport.ssl.key: certs/es-a/es-a.key
+      xpack.security.transport.ssl.certificate: certs/es-a/es-a.crt
+      xpack.security.transport.ssl.certificate_authorities: certs/ca/ca.crt
+      xpack.security.http.ssl.enabled: 'true'
+      xpack.security.http.ssl.key: certs/es-a/es-a.key
+      xpack.security.http.ssl.certificate: certs/es-a/es-a.crt
+      xpack.security.http.ssl.certificate_authorities: certs/ca/ca.crt
+      node.processors: '2'
+      xpack.ml.enabled: 'false'
+    volumes:
+    - data-a:/usr/share/elasticsearch/data
+    - certs:/usr/share/elasticsearch/config/certs:ro
+    - snapshots:/mnt/elasticsearch-snapshots
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl --silent --cacert config/certs/ca/ca.crt -u "elastic:$${ELASTIC_PASSWORD}" https://localhost:9200/_cluster/health | grep -qE '"status":"(green|yellow)"' && curl --silent --fail --cacert config/certs/ca/ca.crt -u "elastic:$${ELASTIC_PASSWORD}" https://localhost:9200/_license | grep -q '"active"'
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    ports:
+    - 127.0.0.1:${CLUSTER_PORT:-19208}:9200
+    mem_limit: 1g
+  es-b:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5
+    environment:
+      cluster.name: elastic-cluster
+      node.name: es-b
+      node.roles: master,data_content,data_hot,remote_cluster_client
+      discovery.seed_hosts: es-a,es-b,es-c
+      cluster.initial_master_nodes: es-a,es-b,es-c
+      xpack.security.enabled: 'true'
+      xpack.license.self_generated.type: basic
+      ELASTIC_PASSWORD: ${CLUSTER_ELASTIC_PASSWORD:?export CLUSTER_ELASTIC_PASSWORD}
+      ES_JAVA_OPTS: -Xms384m -Xmx384m
+      path.repo: /mnt/elasticsearch-snapshots
+      xpack.security.transport.ssl.enabled: 'true'
+      xpack.security.transport.ssl.verification_mode: certificate
+      xpack.security.transport.ssl.key: certs/es-b/es-b.key
+      xpack.security.transport.ssl.certificate: certs/es-b/es-b.crt
+      xpack.security.transport.ssl.certificate_authorities: certs/ca/ca.crt
+      xpack.security.http.ssl.enabled: 'true'
+      xpack.security.http.ssl.key: certs/es-b/es-b.key
+      xpack.security.http.ssl.certificate: certs/es-b/es-b.crt
+      xpack.security.http.ssl.certificate_authorities: certs/ca/ca.crt
+      node.processors: '2'
+      xpack.ml.enabled: 'false'
+    volumes:
+    - data-b:/usr/share/elasticsearch/data
+    - certs:/usr/share/elasticsearch/config/certs:ro
+    - snapshots:/mnt/elasticsearch-snapshots
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl --silent --cacert config/certs/ca/ca.crt -u "elastic:$${ELASTIC_PASSWORD}" https://localhost:9200/_cluster/health | grep -qE '"status":"(green|yellow)"' && curl --silent --fail --cacert config/certs/ca/ca.crt -u "elastic:$${ELASTIC_PASSWORD}" https://localhost:9200/_license | grep -q '"active"'
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    mem_limit: 1g
+  es-c:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5
+    environment:
+      cluster.name: elastic-cluster
+      node.name: es-c
+      node.roles: master,data_content,data_hot,ingest,remote_cluster_client
+      discovery.seed_hosts: es-a,es-b,es-c
+      cluster.initial_master_nodes: es-a,es-b,es-c
+      xpack.security.enabled: 'true'
+      xpack.license.self_generated.type: basic
+      ELASTIC_PASSWORD: ${CLUSTER_ELASTIC_PASSWORD:?export CLUSTER_ELASTIC_PASSWORD}
+      ES_JAVA_OPTS: -Xms384m -Xmx384m
+      path.repo: /mnt/elasticsearch-snapshots
+      xpack.security.transport.ssl.enabled: 'true'
+      xpack.security.transport.ssl.verification_mode: certificate
+      xpack.security.transport.ssl.key: certs/es-c/es-c.key
+      xpack.security.transport.ssl.certificate: certs/es-c/es-c.crt
+      xpack.security.transport.ssl.certificate_authorities: certs/ca/ca.crt
+      xpack.security.http.ssl.enabled: 'true'
+      xpack.security.http.ssl.key: certs/es-c/es-c.key
+      xpack.security.http.ssl.certificate: certs/es-c/es-c.crt
+      xpack.security.http.ssl.certificate_authorities: certs/ca/ca.crt
+      node.processors: '2'
+      xpack.ml.enabled: 'false'
+    volumes:
+    - data-c:/usr/share/elasticsearch/data
+    - certs:/usr/share/elasticsearch/config/certs:ro
+    - snapshots:/mnt/elasticsearch-snapshots
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - curl --silent --cacert config/certs/ca/ca.crt -u "elastic:$${ELASTIC_PASSWORD}" https://localhost:9200/_cluster/health | grep -qE '"status":"(green|yellow)"' && curl --silent --fail --cacert config/certs/ca/ca.crt -u "elastic:$${ELASTIC_PASSWORD}" https://localhost:9200/_license | grep -q '"active"'
+      interval: 5s
+      timeout: 5s
+      retries: 60
+    mem_limit: 1g
+volumes:
+  certs: {}
+  snapshots: {}
+  data-a: {}
+  data-b: {}
+  data-c: {}

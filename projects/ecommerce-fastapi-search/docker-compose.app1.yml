@@ -1,0 +1,27 @@
+name: ecommerce-search-fastapi
+
+services:
+  ecommerce-search-fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ecommerce-search-fastapi:latest
+    container_name: ecommerce-search-fastapi-app1
+    environment:
+      - HOST=0.0.0.0
+      - PORT=19001
+      - ELASTIC_URL=${ELASTIC_URL:-http://elasticsearch-lab00:9200}
+      - ELASTIC_USER=${ELASTIC_USER:-elastic}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+      - PRODUCT_INDEX=ecommerce_search_products
+    ports:
+      # 0.0.0.0 ile hem yerel Nginx (DNS & Path) hem de doğrudan PIP port erişimi sağlanır
+      - "0.0.0.0:19001:19001"
+    networks:
+      - default
+    restart: unless-stopped
+
+networks:
+  default:
+    name: elastic-lab00_default
+    external: true

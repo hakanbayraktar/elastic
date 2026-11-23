@@ -1,0 +1,107 @@
+### ==============================================================================
+### FastAPI ELK: Dev Tools Modül 01 - FastAPI Log Data Stream Şablonu ve Mapping
+### ==============================================================================
+
+### 1. Cluster Sağlığı ve Durumu Kontrolü
+GET _cluster/health
+
+### 2. Logstash için API Key Oluşturma (Sunum M09 Güvenlik Standardı)
+POST _security/api_key
+{
+  "name": "logstash-fastapi-writer",
+  "role_descriptors": {
+    "fastapi_writer_role": {
+      "cluster": ["manage_index_templates", "monitor", "manage_data_stream_global_retention"],
+      "indices": [
+        {
+          "names": ["logs-fastapi-*"],
+          "privileges": ["write", "create_doc", "create_index", "view_index_metadata", "manage"]
+        }
+      ]
+    }
+  }
+}
+
+### 3. Composable Index Template (Data Stream): logs-fastapi-template
+### Logstash tarafından 'logs-fastapi-production' data stream'ine yazılan kayıtların
+### ECS uyumlu alanlarını (özellikle http.request.id korelasyonunu) yapılandırır.
+PUT _index_template/logs-fastapi-template
+{
+  "index_patterns": ["logs-fastapi-*"],
+  "data_stream": {},
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index.refresh_interval": "1s"
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "log": {
+          "properties": {
+            "level": { "type": "keyword" },
+            "logger": { "type": "keyword" }
+          }
+        },
+        "message": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword", "ignore_above": 512 }
+          }
+        },
+        "service": {
+          "properties": {
+            "name": { "type": "keyword" },
+            "environment": { "type": "keyword" },
+            "version": { "type": "keyword" }
+          }
+        },
+        "http": {
+          "properties": {
+            "request": {
+              "properties": {
+                "id": { "type": "keyword" },
+                "method": { "type": "keyword" }
+              }
+            },
+            "response": {
+              "properties": {
+                "status_code": { "type": "integer" }
+              }
+            },
+            "status_code": { "type": "integer" },
+            "route": { "type": "keyword" },
+            "client_ip": { "type": "ip" },
+            "duration_ms": { "type": "float" }
+          }
+        },
+        "error": {
+          "properties": {
+            "class": { "type": "keyword" },
+            "message": { "type": "text" },
+            "stack_trace": { "type": "text" }
+          }
+        },
+        "tags": {
+          "type": "keyword"
+        }
+      }
+    }
+  },
+  "priority": 200
+}
+
+### 4. Data Stream Durumu ve Shard Dağılımını İnceleme
+GET _data_stream/logs-fastapi-*
+
+### 5. Son Gelen 10 Log Kaydını Listeleme (Data Stream Üzerinden)
+GET logs-fastapi-*/_search
+{
+  "size": 10,
+  "sort": [
+    { "@timestamp": { "order": "desc" } }
+  ]
+}

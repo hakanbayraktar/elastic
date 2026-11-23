@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">KQL araması: text ve keyword alanında aynı kelime neden farklı sonuç verir</title>
+  <desc id="desc">Bir belgenin customer_full_name değeri index'lenirken text alanında analyzer ile küçük harfli token'lara ayrılır, keyword alt alanında ise tek parça saklanır. KQL sorgusu Kibana'da Query DSL'e çevrilir; text alanında aranan kelime de analiz edildiği için eşleşir, keyword alanında yalnızca birebir aynı değer eşleşir.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .zone { fill:#eef3f7; stroke:#8a94a6; stroke-width:2; stroke-dasharray:10 6 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 18px Arial,sans-serif; fill:#5aa454 }
+    .bad { font:700 18px Arial,sans-serif; fill:#bd271e }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+    .arrowg { stroke:#8a94a6; stroke-width:3; fill:none; stroke-dasharray:8 6; marker-end:url(#arrowg) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+    <marker id="arrowg" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8a94a6"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Aynı kelime, iki alan: text ve keyword</text>
+  <text x="60" y="116" class="sub">Discover'da yazdığınız KQL, Kibana tarafından Query DSL'e çevrilir. Sonucu belirleyen, alanın nasıl index'lendiğidir.</text>
+  <rect x="60" y="160" rx="14" width="420" height="150" class="card"/>
+  <rect x="60" y="160" rx="14" width="420" height="50" fill="#6b5b95"/><rect x="60" y="192" width="420" height="18" fill="#6b5b95"/>
+  <text x="78" y="193" class="head">Belge (ecommerce örneği)</text>
+  <text x="80" y="240" class="mono">"customer_full_name":</text>
+  <text x="80" y="268" class="mono">    "Eddie Underwood"</text>
+  <rect x="560" y="160" rx="14" width="980" height="150" class="card"/>
+  <rect x="560" y="160" rx="14" width="980" height="50" fill="#005571"/><rect x="560" y="192" width="980" height="18" fill="#005571"/>
+  <text x="578" y="193" class="head">customer_full_name  (text)  — analyzer: standard</text>
+  <text x="580" y="236" class="body">1. tokenizer kelimelere böler   2. lowercase küçük harfe çevirir</text>
+  <rect x="580" y="256" rx="8" width="150" height="40" fill="#0b6e99"/>
+  <text x="655" y="283" class="head" text-anchor="middle">eddie</text>
+  <rect x="750" y="256" rx="8" width="150" height="40" fill="#0b6e99"/>
+  <text x="825" y="283" class="head" text-anchor="middle">underwood</text>
+  <text x="940" y="283" class="small">inverted index'te iki ayrı terim</text>
+  <rect x="560" y="340" rx="14" width="980" height="130" class="card"/>
+  <rect x="560" y="340" rx="14" width="980" height="50" fill="#f5a700"/><rect x="560" y="372" width="980" height="18" fill="#f5a700"/>
+  <text x="578" y="373" class="head">customer_full_name.keyword  (keyword)  — analiz yok</text>
+  <rect x="580" y="410" rx="8" width="260" height="40" fill="#f5a700"/>
+  <text x="710" y="437" class="head" text-anchor="middle">Eddie Underwood</text>
+  <text x="870" y="437" class="small">tek terim, büyük/küçük harf korunur</text>
+  <path d="M482 235 L556 235" class="arrow"/>
+  <path d="M482 280 L520 280 L520 405 L556 405" class="arrow"/>
+  <rect x="60" y="510" rx="14" width="1480" height="300" class="card"/>
+  <rect x="60" y="510" rx="14" width="1480" height="50" fill="#5aa454"/><rect x="60" y="542" width="1480" height="18" fill="#5aa454"/>
+  <text x="78" y="543" class="head">KQL → Query DSL → sonuç</text>
+  <text x="84" y="600" class="mono">customer_full_name : eddie</text>
+  <text x="640" y="600" class="body">match → "eddie" analiz edilir → token "eddie" var</text>
+  <text x="1380" y="600" class="ok">EŞLEŞİR</text>
+  <text x="84" y="652" class="mono">customer_full_name : EDDIE</text>
+  <text x="640" y="652" class="body">match → "EDDIE" → "eddie" (lowercase) → token var</text>
+  <text x="1380" y="652" class="ok">EŞLEŞİR</text>
+  <text x="84" y="704" class="mono">customer_full_name.keyword : eddie</text>
+  <text x="640" y="704" class="body">analiz yok → "eddie" ≠ "Eddie Underwood"</text>
+  <text x="1380" y="704" class="bad">EŞLEŞMEZ</text>
+  <text x="84" y="756" class="mono">customer_full_name.keyword : "Eddie Underwood"</text>
+  <text x="640" y="756" class="body">birebir aynı değer</text>
+  <text x="1380" y="756" class="ok">EŞLEŞİR</text>
+  <rect x="60" y="840" rx="14" width="1480" height="120" class="card"/>
+  <text x="84" y="882" class="h2">Karar kuralı</text>
+  <text x="84" y="914" class="body">Serbest metin araması (kelime, büyük/küçük harf fark etmez) → text alanı.   Filtre, gruplama, sıralama (tam değer) → keyword alanı.</text>
+  <text x="84" y="942" class="small">Aynı ayrım Query DSL'de match (text) ve term (keyword) olarak karşınıza çıkar: LAB-05 Modül 02-03.</text>
+</svg>

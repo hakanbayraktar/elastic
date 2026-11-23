@@ -1,0 +1,167 @@
+### ====================================================================
+### NovaShop: NovaShop İleri Veri Modellemesi — Parent-Child (join) İlişkisi
+### ====================================================================
+### Neden Nested Değil de Parent-Child?
+### 1. Nested nesnelerde yeni bir yorum eklendiğinde tüm ürün baştan reindex edilir.
+### 2. Parent-Child (join) ilişkisinde ürün ve yorumlar BAĞIMSIZ belgelerdir.
+###    Günde 10.000 yorum gelse bile ana ürün belgesine dokunulmaz.
+### 3. KRİTİK KURAL: Bir parent ve onun tüm child'ları AYNI SHARD'da yaşamalıdır.
+###    Bu nedenle child doküman eklerken ?routing=<parent_id> ZORUNLUDUR!
+### ====================================================================
+
+### --------------------------------------------------------------------
+### 1. index'i Oluşturma (join veri tipi ile)
+### --------------------------------------------------------------------
+DELETE /novashop-catalog-relational
+
+PUT /novashop-catalog-relational
+{
+  "settings": {
+    "number_of_shards": 2,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "title": { "type": "text" },
+      "category": { "type": "keyword" },
+      "price": { "type": "double" },
+      "author": { "type": "keyword" },
+      "stars": { "type": "integer" },
+      "comment": { "type": "text" },
+      "created_at": { "type": "date" },
+      "catalog_relation": {
+        "type": "join",
+        "relations": {
+          "product": "review"
+        }
+      }
+    }
+  }
+}
+
+### --------------------------------------------------------------------
+### 2. Parent Belgeleri Ekleme (Ürünler)
+### Parent belgeler eklenirken routing parametresi gerekmez; kendi _id'leri rotalanır.
+### --------------------------------------------------------------------
+PUT /novashop-catalog-relational/_doc/prod-101
+{
+  "title": "NovaSound Pro Gürültü Önleyici Kablosuz Kulaklık",
+  "category": "Electronics",
+  "price": 1299.99,
+  "catalog_relation": "product"
+}
+
+PUT /novashop-catalog-relational/_doc/prod-102
+{
+  "title": "NovaPad 11 İnç Tablet ve Kalem Seti",
+  "category": "Electronics",
+  "price": 4500.00,
+  "catalog_relation": "product"
+}
+
+PUT /novashop-catalog-relational/_doc/prod-103
+{
+  "title": "NovaWear Akıllı Koşu Ayakkabısı",
+  "category": "Footwear",
+  "price": 850.00,
+  "catalog_relation": "product"
+}
+
+### --------------------------------------------------------------------
+### 3. Child Belgeleri Ekleme (Yorumlar / Değerlendirmeler)
+### DİKKAT: ?routing=prod-XXX parametresi kesinlikle verilmelidir!
+### --------------------------------------------------------------------
+PUT /novashop-catalog-relational/_doc/rev-501?routing=prod-101
+{
+  "author": "Ayşe Yılmaz",
+  "stars": 5,
+  "comment": "Ses kalitesi ve aktif gürültü engelleme harika, şarjı iki gün gidiyor.",
+  "created_at": "2026-11-01T10:15:00Z",
+  "catalog_relation": {
+    "name": "review",
+    "parent": "prod-101"
+  }
+}
+
+PUT /novashop-catalog-relational/_doc/rev-502?routing=prod-101
+{
+  "author": "Mehmet Demir",
+  "stars": 4,
+  "comment": "Mikrofon performansı biraz zayıf ama müzik dinlemek için çok iyi.",
+  "created_at": "2026-11-02T14:30:00Z",
+  "catalog_relation": {
+    "name": "review",
+    "parent": "prod-101"
+  }
+}
+
+PUT /novashop-catalog-relational/_doc/rev-503?routing=prod-102
+{
+  "author": "Canan Kaya",
+  "stars": 2,
+  "comment": "Ekran parlaklığı yetersiz, çizim kalemi ara sıra takılıyor.",
+  "created_at": "2026-11-03T09:00:00Z",
+  "catalog_relation": {
+    "name": "review",
+    "parent": "prod-102"
+  }
+}
+
+### --------------------------------------------------------------------
+### 4. has_child Sorgusu: Yorumlara Göre Ürünü Bulma
+### Senaryo: En az 5 yıldızlı yorum almış ürünleri getir.
+### inner_hits: Eşleşen 5 yıldızlı yorumu da ürünün altında göster!
+### --------------------------------------------------------------------
+POST /novashop-catalog-relational/_search
+{
+  "query": {
+    "has_child": {
+      "type": "review",
+      "query": {
+        "range": {
+          "stars": { "gte": 5 }
+        }
+      },
+      "inner_hits": {
+        "_source": ["author", "stars", "comment"]
+      }
+    }
+  }
+}
+
+### --------------------------------------------------------------------
+### 5. has_parent Sorgusu: Ürün Bilgisine Göre Yorumları Bulma
+### Senaryo: Fiyatı 2.000 TL'den yüksek Elektronik ürünlere yapılmış yorumları getir.
+### --------------------------------------------------------------------
+POST /novashop-catalog-relational/_search
+{
+  "query": {
+    "has_parent": {
+      "parent_type": "product",
+      "query": {
+        "bool": {
+          "filter": [
+            { "term": { "category": "Electronics" } },
+            { "range": { "price": { "gt": 2000 } } }
+          ]
+        }
+      },
+      "inner_hits": {
+        "_source": ["title", "price"]
+      }
+    }
+  }
+}
+
+### --------------------------------------------------------------------
+### 6. parent_id Sorgusu: Belirli Bir Ürünün Tüm Yorumlarını Listeleme
+### --------------------------------------------------------------------
+POST /novashop-catalog-relational/_search
+{
+  "query": {
+    "parent_id": {
+      "type": "review",
+      "id": "prod-101"
+    }
+  }
+}

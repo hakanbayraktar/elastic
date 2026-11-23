@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if query %}{{ query }} · {% endif %}BilgincIT DevOps Arama</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" media="(prefers-color-scheme: light)" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+  <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('home') }}">
+      <span class="brand-name">bilginc<span>IT</span></span>
+      <span class="brand-sub">DevOps &amp; Cloud bilgi bankası</span>
+    </a>
+    <div class="spacer"></div>
+    {% if es_status %}
+      <span class="pill ok" title="{{ es_url }}"><span class="dot"></span>Elasticsearch bağlı<span class="mono"> · {{ index_name }}</span></span>
+    {% else %}
+      <span class="pill err" title="{{ es_url }}"><span class="dot"></span>Elasticsearch'e ulaşılamıyor</span>
+    {% endif %}
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="card search-card">
+    <form action="{{ url_for('home') }}" method="get" id="searchForm" role="search">
+      {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+      {% if tag %}<input type="hidden" name="tag" value="{{ tag }}">{% endif %}
+
+      <fieldset class="modes" style="border:0;padding:0;margin:0 0 14px">
+        <legend class="sr-only">Arama metodu</legend>
+        {% for key, st in search_types.items() %}
+          <label class="mode">
+            <input type="radio" name="type" value="{{ key }}" {% if key == search_type %}checked{% endif %}>
+            <span>{{ st.name }} <small>{{ st.badge }}</small></span>
+          </label>
+        {% endfor %}
+      </fieldset>
+
+      <div class="searchbox">
+        <div class="searchbox-row">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <label for="q" class="sr-only">Arama ifadesi</label>
+          <input type="search" id="q" name="q" value="{{ query }}" autocomplete="off" spellcheck="false"
+                 placeholder="Doküman, komut veya konu arayın: kubernetes, docker run, sharding…"
+                 role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suggest">
+          <span class="kbd" title="Arama kutusuna odaklan">/</span>
+          <button class="btn btn-primary" type="submit">Ara</button>
+        </div>
+        <div class="suggest" id="suggest" hidden>
+          <div class="suggest-head">Başlıkta eşleşen dokümanlar · ↑ ↓ ile seçin, Enter ile açın</div>
+          <div id="suggestList" role="listbox"></div>
+        </div>
+      </div>
+
+      <p class="mode-hint"><b>{{ search_types[search_type].name }}:</b> {{ search_types[search_type].description }}</p>
+
+      <div class="quick">
+        <span class="quick-label">Hızlı testler</span>
+        {% for t in quick_tests %}
+          <a class="chip" href="{{ url_for('home', type=t.type, q=t.q) }}" title="{{ t.hint }}">{{ t.label }} <code>{{ t.q }}</code></a>
+        {% endfor %}
+      </div>
+    </form>
+  </section>
+
+  <div class="layout">
+
+    <!-- Sol: facet'ler -->
+    <aside class="card facets" aria-label="Filtreler">
+      {% if result and (result.categories or result.tags) %}
+        <div class="facet">
+          <h3>Kategori</h3>
+          <ul class="facet-list">
+            <li><a href="{{ search_url(category='') }}" class="{% if not category %}active{% endif %}"><span>Tümü</span></a></li>
+            {% for b in result.categories %}
+              <li><a href="{{ search_url(category='' if b.key == category else b.key) }}" class="{% if b.key == category %}active{% endif %}">
+                <span>{{ b.key }}</span><span class="count">{{ b.doc_count }}</span></a></li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="facet">
+          <h3>Etiket</h3>
+          <div class="tag-cloud">
+            {% for b in result.tags %}
+              <a class="chip {% if b.key == tag %}active{% endif %}" href="{{ search_url(tag='' if b.key == tag else b.key) }}">#{{ b.key }} <span class="count">{{ b.doc_count }}</span></a>
+            {% endfor %}
+          </div>
+          <p class="facet-note">Sayılar aynı aramadaki <code>terms</code> aggregation'ından gelir; seçim <code>post_filter</code> ile uygulanır.</p>
+        </div>
+      {% else %}
+        <p class="facet-note">Filtreler, index'te doküman olduğunda görünür.</p>
+      {% endif %}
+    </aside>
+
+    <!-- Orta: sonuçlar -->
+    <section aria-label="Sonuçlar">
+      {% if result and result.error %}
+        <div class="alert alert-err">
+          <b>Arama çalıştırılamadı.</b> Index henüz oluşturulmamış olabilir: <code>python3 indexer.py</code><br>
+          <span class="mono" style="font-size:12px">{{ result.error[:300] }}</span>
+        </div>
+      {% endif %}
+
+      {% if not es_status %}
+        <div class="card empty">
+          <h3>Elasticsearch'e bağlanılamadı</h3>
+          <p><code>{{ es_url }}</code> yanıt vermiyor. Omurga duruyorsa: <code>docker start elasticsearch-lab00 kibana-lab00</code></p>
+        </div>
+      {% elif searched %}
+        <div class="results-head">
+          <span>
+            {% if query %}<b>“{{ query }}”</b> için {% endif %}<b>{{ result.total }}</b> sonuç
+          </span>
+          <span class="active-filters">
+            {% if category %}<a class="chip active" href="{{ search_url(category='') }}" title="Filtreyi kaldır">{{ category }} ✕</a>{% endif %}
+            {% if tag %}<a class="chip active" href="{{ search_url(tag='') }}" title="Filtreyi kaldır">#{{ tag }} ✕</a>{% endif %}
+          </span>
+        </div>
+
+        {% for hit in result.hits %}
+          {% set src = hit._source %}
+          <article class="card result">
+            <div class="r-meta">
+              <span class="badge">{{ src.category }}</span>
+              <span class="mono">{{ src.filename }}</span>
+              {% if hit._score is not none and result.max_score %}
+                <span class="score" title="_score: alaka puanı (BM25)">
+                  <span class="score-bar"><i style="width: {{ (hit._score / result.max_score * 100)|round(0) }}%"></i></span>
+                  {{ "%.2f"|format(hit._score) }}
+                </span>
+              {% endif %}
+            </div>
+
+            <a class="r-title" href="{{ url_for('view_document', doc_path=src.rel_path, q=query or None) }}">
+              {% if hit.highlight and hit.highlight.title %}{{ hit.highlight.title[0]|safe }}{% else %}{{ src.title }}{% endif %}
+            </a>
+
+            <div class="snippet">
+              {% if hit.highlight and hit.highlight.content %}
+                {% for frag in hit.highlight.content %}<p>…{{ frag|safe }}…</p>{% endfor %}
+              {% elif src.summary %}
+                <p>{{ src.summary }}</p>
+              {% endif %}
+            </div>
+
+            {% if hit.inner_hits %}
+              {% for path, inner in hit.inner_hits.items() %}
+                {% if inner.hits.hits %}
+                  <div class="nested">
+                    <div class="nested-title">{{ 'Eşleşen kod blokları' if path == 'commands' else 'Eşleşen bölümler' }} · {{ inner.hits.total.value }}</div>
+                    {% for ih in inner.hits.hits %}
+                      {% set h = ih.highlight or {} %}
+                      {% if path == 'commands' %}
+                        {% set line = h['commands.command'] or h['commands.full_code'] %}
+                        <code>$ {% if line %}{{ line[0]|safe }}{% else %}{{ ih._source.command }}{% endif %}</code>
+                      {% else %}
+                        <code># {% if h['sections.heading'] %}{{ h['sections.heading'][0]|safe }}{% else %}{{ ih._source.heading }}{% endif %}</code>
+                        {% if not h['sections.heading'] and h['sections.body'] %}<span class="nested-body">…{{ h['sections.body'][0]|safe }}…</span>{% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+
+            {% if src.tags %}
+              <div class="r-foot">
+                {% for t in src.tags|sort %}
+                  <a class="chip {% if t == tag %}active{% endif %}" href="{{ search_url(tag=t) }}">#{{ t }}</a>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </article>
+        {% else %}
+          {% if not result.error %}
+            <div class="card empty">
+              <h3>Eşleşen doküman yok</h3>
+              <p>“{{ query }}” <b>{{ search_types[search_type].name }}</b> aramasında bulunamadı.</p>
+              {% if query and search_type != 'fuzzy' %}
+                <p><a class="btn" href="{{ search_url(type='fuzzy') }}">Yazım hatası olabilir mi? Fuzzy ile dene</a></p>
+              {% endif %}
+              {% if category or tag %}
+                <p><a href="{{ url_for('home', q=query or None, type=search_type) }}">Filtreleri kaldırıp tekrar ara</a></p>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="card empty">
+          <h3>Bilgi bankasında {{ result.total if result else 0 }} doküman var</h3>
+          <p>Bir ifade yazın veya soldan kategori seçin. Her aramanın Elasticsearch'e giden sorgusu sağdaki panelde görünür.</p>
+          <div class="steps">
+            <div class="step"><b>1 · Metodu seçin</b>Multi-match, fuzzy, phrase, nested veya Türkçe analyzer'lı match.</div>
+            <div class="step"><b>2 · Arayın</b>Yazarken başlık önerileri gelir; <span class="kbd">/</span> kutuya odaklar.</div>
+            <div class="step"><b>3 · Sorguyu inceleyin</b>Query DSL'i Kibana Dev Tools'a veya terminale kopyalayın.</div>
+          </div>
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- Sağ: sorgu laboratuvarı -->
+    <aside class="card lab" aria-label="Sorgu laboratuvarı">
+      <div class="lab-head">
+        <h2>Sorgu laboratuvarı</h2>
+        <div class="stats">
+          <div class="stat"><span>Süre</span><b>{{ result.took if (result and searched) else '–' }}{% if result and searched %} ms{% endif %}</b></div>
+          <div class="stat"><span>Sonuç</span><b>{{ result.total if (result and searched) else '–' }}</b></div>
+          <div class="stat"><span>Maks. skor</span><b>{{ "%.2f"|format(result.max_score) if (result and searched and result.max_score) else '–' }}</b></div>
+        </div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" aria-controls="p-dsl" id="t-dsl">Query DSL</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-an" id="t-an">Analyzer</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="p-curl" id="t-curl">curl</button>
+      </div>
+
+      <div class="panel" id="p-dsl" role="tabpanel" aria-labelledby="t-dsl">
+        {% if devtools %}
+          <p>Kibana → Dev Tools → Console'a yapıştırılabilir. <code>aggs</code> facet sayılarını, <code>post_filter</code> seçili filtreleri üretir.</p>
+          <pre class="code"><code class="language-json" id="devtoolsText">{{ devtools }}</code></pre>
+          <div class="panel-actions"><button class="btn" type="button" data-copy="devtoolsText">Dev Tools için kopyala</button></div>
+        {% else %}
+          <p>Arama yaptığınızda Elasticsearch'e gönderilen JSON sorgusu burada görünür.</p>
+        {% endif %}
+      </div>
+
+      <div class="panel" id="p-an" role="tabpanel" aria-labelledby="t-an" hidden>
+        {% if tokens and not tokens.error %}
+          <p>Aranan ifade index'teki token'larla eşleşmek için önce analyzer'dan geçer (<code>_analyze</code> API).</p>
+          <h4>turkish_bilginc_analyzer <span class="count">content, title</span></h4>
+          <div class="tokens">{% for t in tokens.turkish %}<span class="token">{{ t }}</span>{% else %}<span class="facet-note">token yok (stop word)</span>{% endfor %}</div>
+          <h4>standard <span class="count">karşılaştırma</span></h4>
+          <div class="tokens">{% for t in tokens.standard %}<span class="token std">{{ t }}</span>{% endfor %}</div>
+          <p>Türkçe zincir: <code>apostrophe</code> → <code>lowercase(tr)</code> → <code>stop</code> → <code>keyword_repeat</code> → <code>stemmer(tr)</code> → <code>asciifolding</code> → <code>remove_duplicates</code>. Kök bulma çoğul ekini atar (<code>kümeler → küme</code>); <code>keyword_repeat</code> orijinal kelimeyi de tuttuğu için stemmer'ın tuhaf kökleri (<code>podları → podu</code>) tam kelime eşleşmesini bozmaz. Aynı konumdaki token'lar sorguda eş anlamlı (OR) sayılır.</p>
+        {% elif tokens and tokens.error %}
+          <p>Analyzer çalıştırılamadı: index yok mu? <code>python3 indexer.py</code></p>
+        {% else %}
+          <p>Bir ifade aradığınızda Türkçe analyzer ile standard analyzer'ın ürettiği token'lar yan yana görünür.</p>
+        {% endif %}
+      </div>
+
+      <div class="panel" id="p-curl" role="tabpanel" aria-labelledby="t-curl" hidden>
+        {% if curl %}
+          <p>Aynı sorgu terminalden (parolayı <code>ELASTIC_PASSWORD</code> değişkeninden alır):</p>
+          <pre class="code"><code class="language-bash" id="curlText">{{ curl }}</code></pre>
+          <div class="panel-actions"><button class="btn" type="button" data-copy="curlText">curl komutunu kopyala</button></div>
+          <p style="margin-top:12px">Uygulamanın JSON uç noktası: <code>/api/search?{{ request.query_string.decode() }}</code></p>
+        {% else %}
+          <p>Arama yaptığınızda aynı sorgunun curl karşılığı burada görünür.</p>
+        {% endif %}
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+<footer class="footer">BilgincIT Search · Elasticsearch eğitim projesi · <span class="mono">{{ index_name }}</span></footer>
+
+<script>
+(() => {
+  const form = document.getElementById('searchForm');
+  const input = document.getElementById('q');
+  const box = document.getElementById('suggest');
+  const list = document.getElementById('suggestList');
+  let timer, items = [], active = -1, seq = 0;
+
+  // Metot değişince, ifade varsa aramayı tekrarla
+  form.querySelectorAll('input[name=type]').forEach(r => r.addEventListener('change', () => {
+    if (input.value.trim() || {{ 'true' if (category or tag) else 'false' }}) form.submit();
+  }));
+
+  // "/" kısayolu
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== input && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) {
+      e.preventDefault(); input.focus(); input.select();
+    }
+  });
+
+  function close() { box.hidden = true; input.setAttribute('aria-expanded', 'false'); active = -1; }
+  function setActive(i) {
+    items.forEach((el, k) => el.classList.toggle('active', k === i));
+    active = i;
+  }
+
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    const v = input.value.trim();
+    if (v.length < 2) { close(); return; }
+    timer = setTimeout(async () => {
+      const mine = ++seq;
+      try {
+        const res = await fetch('/api/suggest?q=' + encodeURIComponent(v));
+        const data = await res.json();
+        if (mine !== seq) return;            // eski yanıtı yok say
+        list.replaceChildren();
+        items = data.map(s => {
+          const a = document.createElement('a');
+          a.href = '/view/' + s.rel_path.split('/').map(encodeURIComponent).join('/') + '?q=' + encodeURIComponent(v);
+          a.setAttribute('role', 'option');
+          const t = document.createElement('span');
+          // highlighted_title Elasticsearch'te encoder:html ile kaçırılmıştır; yalnız <mark> içerir
+          if (s.highlighted_title) t.innerHTML = s.highlighted_title; else t.textContent = s.title;
+          const c = document.createElement('span');
+          c.className = 's-cat'; c.textContent = s.category;
+          a.append(t, c);
+          list.append(a);
+          return a;
+        });
+        if (items.length) { box.hidden = false; input.setAttribute('aria-expanded', 'true'); setActive(-1); }
+        else close();
+      } catch { close(); }
+    }, 160);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (box.hidden || !items.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((active + 1) % items.length); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((active - 1 + items.length) % items.length); }
+    else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); location.href = items[active].href; }
+    else if (e.key === 'Escape') { close(); }
+  });
+  document.addEventListener('click', e => { if (!box.contains(e.target) && e.target !== input) close(); });
+
+  // Sekmeler
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on);
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+  }));
+
+  // Kopyalama
+  document.querySelectorAll('[data-copy]').forEach(btn => btn.addEventListener('click', async () => {
+    const text = document.getElementById(btn.dataset.copy).textContent;
+    const label = btn.textContent;
+    try { await navigator.clipboard.writeText(text); btn.textContent = 'Kopyalandı'; }
+    catch {
+      const ta = Object.assign(document.createElement('textarea'), { value: text });
+      document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      btn.textContent = 'Kopyalandı';
+    }
+    setTimeout(() => { btn.textContent = label; }, 1600);
+  }));
+
+  window.addEventListener('load', () => { if (window.hljs) document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el)); });
+})();
+</script>
+</body>
+</html>

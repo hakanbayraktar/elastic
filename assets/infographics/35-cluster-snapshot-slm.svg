@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Snapshot, SLM, farklı adla geri yükleme ve node boşaltma</title>
+  <desc id="desc">Üç node aynı paylaşılan dizindeki cluster-yedek repository'sine kendi shard'larını yazar. Elle alınan elle-1 ve SLM politikasının aldığı günlük snapshot'lar aynı repository'de durur; saklama kuralı (en çok 2) yalnız SLM'nin en eski snapshot'ını siler. Kazayla silinen belge, snapshot'ın geri- önekiyle farklı adla açılmasıyla bulunur ve _reindex ile canlı index'e taşınır. Altta, bakım öncesi exclude._name ile bir node'un shard'lardan boşaltılması gösterilir.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .bold { font:700 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 17px Arial,sans-serif; fill:#2e7d32 }
+    .bad { font:700 17px Arial,sans-serif; fill:#bd271e }
+    .node { fill:#e6f1f6; stroke:#0b6e99; stroke-width:2 }
+    .repo { fill:#fff8e1; stroke:#f5a700; stroke-width:2 }
+    .snap { fill:#fff; stroke:#6b5b95; stroke-width:2 }
+    .gone { fill:#fdecea; stroke:#bd271e; stroke-width:2; stroke-dasharray:6 4 }
+    .arrow { stroke:#42526e; stroke-width:2.5; fill:none; marker-end:url(#ok) }
+  </style>
+  <defs>
+    <marker id="ok" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#42526e"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Yedek cluster dışında durur: snapshot, SLM ve geri yükleme</text>
+  <text x="60" y="116" class="sub">Replica node kaybına karşı korur; silinen belgeye karşı korumaz. Geri dönüş snapshot'tan yapılır.</text>
+
+  <!-- 1. Repository -->
+  <rect x="60" y="150" rx="14" width="460" height="560" class="card"/>
+  <rect x="60" y="150" rx="14" width="460" height="50" fill="#0b6e99"/><rect x="60" y="182" width="460" height="18" fill="#0b6e99"/>
+  <text x="80" y="183" class="head">1 · Repository: her node yazar</text>
+  <rect x="85" y="230" rx="10" width="120" height="60" class="node"/><text x="122" y="267" class="bold">es-a</text>
+  <rect x="230" y="230" rx="10" width="120" height="60" class="node"/><text x="267" y="267" class="bold">es-b</text>
+  <rect x="375" y="230" rx="10" width="120" height="60" class="node"/><text x="412" y="267" class="bold">es-c</text>
+  <path d="M145,292 L240,370" class="arrow"/><path d="M290,292 L290,370" class="arrow"/><path d="M435,292 L340,370" class="arrow"/>
+  <rect x="100" y="376" rx="10" width="380" height="96" class="repo"/>
+  <text x="120" y="408" class="mono">cluster-yedek  (type: fs)</text>
+  <text x="120" y="434" class="small">path.repo: /mnt/elasticsearch-snapshots</text>
+  <text x="120" y="458" class="small">üç node'a bağlı aynı volume (NFS)</text>
+  <text x="85" y="510" class="body">Her primary, bulunduğu node</text>
+  <text x="85" y="536" class="body">tarafından repository'ye yazılır.</text>
+  <text x="85" y="580" class="mono">_verify → [es-a, es-b, es-c]</text>
+  <text x="85" y="622" class="small">Bir node dizini göremezse doğrulama</text>
+  <text x="85" y="646" class="small">başarısız olur; snapshot'ın o node'daki</text>
+  <text x="85" y="670" class="small">shard'ı yazılamaz.</text>
+
+  <!-- 2. Snapshot + SLM -->
+  <rect x="570" y="150" rx="14" width="460" height="560" class="card"/>
+  <rect x="570" y="150" rx="14" width="460" height="50" fill="#6b5b95"/><rect x="570" y="182" width="460" height="18" fill="#6b5b95"/>
+  <text x="590" y="183" class="head">2 · Snapshot'lar ve SLM saklama</text>
+  <text x="590" y="236" class="mono">schedule  0 30 1 * * ?   (her gece 01:30)</text>
+  <text x="590" y="262" class="mono">retention expire 30d · min 1 · max 2</text>
+  <rect x="595" y="290" rx="10" width="410" height="54" class="snap"/>
+  <text x="615" y="324" class="mono">elle-1</text><text x="800" y="324" class="small">elle · SLM dokunmaz</text>
+  <rect x="595" y="358" rx="10" width="410" height="54" class="gone"/>
+  <text x="615" y="392" class="mono">gunluk-… (1)</text><text x="800" y="392" class="bad">saklama sildi</text>
+  <rect x="595" y="426" rx="10" width="410" height="54" class="snap"/>
+  <text x="615" y="460" class="mono">gunluk-… (2)</text><text x="800" y="460" class="ok">kaldı</text>
+  <rect x="595" y="494" rx="10" width="410" height="54" class="snap"/>
+  <text x="615" y="528" class="mono">gunluk-… (3)</text><text x="800" y="528" class="ok">kaldı</text>
+  <text x="590" y="590" class="body">Snapshot artımlıdır: önceki snapshot'ta</text>
+  <text x="590" y="616" class="body">olan segment tekrar kopyalanmaz.</text>
+  <text x="590" y="656" class="small">_execute: geceyi beklemeden çalıştır</text>
+  <text x="590" y="680" class="small">_execute_retention: saklamayı şimdi uygula</text>
+
+  <!-- 3. Restore -->
+  <rect x="1080" y="150" rx="14" width="460" height="560" class="card"/>
+  <rect x="1080" y="150" rx="14" width="460" height="50" fill="#5aa454"/><rect x="1080" y="182" width="460" height="18" fill="#5aa454"/>
+  <text x="1100" y="183" class="head">3 · Kaza ve farklı adla geri yükleme</text>
+  <rect x="1105" y="225" rx="10" width="410" height="70" class="node"/>
+  <text x="1125" y="255" class="mono">cluster-urunler</text>
+  <text x="1125" y="280" class="bad">5 belge (id 3 silindi)</text>
+  <path d="M1310,300 L1310,340" class="arrow"/>
+  <text x="1105" y="366" class="mono">_restore elle-1</text>
+  <text x="1105" y="390" class="mono">rename_pattern     (.+)</text>
+  <text x="1105" y="414" class="mono">rename_replacement geri-$1</text>
+  <path d="M1310,424 L1310,456" class="arrow"/>
+  <rect x="1105" y="462" rx="10" width="410" height="70" class="repo"/>
+  <text x="1125" y="492" class="mono">geri-cluster-urunler</text>
+  <text x="1125" y="517" class="ok">6 belge (snapshot anı)</text>
+  <path d="M1310,537 L1310,569" class="arrow"/>
+  <text x="1105" y="594" class="mono">_reindex  id 3 → cluster-urunler</text>
+  <text x="1105" y="636" class="body">Index'i tümüyle geri döndürmek, sonradan</text>
+  <text x="1105" y="662" class="body">yazılanları kaybettirir; yalnız gerekeni</text>
+  <text x="1105" y="688" class="body">taşıyın.</text>
+
+  <!-- 4. Node bosaltma -->
+  <rect x="60" y="745" rx="14" width="1480" height="200" class="card"/>
+  <rect x="60" y="745" rx="14" width="1480" height="50" fill="#005571"/><rect x="60" y="777" width="1480" height="18" fill="#005571"/>
+  <text x="80" y="778" class="head">4 · Bakım öncesi node boşaltma</text>
+  <rect x="90" y="830" rx="10" width="300" height="80" class="node"/>
+  <text x="110" y="862" class="bold">3 node dengeli</text><text x="110" y="890" class="small">shard'lar üçe bölünmüş</text>
+  <path d="M395,870 L455,870" class="arrow"/>
+  <rect x="460" y="830" rx="10" width="330" height="80" class="repo"/>
+  <text x="480" y="862" class="mono">exclude._name: es-c</text><text x="480" y="890" class="small">shard'lar es-a ve es-b'ye taşınır</text>
+  <path d="M795,870 L855,870" class="arrow"/>
+  <rect x="860" y="830" rx="10" width="300" height="80" class="node"/>
+  <text x="880" y="862" class="bold">es-c: 0 shard · green</text><text x="880" y="890" class="small">durdurulabilir, bakım</text>
+  <path d="M1165,870 L1225,870" class="arrow"/>
+  <rect x="1230" y="830" rx="10" width="280" height="80" class="repo"/>
+  <text x="1250" y="862" class="mono">exclude._name: null</text><text x="1250" y="890" class="small">shard'lar yeniden dağılır</text>
+</svg>

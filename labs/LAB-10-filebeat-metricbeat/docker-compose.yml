@@ -1,0 +1,51 @@
+name: beats-lab
+
+services:
+  # Demo web sunucusu: erisim loglari container stdout'una gider (resmi image boyle kurar).
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx-beats-lab
+    ports:
+      - "127.0.0.1:8081:80"
+
+  # Demo API: her istekte stdout'a tek satir JSON log yazar (paket kurulumu yok).
+  api:
+    image: python:3.12-alpine
+    container_name: api-beats-lab
+    command: ["python", "-u", "/app/api.py"]
+    volumes:
+      - ./sample-apps/api.py:/app/api.py:ro
+    ports:
+      - "127.0.0.1:3001:3000"
+
+  # Filebeat: host'un auth.log'unu ve container loglarini okur.
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:9.5.5
+    container_name: filebeat-beats-lab
+    user: root                                   # host log dosyalari ve Docker soketi root'a ait
+    command: ["filebeat", "-e", "--strict.perms=false"]
+    volumes:
+      - ./config/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log:/hostfs/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - filebeat-data:/usr/share/filebeat/data    # registry: hangi dosyanin nereye kadar okundugu
+    network_mode: host                           # host adi (host.name) sunucunun adi olur; ES 127.0.0.1:9200
+
+  # Metricbeat: host (CPU, bellek, disk, surec) ve container metrikleri.
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:9.5.5
+    container_name: metricbeat-beats-lab
+    user: root
+    pid: host                                    # host sureclerini gorebilmek icin
+    command: ["metricbeat", "-e", "--strict.perms=false"]
+    volumes:
+      - ./config/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /:/hostfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    network_mode: host                           # host'un ag arayuzleri ve adi gorunur
+
+volumes:
+  filebeat-data:

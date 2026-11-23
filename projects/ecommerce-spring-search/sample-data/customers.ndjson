@@ -1,0 +1,40 @@
+{"index": {"_id": "C2001", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2001", "name": "Amber Ramirez", "email": "rachelwilliams@yahoo.com", "address": {"street": "9901 Emily Junction Apt. 056", "city": "East Stephanie", "state": "WY", "zip": "34686"}, "join_date": "2023-01-01", "loyalty_tier": "Gold"}
+{"index": {"_id": "C2002", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2002", "name": "Rachel Mccarty", "email": "murrayjoshua@simpson.com", "address": {"street": "904 Fernandez Isle", "city": "West Kathyland", "state": "OH", "zip": "48898"}, "join_date": "2021-04-09", "loyalty_tier": "Platinum"}
+{"index": {"_id": "C2003", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2003", "name": "Natalie Gonzalez", "email": "millerjeffrey@gmail.com", "address": {"street": "6947 Bauer Centers", "city": "East Heather", "state": "NC", "zip": "90098"}, "join_date": "2024-05-14", "loyalty_tier": null}
+{"index": {"_id": "C2004", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2004", "name": "Jessica Wang", "email": "zachary41@garcia.com", "address": {"street": "300 Allen Gardens Suite 957", "city": "Juliaport", "state": "IL", "zip": "97362"}, "join_date": "2021-02-21", "loyalty_tier": "Platinum"}
+{"index": {"_id": "C2005", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2005", "name": "Patricia Hernandez", "email": "russell78@moss-mendez.com", "address": {"street": "800 Hammond Plain", "city": "Christopherchester", "state": "NC", "zip": "85527"}, "join_date": "2021-01-22", "loyalty_tier": "Silver"}
+{"index": {"_id": "C2006", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2006", "name": "Caitlin Poole DVM", "email": "breannawood@delgado.com", "address": {"street": "6029 Cox Prairie", "city": "Jamesfurt", "state": "NJ", "zip": "33400"}, "join_date": "2024-03-11", "loyalty_tier": "Silver"}
+{"index": {"_id": "C2007", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2007", "name": "Andrew Conrad", "email": "jhanson@villegas.com", "address": {"street": "6349 Castillo Meadow", "city": "Valerieburgh", "state": "CO", "zip": "54945"}, "join_date": "2024-01-06", "loyalty_tier": "Silver"}
+{"index": {"_id": "C2008", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2008", "name": "Virginia Bradley", "email": "stephanie94@cooper.com", "address": {"street": "5793 Newton Harbor Apt. 786", "city": "East Thomas", "state": "ID", "zip": "86509"}, "join_date": "2020-02-25", "loyalty_tier": "Silver"}
+{"index": {"_id": "C2009", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2009", "name": "Marc Miller", "email": "robert94@conner.biz", "address": {"street": "23720 Christine Canyon Apt. 025", "city": "Mccoyview", "state": "MT", "zip": "87019"}, "join_date": "2020-10-01", "loyalty_tier": "Gold"}
+{"index": {"_id": "C2010", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2010", "name": "William Thompson", "email": "carterjames@yahoo.com", "address": {"street": "666 Rose Isle", "city": "Kirkshire", "state": "KY", "zip": "47071"}, "join_date": "2024-11-15", "loyalty_tier": "Platinum"}
+{"index": {"_id": "C2011", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2011", "name": "Michael Little", "email": "garciadouglas@gmail.com", "address": {"street": "57526 Taylor Ridge", "city": "Port Nancy", "state": "SD", "zip": "20072"}, "join_date": "2022-09-12", "loyalty_tier": "Gold"}
+{"index": {"_id": "C2012", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2012", "name": "Justin Villa", "email": "tcook@gmail.com", "address": {"street": "0260 Timothy Orchard", "city": "West Theresaborough", "state": "ME", "zip": "30063"}, "join_date": "2023-06-15", "loyalty_tier": "Platinum"}
+{"index": {"_id": "C2013", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2013", "name": "Teresa Miller", "email": "fschneider@patrick.biz", "address": {"street": "172 Davies Road", "city": "South Nicholasport", "state": "CA", "zip": "37704"}, "join_date": "2021-06-23", "loyalty_tier": "Silver"}
+{"index": {"_id": "C2014", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2014", "name": "Rachel Gonzalez", "email": "thomasshawn@gmail.com", "address": {"street": "0348 Williams Meadow", "city": "Nicholasport", "state": "NY", "zip": "49705"}, "join_date": "2020-12-07", "loyalty_tier": null}
+{"index": {"_id": "C2015", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2015", "name": "Sharon Green", "email": "grantjenna@gmail.com", "address": {"street": "6481 Jonathan Mill", "city": "North Williamton", "state": "NY", "zip": "12916"}, "join_date": "2020-11-23", "loyalty_tier": "Silver"}
+{"index": {"_id": "C2016", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2016", "name": "Melinda Cox", "email": "vcook@graham.com", "address": {"street": "75106 Brian Tunnel Apt. 077", "city": "North Sherry", "state": "NE", "zip": "72137"}, "join_date": "2022-06-07", "loyalty_tier": "Platinum"}
+{"index": {"_id": "C2017", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2017", "name": "Amy Brown", "email": "dnewton@hotmail.com", "address": {"street": "606 Montgomery Club Apt. 209", "city": "West Tarashire", "state": "FL", "zip": "66150"}, "join_date": "2024-10-17", "loyalty_tier": "Silver"}
+{"index": {"_id": "C2018", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2018", "name": "Diane Moore", "email": "sarahhatfield@harris.org", "address": {"street": "71730 Kristina Ville", "city": "East William", "state": "PA", "zip": "45596"}, "join_date": "2020-07-02", "loyalty_tier": "Platinum"}
+{"index": {"_id": "C2019", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2019", "name": "Heather Bennett", "email": "wilsonjenny@gmail.com", "address": {"street": "922 Steven Parkway Suite 190", "city": "West Kyle", "state": "IN", "zip": "70486"}, "join_date": "2024-05-26", "loyalty_tier": "Gold"}
+{"index": {"_id": "C2020", "_index": "ecommerce-customers-v1"}}
+{"customer_id": "C2020", "name": "Jesse Wells", "email": "danielrichardson@yahoo.com", "address": {"street": "15996 Kristopher Green Apt. 220", "city": "Vasquezhaven", "state": "GA", "zip": "41647"}, "join_date": "2025-01-13", "loyalty_tier": "Platinum"}

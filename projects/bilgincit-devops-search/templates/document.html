@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} · BilgincIT</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('home') }}">
+      <span class="brand-name">bilginc<span>IT</span></span>
+      <span class="brand-sub">DevOps &amp; Cloud bilgi bankası</span>
+    </a>
+    <div class="spacer"></div>
+    <a class="btn" href="{{ url_for('home', q=highlight_q or None) }}">← Aramaya dön</a>
+  </div>
+</header>
+
+<main class="page">
+  <div class="doc-layout">
+
+    <aside class="card toc" aria-label="İçindekiler">
+      <h3>İçindekiler</h3>
+      {% if toc %}
+        <ol>
+          {% for h in toc %}
+            <li class="l{{ h.level }}"><a href="#{{ h.id }}">{{ h.name }}</a></li>
+          {% endfor %}
+        </ol>
+      {% else %}
+        <p class="facet-note">Bu dokümanda alt başlık yok.</p>
+      {% endif %}
+    </aside>
+
+    <article class="card doc">
+      <div class="doc-head">
+        <div class="r-meta">
+          <a class="badge" href="{{ url_for('home', category=category) }}" title="Bu kategorideki dokümanlar">{{ category }}</a>
+          <span class="mono">{{ rel_path }}</span>
+          <span>· {{ line_count }} satır</span>
+        </div>
+        <h1>{{ title }}</h1>
+        <div class="doc-tools">
+          <button class="btn" type="button" id="copyBtn">Ham metni kopyala</button>
+          {% if highlight_q %}
+            <span class="hl-note" id="hlNote">“{{ highlight_q }}” vurgulanıyor</span>
+            <a class="btn" href="{{ url_for('view_document', doc_path=rel_path) }}">Vurguyu kaldır</a>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if is_markdown %}
+        <div class="md" id="content">{{ rendered_html|safe }}</div>
+      {% else %}
+        <pre class="raw" id="content"><code>{{ raw_content }}</code></pre>
+      {% endif %}
+    </article>
+
+  </div>
+</main>
+
+<footer class="footer">BilgincIT Search · <span class="mono">docs/{{ rel_path }}</span></footer>
+
+<template id="rawContent">{{ raw_content }}</template>
+
+<script>
+(() => {
+  const btn = document.getElementById('copyBtn');
+  btn.addEventListener('click', async () => {
+    const text = document.getElementById('rawContent').content.textContent;
+    try { await navigator.clipboard.writeText(text); } catch {
+      const ta = Object.assign(document.createElement('textarea'), { value: text });
+      document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    btn.textContent = 'Kopyalandı';
+    setTimeout(() => { btn.textContent = 'Ham metni kopyala'; }, 1600);
+  });
+
+  // Önce kod renklendirme (highlight.js defer ile yüklenir), sonra arama vurgusu
+  document.addEventListener('DOMContentLoaded', () => {
+  if (window.hljs) document.querySelectorAll('#content pre code').forEach(el => hljs.highlightElement(el));
+
+  // Aramadan gelindiyse (?q=) ifadedeki kelimeleri metinde işaretle ve ilk eşleşmeye kaydır
+  const q = {{ highlight_q|tojson }};
+  const words = q.split(/\s+/).filter(w => w.length > 1)
+                 .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  if (words.length) {
+    const re = new RegExp('(' + words.join('|') + ')', 'giu');
+    const has = new RegExp(re.source, 'iu');   // test için global olmayan kopya (lastIndex durumu yok)
+    const root = document.getElementById('content');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) if (has.test(walker.currentNode.nodeValue)) nodes.push(walker.currentNode);
+    let count = 0;
+    nodes.forEach(node => {
+      const frag = document.createDocumentFragment();
+      node.nodeValue.split(re).forEach((part, i) => {
+        if (i % 2) { const m = document.createElement('mark'); m.textContent = part; frag.append(m); count++; }
+        else if (part) frag.append(part);
+      });
+      node.replaceWith(frag);
+    });
+    const note = document.getElementById('hlNote');
+    if (note) note.textContent = count ? `“${q}” · ${count} eşleşme vurgulandı` : `“${q}” metinde birebir geçmiyor (eşleşme kök/fuzzy ile olmuş olabilir)`;
+    const first = root.querySelector('mark');
+    if (first) first.scrollIntoView({ block: 'center' });
+  }
+  });
+})();
+</script>
+</body>
+</html>

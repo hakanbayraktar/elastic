@@ -1,0 +1,42 @@
+name: fleet-lab
+
+services:
+  # Fleet Server: ajanlarin politika sordugu sunucu. Kendisi de bir Elastic Agent'tir.
+  fleet-server:
+    image: docker.elastic.co/elastic-agent/elastic-agent:9.5.5
+    container_name: fleet-server-lab
+    hostname: fleet-server
+    environment:
+      - FLEET_SERVER_ENABLE=1
+      - FLEET_SERVER_ELASTICSEARCH_HOST=http://elasticsearch-lab00:9200
+      - FLEET_SERVER_SERVICE_TOKEN=${FLEET_SERVER_SERVICE_TOKEN}
+      - FLEET_SERVER_POLICY_ID=fleet-server-policy
+    ports:
+      - "127.0.0.1:8220:8220"   # yalniz sunucudan; ajan Docker agi uzerinden baglanir
+    restart: unless-stopped
+
+  # Yonetilen ajan: ne toplayacagini Fleet Server'dan alir.
+  elastic-agent:
+    image: docker.elastic.co/elastic-agent/elastic-agent:9.5.5
+    container_name: agent-fleet-lab
+    hostname: linux-agent-01
+    # Sunucunun loglari ve /proc'u salt okunur baglanir; baglanmazsa ajan yalniz kendi konteynerini gorur.
+    # /var/log'daki auth.log syslog:adm 640 oldugu icin root gerekir.
+    user: root
+    volumes:
+      - /var/log:/var/log:ro
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+    environment:
+      - FLEET_ENROLL=1
+      - FLEET_URL=https://fleet-server:8220
+      - FLEET_ENROLLMENT_TOKEN=${FLEET_ENROLLMENT_TOKEN}
+      - FLEET_INSECURE=true     # Fleet Server kendi imzali sertifikayla acilir (yalniz lab)
+    depends_on:
+      - fleet-server
+    restart: unless-stopped
+
+networks:
+  default:
+    name: elastic-lab00_default
+    external: true

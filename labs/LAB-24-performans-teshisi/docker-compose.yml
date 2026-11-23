@@ -1,0 +1,15 @@
+# LAB-24 Adim 6: Stack Monitoring icin Metricbeat. Ana cluster'in agina katilir, yeni ag kurmaz.
+services:
+  metricbeat-izleme:
+    image: docker.elastic.co/beats/metricbeat:9.5.5
+    container_name: metricbeat-izleme-lab
+    user: root
+    command: ["metricbeat", "-e", "--strict.perms=false"]
+    volumes:
+      - ./config/metricbeat-izleme.yml:/usr/share/metricbeat/metricbeat.yml:ro
+    networks: [elastic]
+
+networks:
+  elastic:
+    name: elastic-lab00_default
+    external: true

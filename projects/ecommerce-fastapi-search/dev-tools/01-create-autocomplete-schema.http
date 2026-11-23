@@ -1,0 +1,129 @@
+# ==============================================================================
+# NovaCommerce: E-Ticaret Arama Bileşenleri — Edge N-Gram Autocomplete Şeması
+# Mimari: Kurumsal E-Ticaret Otomatik Tamamlama ve Arama Şeması
+# Hedef Index : ecommerce_search_products
+# ==============================================================================
+
+###
+# 1. Eski denemelerden kalan index'i temizleyin (Opsiyonel)
+DELETE ecommerce_search_products?ignore_unavailable=true
+
+###
+# 2. Özel Edge N-Gram Tokenizer & Analyzer ile Index ve Mapping Tanımı
+# ------------------------------------------------------------------------------
+# Mantık:
+# - autocomplete_tokenizer: 2 ile 20 karakter arası ön ek (edge n-gram) üretir.
+#   Örn: "iphone" -> "ip", "iph", "ipho", "iphon", "iphone"
+# - autocomplete_index: Indexleme sırasında edge_ngram tokenizer + lowercase çalışır.
+# - autocomplete_search: Arama sırasında STANDARD tokenizer + lowercase çalışır.
+#   ÇOK KRİTİK: Arama zamanında edge_ngram kullanılmaz! Kullanıcı "iph" yazdığında
+#   arama terimi parçalanmamalı, doğrudan "iph" olarak indexlenmiş ngram'ler ile eşleşmelidir.
+PUT ecommerce_search_products
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "tokenizer": {
+        "autocomplete_tokenizer": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      },
+      "analyzer": {
+        "autocomplete_index": {
+          "type": "custom",
+          "tokenizer": "autocomplete_tokenizer",
+          "filter": [
+            "lowercase"
+          ]
+        },
+        "autocomplete_search": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "product_id": {
+        "type": "keyword"
+      },
+      "product_name": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "brand": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "category": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          }
+        }
+      },
+      "price": {
+        "type": "float"
+      },
+      "discount_percentage": {
+        "type": "float"
+      },
+      "currency": {
+        "type": "keyword"
+      },
+      "in_stock": {
+        "type": "boolean"
+      },
+      "units_sold": {
+        "type": "integer"
+      },
+      "search_autocomplete": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword"
+          },
+          "autocomplete": {
+            "type": "text",
+            "analyzer": "autocomplete_index",
+            "search_analyzer": "autocomplete_search"
+          }
+        }
+      }
+    }
+  }
+}
+
+###
+# 3. Şema ve Mapping Kontrolü
+GET ecommerce_search_products/_mapping
+
+###
+# 4. Analyzer Testi (Token Analizi)
+# "Casual Summer Dress" cümlesinin nasıl ngram tokenlarına ayrıldığını gözlemleyin:
+POST ecommerce_search_products/_analyze
+{
+  "analyzer": "autocomplete_index",
+  "text": "Casual Dress"
+}

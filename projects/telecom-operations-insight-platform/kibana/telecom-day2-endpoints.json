@@ -1,0 +1,32 @@
+{
+  "type": "xy",
+  "title": "API | En sorunlu 10 endpoint",
+  "query": {
+    "language": "kql",
+    "expression": "event.dataset: \"telecom.day2\" AND service.name: \"edge-proxy\" AND http.response.status_code >= 500 AND http.response.status_code < 600"
+  },
+  "layers": [
+    {
+      "type": "bar_horizontal",
+      "data_source": {
+        "type": "data_view_reference",
+        "ref_id": "telecom-events-lab"
+      },
+      "x": {
+        "operation": "terms",
+        "fields": [
+          "url.path"
+        ],
+        "limit": 10,
+        "label": "Endpoint"
+      },
+      "y": [
+        {
+          "operation": "count",
+          "label": "5xx istek"
+        }
+      ]
+    }
+  ],
+  "description": "40 proxy isteği; uygulama logları aynı isteği ikinci kez saymaz. Zaman aralığı dashboard tarafından uygulanır."
+}

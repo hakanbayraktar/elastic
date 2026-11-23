@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Fleet akışı: politika Kibana'dan ajana, veri ajandan Elasticsearch'e</title>
+  <desc id="desc">Soldan sağa Türkçe diyagram. Kibana Fleet'te agent policy ve integration tanımlanır, revision numarası artar. Fleet Server 8220 portunda ajanın check-in'ine yeni politikayı döner ve durumu .fleet index'lerine yazar. Konteynerdeki Elastic Agent politikayı uygular; sunucunun /var/log, /proc ve cgroup dizinleri salt okunur bağlanmıştır, system.hostfs /hostfs olarak ayarlıdır. Ajan topladığı veriyi Fleet Server'a değil doğrudan Elasticsearch'e, logs-system ve metrics-system data stream'lerine yazar. Alt şerit, host bağlaması olmadığında ajanın yalnızca kendi konteynerini gördüğünü gösterir.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .lane { fill:#ffffff; stroke:#b3bac5; stroke-width:2 }
+    .lanehead { font:700 24px Arial,sans-serif; fill:#172b4d }
+    .card { fill:#ffffff; stroke-width:3 }
+    .chead { font:700 21px Arial,sans-serif; fill:#ffffff }
+    .body { font:400 19px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .note { font:400 18px Arial,sans-serif; fill:#42526e }
+    .lbl { font:700 18px Arial,sans-serif; fill:#0b6e99 }
+    .lbld { font:700 18px Arial,sans-serif; fill:#5aa454 }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#ah) }
+    .arrowd { stroke:#5aa454; stroke-width:6; fill:none; marker-end:url(#ahd) }
+    .dash { stroke:#6b5b95; stroke-width:3; stroke-dasharray:9 7; fill:none; marker-end:url(#ahp) }
+    .host { fill:none; stroke:#f5a700; stroke-width:3; stroke-dasharray:12 8 }
+  </style>
+  <defs>
+    <marker id="ah" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="16" refX="13" refY="8" orient="auto">
+      <path d="M0,0 L16,8 L0,16 z" fill="#0b6e99"/>
+    </marker>
+    <marker id="ahd" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="15" refY="9" orient="auto">
+      <path d="M0,0 L18,9 L0,18 z" fill="#5aa454"/>
+    </marker>
+    <marker id="ahp" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto">
+      <path d="M0,0 L14,7 L0,14 z" fill="#6b5b95"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1600" height="1000"/>
+  <text class="title" x="60" y="70">Ayar politikada, veri doğrudan Elasticsearch'te</text>
+  <text class="sub" x="60" y="108">Politika Kibana'da değişir; ajan check-in'de alır. Fleet Server veri taşımaz.</text>
+
+  <!-- Ust serit -->
+  <rect class="lane" x="40" y="140" width="1520" height="520" rx="14"/>
+  <text class="lanehead" x="64" y="180">Bu lab: iki konteyner, iki politika</text>
+
+  <!-- Kibana -->
+  <rect class="card" x="64" y="210" width="330" height="250" rx="10" stroke="#005571"/>
+  <rect x="64" y="210" width="330" height="46" rx="10" fill="#005571"/>
+  <text class="chead" x="82" y="241">1. Kibana Fleet (:5601)</text>
+  <text class="body" x="82" y="290">Agent policy:</text>
+  <text class="mono" x="82" y="318">fleet-linux-policy</text>
+  <text class="body" x="82" y="356">Integration:</text>
+  <text class="mono" x="82" y="384">system-lab</text>
+  <text class="mono" x="82" y="410">system.hostfs: /hostfs</text>
+  <text class="note" x="82" y="444">her değişiklik: revision +1</text>
+
+  <!-- Fleet Server -->
+  <rect class="card" x="500" y="210" width="330" height="250" rx="10" stroke="#0b6e99"/>
+  <rect x="500" y="210" width="330" height="46" rx="10" fill="#0b6e99"/>
+  <text class="chead" x="518" y="241">2. Fleet Server (:8220)</text>
+  <text class="mono" x="518" y="290">fleet-server-lab</text>
+  <text class="body" x="518" y="328">Check-in'e yeni politikayı</text>
+  <text class="body" x="518" y="354">döner, ajan durumunu tutar</text>
+  <text class="note" x="518" y="398">kimlik: service token</text>
+  <text class="note" x="518" y="426">politika: fleet-server-policy</text>
+
+  <!-- Host kutusu + Agent -->
+  <rect class="host" x="925" y="196" width="320" height="440" rx="14"/>
+  <text class="note" x="945" y="626">sunucu (host)</text>
+  <rect class="card" x="945" y="210" width="280" height="250" rx="10" stroke="#6b5b95"/>
+  <rect x="945" y="210" width="280" height="46" rx="10" fill="#6b5b95"/>
+  <text class="chead" x="963" y="241">3. Elastic Agent</text>
+  <text class="mono" x="963" y="290">agent-fleet-lab</text>
+  <text class="mono" x="963" y="316">host: linux-agent-01</text>
+  <text class="body" x="963" y="356">Politikayı uygular,</text>
+  <text class="body" x="963" y="382">toplayıcıları başlatır</text>
+  <text class="note" x="963" y="426">kayıt: enrollment token</text>
+
+  <text class="body" x="945" y="500">Salt okunur bağlamalar:</text>
+  <text class="mono" x="945" y="530">/var/log → /var/log</text>
+  <text class="mono" x="945" y="558">/proc → /hostfs/proc</text>
+  <text class="mono" x="945" y="586">cgroup → /hostfs/sys/...</text>
+
+  <!-- Elasticsearch -->
+  <rect class="card" x="1330" y="210" width="210" height="400" rx="10" stroke="#5aa454"/>
+  <rect x="1330" y="210" width="210" height="46" rx="10" fill="#5aa454"/>
+  <text class="chead" x="1348" y="241">4. Elasticsearch</text>
+  <text class="body" x="1348" y="290">(:9200)</text>
+  <text class="mono" x="1348" y="336">logs-system</text>
+  <text class="mono" x="1348" y="358">  .syslog</text>
+  <text class="mono" x="1348" y="380">  .auth</text>
+  <text class="mono" x="1348" y="420">metrics-system</text>
+  <text class="mono" x="1348" y="442">  .cpu .memory</text>
+  <text class="mono" x="1348" y="464">  .process ...</text>
+  <text class="mono" x="1348" y="530">.fleet-agents</text>
+  <text class="mono" x="1348" y="556">.fleet-policies</text>
+
+  <!-- Oklar -->
+  <path class="arrow" d="M394,300 L496,300"/>
+  <text class="lbl" x="404" y="288">politika</text>
+  <path class="arrow" d="M941,330 L834,330"/>
+  <text class="lbl" x="846" y="318">check-in</text>
+  <path class="arrow" d="M834,390 L941,390"/>
+  <text class="lbl" x="846" y="420">yeni rev.</text>
+  <path class="arrowd" d="M1225,440 L1326,440"/>
+  <text class="lbld" x="1234" y="428">veri</text>
+  <path class="dash" d="M665,460 L665,648 L1300,648 L1300,545 L1326,545"/>
+  <text class="note" x="685" y="510">ajan durumu ve</text>
+  <text class="note" x="685" y="536">politika kaydı</text>
+
+  <!-- Alt serit -->
+  <rect class="lane" x="40" y="690" width="1520" height="280" rx="14"/>
+  <text class="lanehead" x="64" y="730">Bağlama olmasaydı: ajan yalnızca kendi konteynerini görür</text>
+
+  <rect class="card" x="64" y="755" width="700" height="190" rx="10" stroke="#bd271e"/>
+  <rect x="64" y="755" width="700" height="44" rx="10" fill="#bd271e"/>
+  <text class="chead" x="82" y="785">Bağlama yok</text>
+  <text class="body" x="82" y="835">/var/log içinde syslog ve auth.log yok</text>
+  <text class="body" x="82" y="867">logs-system.auth: 0 belge, SSH panosu boş</text>
+  <text class="body" x="82" y="899">süreç listesi: yalnızca elastic-agent bileşenleri</text>
+
+  <rect class="card" x="836" y="755" width="700" height="190" rx="10" stroke="#5aa454"/>
+  <rect x="836" y="755" width="700" height="44" rx="10" fill="#5aa454"/>
+  <text class="chead" x="854" y="785">Bağlama + system.hostfs (bu lab)</text>
+  <text class="body" x="854" y="835">sunucunun syslog ve auth.log dosyaları okunur</text>
+  <text class="body" x="854" y="867">sshd ve sudo kayıtları, System panoları dolu</text>
+  <text class="body" x="854" y="899">süreç listesi: dockerd, java ...</text>
+</svg>

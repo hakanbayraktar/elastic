@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Rol, API key, FLS/DLS ve Spaces ile çok ekipli erişim</title>
+  <desc id="desc">Aynı guvenlik-talepler index'ine üç kimlik erişir: yalnız okuyan gvn_okuyucu bütün talepleri ve bütün alanları görür; yalnız belge ekleyebilen gvn-form API key'i okuyamaz; gvn_destek kullanıcısı satır düzeyinde güvenlikle yalnız destek ekibinin taleplerini, alan düzeyinde güvenlikle e-posta ve telefonsuz görür ve Kibana'da yalnız Destek ekibi Space'inde Discover'a erişir. Altta 401 ile 403 farkı ve saved objects dışa/içe aktarma.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 16px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 17px Arial,sans-serif; fill:#2e7d32 }
+    .bad { font:700 17px Arial,sans-serif; fill:#bd271e }
+  </style>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Bir index, üç kimlik, iki ekip</text>
+  <text x="60" y="116" class="sub">Yetkiyi Elasticsearch verir; Kibana ve uygulama rolün izin verdiğinden fazlasını göremez.</text>
+
+  <rect x="60" y="160" rx="14" width="460" height="330" class="card"/>
+  <rect x="60" y="160" rx="14" width="460" height="50" fill="#0b6e99"/><rect x="60" y="192" width="460" height="18" fill="#0b6e99"/>
+  <text x="80" y="193" class="head">gvn_okuyucu · rol gvn-okuyucu</text>
+  <text x="80" y="246" class="mono">guvenlik-* : read</text>
+  <text x="80" y="290" class="ok">okuma: 9 talep, bütün alanlar</text>
+  <text x="80" y="322" class="bad">yazma → 403</text>
+  <text x="80" y="354" class="bad">başka index → 403</text>
+  <text x="80" y="410" class="small">En az yetki: gereken açık,</text>
+  <text x="80" y="436" class="small">gerisi kapalı.</text>
+
+  <rect x="570" y="160" rx="14" width="460" height="330" class="card"/>
+  <rect x="570" y="160" rx="14" width="460" height="50" fill="#f5a700"/><rect x="570" y="192" width="460" height="18" fill="#f5a700"/>
+  <text x="590" y="193" class="head">API key gvn-form (web formu)</text>
+  <text x="590" y="246" class="mono">guvenlik-talepler : create_doc</text>
+  <text x="590" y="276" class="mono">expiration: 1h</text>
+  <text x="590" y="320" class="ok">talep ekleme → created</text>
+  <text x="590" y="352" class="bad">okuma → 403</text>
+  <text x="590" y="384" class="bad">iptal sonrası → 401</text>
+  <text x="590" y="436" class="small">403: tanınıyor, yetkisi yok · 401: tanınmıyor</text>
+
+  <rect x="1080" y="160" rx="14" width="460" height="330" class="card"/>
+  <rect x="1080" y="160" rx="14" width="460" height="50" fill="#5aa454"/><rect x="1080" y="192" width="460" height="18" fill="#5aa454"/>
+  <text x="1100" y="193" class="head">gvn_destek · rol gvn-destek</text>
+  <text x="1100" y="246" class="body"><tspan class="h2">DLS</tspan>: <tspan class="mono">term ekip: destek</tspan></text>
+  <text x="1100" y="276" class="body"><tspan class="h2">FLS</tspan>: <tspan class="mono">except email, telefon</tspan></text>
+  <text x="1100" y="320" class="ok">6 talep, 5 alan</text>
+  <text x="1100" y="364" class="body"><tspan class="h2">Kibana</tspan>: Space gvn-destek</text>
+  <text x="1100" y="392" class="mono">feature discover: read</text>
+  <text x="1100" y="436" class="small">Girişte yalnız bu Space ve Discover.</text>
+
+  <rect x="60" y="530" rx="14" width="980" height="410" class="card"/>
+  <text x="90" y="578" class="h2">Aynı sorgu, iki kullanıcı (FLS + DLS)</text>
+  <text x="90" y="622" class="small">Kullanıcı</text><text x="320" y="622" class="small">Talep</text><text x="440" y="622" class="small">Görünen alanlar</text>
+  <line x1="90" y1="636" x2="1010" y2="636" stroke="#dfe1e6" stroke-width="2"/>
+  <text x="90" y="676" class="mono">gvn_okuyucu</text><text x="320" y="676" class="body">9</text>
+  <text x="440" y="676" class="mono">@timestamp durum ekip konu talep_id</text>
+  <text x="440" y="702" class="bad">musteri_email telefon</text>
+  <text x="90" y="752" class="mono">gvn_destek</text><text x="320" y="752" class="body">6</text>
+  <text x="440" y="752" class="mono">@timestamp durum ekip konu talep_id</text>
+  <text x="90" y="820" class="body">Gizleme sunucuda yapılır: uygulama ya da Kibana gizli alanı</text>
+  <text x="90" y="848" class="body">isteyemez, satış talepleri sayıma bile girmez.</text>
+  <text x="90" y="900" class="small">Birden çok rol verilirse yetkiler toplanır; her ekip için dar bir rol yazılır.</text>
+
+  <rect x="1080" y="530" rx="14" width="460" height="410" class="card"/>
+  <text x="1110" y="578" class="h2">Saved objects</text>
+  <rect x="1110" y="604" width="400" height="70" rx="10" fill="#e8f5ee" stroke="#2e7d32"/>
+  <text x="1130" y="634" class="h2">Destek ekibi</text><text x="1130" y="660" class="mono">data view gvn-talepler</text>
+  <text x="1130" y="712" class="mono">_export → gvn-export.ndjson</text>
+  <text x="1130" y="742" class="mono">_import → successCount 1</text>
+  <rect x="1110" y="768" width="400" height="70" rx="10" fill="#e8f1f8" stroke="#0b6e99"/>
+  <text x="1130" y="798" class="h2">Satış ekibi</text><text x="1130" y="824" class="mono">data view gvn-talepler</text>
+  <text x="1110" y="880" class="small">Pano, görselleştirme, data view taşınır;</text>
+  <text x="1110" y="906" class="small">veri ve roller taşınmaz.</text>
+</svg>

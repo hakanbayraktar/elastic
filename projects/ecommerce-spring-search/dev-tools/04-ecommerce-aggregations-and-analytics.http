@@ -1,0 +1,175 @@
+# NovaShop E-Commerce: Metrik, Bucket, Histogram ve Zaman Serisi Analitikleri (Aggregations)
+# Kaynak: Ex_Files_Elasticsearch_Esst_Training (Exercise Files 05_01, 05_02, 05_03)
+# Önce 01-create-ecommerce-schema.http ve 02-bulk-ecommerce-data.http çalıştırılmalıdır.
+
+###
+# 1. TEMEL METRİK AGGREGASYONLARI (avg, min, max, sum, stats)
+# Ürün fiyat istatistikleri; size: 0 ile ham belgeleri gizleyip sadece analitiği getirin.
+GET products/_search
+{
+  "size": 0,
+  "aggs": {
+    "price_stats": {
+      "stats": { "field": "price" }
+    },
+    "unique_categories": {
+      "cardinality": { "field": "category" }
+    }
+  }
+}
+
+###
+# 2. FİYAT ARALIKLARI (RANGE AGGREGATION)
+# Ürünleri bütçe dilimlerine göre gruplama: Ucuz (<50), Orta (50-200), Premium (>=200)
+GET products/_search
+{
+  "size": 0,
+  "aggs": {
+    "price_ranges": {
+      "range": {
+        "field": "price",
+        "ranges": [
+          { "to": 50 },
+          { "from": 50, "to": 200 },
+          { "from": 200 }
+        ]
+      }
+    }
+  }
+}
+
+###
+# 3. KATEGORİ BUCKET VE ALT METRİK AGGREGASYONU (Sub-aggregation)
+# Her kategorideki ürün sayısı ve o kategorinin ortalama fiyatı
+GET products/_search
+{
+  "size": 0,
+  "aggs": {
+    "categories": {
+      "terms": {
+        "field": "category",
+        "size": 10
+      },
+      "aggs": {
+        "average_price": {
+          "avg": { "field": "price" }
+        }
+      }
+    }
+  }
+}
+
+###
+# 4. FİLTRELİ BUCKET (Filter Aggregation)
+# Yalnızca stokta olan (in_stock: true) ürünlerin ortalama fiyatı ve kategori dağılımı
+GET products/_search
+{
+  "size": 0,
+  "aggs": {
+    "in_stock_summary": {
+      "filter": { "term": { "in_stock": true } },
+      "aggs": {
+        "average_in_stock_price": {
+          "avg": { "field": "price" }
+        },
+        "in_stock_categories": {
+          "terms": {
+            "field": "category",
+            "size": 5
+          }
+        }
+      }
+    }
+  }
+}
+
+###
+# 5. SAYISAL HISTOGRAM (Fiyat Dağılım Grafiği)
+# 50 birimlik aralıklarla ürün dağılımı
+GET products/_search
+{
+  "size": 0,
+  "aggs": {
+    "price_distribution": {
+      "histogram": {
+        "field": "price",
+        "interval": 50
+      }
+    }
+  }
+}
+
+###
+# 6. AYLIK SİPARİŞ VE GELİR ZAMAN SERİSİ (date_histogram)
+# Aylık sipariş adedi, toplam ciro ve ortalama sepet tutarı (AOV - Average Order Value)
+GET orders/_search
+{
+  "size": 0,
+  "aggs": {
+    "monthly_sales": {
+      "date_histogram": {
+        "field": "order_date",
+        "calendar_interval": "month"
+      },
+      "aggs": {
+        "total_revenue": {
+          "sum": { "field": "total_amount" }
+        },
+        "average_order_value": {
+          "avg": { "field": "total_amount" }
+        }
+      }
+    }
+  }
+}
+
+###
+# 7. YÜZDELİKLER VE PERCENTILE RANKS (p50, p75, p90, p95 Fiyat Analizi)
+# Fiyat dağılımının kuyruk analizi
+GET products/_search
+{
+  "size": 0,
+  "aggs": {
+    "price_percentiles": {
+      "percentiles": {
+        "field": "price",
+        "percents": [50, 75, 90, 95]
+      }
+    },
+    "percentile_rank_150": {
+      "percentile_ranks": {
+        "field": "price",
+        "values": [150]
+      }
+    }
+  }
+}
+
+###
+# 8. NESTED AGGREGATION — En Çok Satan Ürünler (Orders -> Items)
+# items alanı nested olduğu için önce nested aggregasyon açılır, ardından adetler toplanır.
+GET orders/_search
+{
+  "size": 0,
+  "aggs": {
+    "nested_items": {
+      "nested": {
+        "path": "items"
+      },
+      "aggs": {
+        "top_sold_products": {
+          "terms": {
+            "field": "items.product_id",
+            "size": 5,
+            "order": { "total_quantity": "desc" }
+          },
+          "aggs": {
+            "total_quantity": {
+              "sum": { "field": "items.quantity" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

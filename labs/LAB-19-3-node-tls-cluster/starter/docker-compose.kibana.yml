@@ -1,0 +1,46 @@
+# LAB-19/23 — 3-node TLS cluster'a Kibana ekler (isteğe bağlı)
+#
+# starter/docker-compose.yml yalnızca üç Elasticsearch node'u ayağa kaldırır;
+# arayüz gerekmeyen operasyon alıştırmaları Dev Tools yerine curl ile yapılır.
+# Cluster'a tarayıcıdan bakmak veya alt alan adıyla dışarı açmak isterseniz bu
+# dosyayı ek olarak verin:
+#
+#   cd ~/elastic/labs/LAB-19-3-node-tls-cluster
+#   set -a; . starter/.env; set +a
+#   docker compose --env-file starter/.env \
+#     -f starter/docker-compose.yml \
+#     -f starter/docker-compose.kibana.yml up -d kibana
+#
+# Kibana 127.0.0.1:15608'de dinler. Dışarı açmak için nginx'te kibana3 alt
+# alanını bu porta yönlendirin (port defterinde kibana3 alt alan adı).
+#
+# Kibana cluster'a HTTPS ile ve cluster'ın kendi iç CA'sıyla bağlanır; sertifika
+# paylaşılan 'certs' volume'unden okunur, bu yüzden ayrıca kopyalamak gerekmez.
+
+services:
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.5.5
+    container_name: kibana-cluster
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: kibana-cluster
+      SERVER_HOST: 0.0.0.0
+      # Alt alan adıyla erişiliyorsa mutlak URL üretimi için gerekir; aksi halde
+      # rapor ve uyarı bağlantıları boş kalır.
+      SERVER_PUBLICBASEURL: ${CLUSTER_KIBANA_PUBLIC_BASE_URL:-http://localhost:15608}
+      ELASTICSEARCH_HOSTS: '["https://es-a:9200","https://es-b:9200","https://es-c:9200"]'
+      # Kibana 9 'elastic' superuser'i reddeder:
+      #   value of "elastic" is forbidden ... Use a service account token instead
+      # Sistem index'lerine yazabilen hesap kibana_system'dir.
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: ${CLUSTER_KIBANA_PASSWORD:-${CLUSTER_ELASTIC_PASSWORD:?export CLUSTER_ELASTIC_PASSWORD}}
+      ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: /usr/share/kibana/config/certs/ca/ca.crt
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: ${CLUSTER_KIBANA_ENCRYPTION_KEY:-clusterlabkibanaencryptionkey32chars}
+    volumes:
+    - certs:/usr/share/kibana/config/certs:ro
+    ports:
+    - 127.0.0.1:${CLUSTER_KIBANA_PORT:-15608}:5601
+    depends_on:
+      es-a:
+        condition: service_healthy
+    mem_limit: 1g

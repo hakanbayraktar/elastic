@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Apache uçtan uca: istekten alarma ve PDF rapora</title>
+  <desc id="desc">Ziyaretçi isteği Apache'ye gelir; Apache her isteği access_log dosyasına yazar. Filebeat dosyayı okuyup Logstash'e gönderir. Logstash grok ile satırı alanlara ayırır, X-Forwarded-For başlığından gerçek IP'yi alır, GeoIP ile ülke, şehir ve konum ekler ve apache-web index'ine yazar. Metricbeat Apache'nin server-status sayfasını ölçer. Kibana'da pano ve harita gösterilir. Elasticsearch query kuralı son 2 dakikada 40'tan fazla 5xx olunca Mailpit, gerçek e-posta (Resend) ve Slack'e mesaj gönderir. Pano PDF rapor olarak alınır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 21px Arial,sans-serif; fill:#fff }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+    .red { stroke:#bd271e; stroke-width:5; fill:none; marker-end:url(#arrowr) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+    <marker id="arrowr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#bd271e"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Apache uçtan uca: istekten alarma ve rapora</text>
+  <text x="60" y="116" class="sub">Bir isteğin log satırı alanlara ayrılır, konumu bulunur, panoda görünür; hata artınca alarm gelir.</text>
+
+  <!-- ust sira: toplama hatti -->
+  <rect class="card" x="60" y="170" width="250" height="190" rx="14"/>
+  <rect x="60" y="170" width="250" height="50" rx="14" fill="#005571"/>
+  <text x="80" y="203" class="head">Ziyaretçi</text>
+  <text x="80" y="255" class="body">Tarayıcı / trafik</text>
+  <text x="80" y="283" class="body">üreteci</text>
+  <text x="80" y="325" class="mono">X-Forwarded-For</text>
+
+  <rect class="card" x="350" y="170" width="250" height="190" rx="14"/>
+  <rect x="350" y="170" width="250" height="50" rx="14" fill="#0b6e99"/>
+  <text x="370" y="203" class="head">Apache (8088)</text>
+  <text x="370" y="255" class="mono">access_log</text>
+  <text x="370" y="285" class="mono">error_log</text>
+  <text x="370" y="325" class="small">503: /cgi-bin/unavailable</text>
+
+  <rect class="card" x="640" y="170" width="250" height="190" rx="14"/>
+  <rect x="640" y="170" width="250" height="50" rx="14" fill="#0b6e99"/>
+  <text x="660" y="203" class="head">Filebeat</text>
+  <text x="660" y="255" class="body">Log dosyasını okur,</text>
+  <text x="660" y="283" class="body">Logstash'e taşır</text>
+  <text x="660" y="325" class="small">Docker ağı içinde 5044</text>
+
+  <rect class="card" x="930" y="170" width="300" height="190" rx="14"/>
+  <rect x="930" y="170" width="300" height="50" rx="14" fill="#6b5b95"/>
+  <text x="950" y="203" class="head">Logstash</text>
+  <text x="950" y="255" class="mono">grok  → alanlar</text>
+  <text x="950" y="285" class="mono">XFF   → source.ip</text>
+  <text x="950" y="315" class="mono">geoip → ülke, konum</text>
+  <text x="950" y="345" class="small">özel IP'nin konumu yok</text>
+
+  <rect class="card" x="1270" y="170" width="270" height="190" rx="14"/>
+  <rect x="1270" y="170" width="270" height="50" rx="14" fill="#5aa454"/>
+  <text x="1290" y="203" class="head">Elasticsearch</text>
+  <text x="1290" y="255" class="mono">apache-web-*</text>
+  <text x="1290" y="285" class="small">1 shard, 0 replica</text>
+  <text x="1290" y="325" class="mono">metricbeat-*</text>
+
+  <path class="arrow" d="M312 265 L342 265"/>
+  <path class="arrow" d="M602 265 L632 265"/>
+  <path class="arrow" d="M892 265 L922 265"/>
+  <path class="arrow" d="M1232 265 L1262 265"/>
+
+  <!-- metricbeat -->
+  <rect class="card" x="350" y="410" width="540" height="90" rx="14"/>
+  <text x="370" y="450" class="body">Metricbeat: Apache server-status (istek/sn, meşgul işçi)</text>
+  <text x="370" y="482" class="small">ve container CPU / bellek, 10 sn'de bir</text>
+  <path class="arrow" d="M892 455 L1262 340"/>
+
+  <!-- alt sira: kibana -->
+  <rect class="card" x="60" y="560" width="440" height="360" rx="14"/>
+  <rect x="60" y="560" width="440" height="50" rx="14" fill="#005571"/>
+  <text x="80" y="593" class="head">Kibana: görmek</text>
+  <text x="80" y="650" class="body">Pano: istek sayısı, 5xx, durum kodu,</text>
+  <text x="80" y="678" class="body">en çok istenen yollar, gecikme</text>
+  <text x="80" y="728" class="body">Harita: ülkelere göre cluster'lar</text>
+  <text x="80" y="790" class="body">PDF rapor: Export › PDF</text>
+  <text x="80" y="818" class="small">Reporting'de listelenir, indirilir</text>
+
+  <rect class="card" x="540" y="560" width="440" height="360" rx="14"/>
+  <rect x="540" y="560" width="440" height="50" rx="14" fill="#bd271e"/>
+  <text x="560" y="593" class="head">Kibana: haber vermek</text>
+  <text x="560" y="650" class="body">Elasticsearch query kuralı</text>
+  <text x="560" y="680" class="mono">status_code &gt;= 500</text>
+  <text x="560" y="710" class="mono">2 dk içinde &gt; 40, her 1 dk</text>
+  <text x="560" y="760" class="body">Alarm açılınca bir kez</text>
+  <text x="560" y="788" class="small">notify_when: onActionGroupChange</text>
+
+  <rect class="card" x="1020" y="560" width="520" height="360" rx="14"/>
+  <rect x="1020" y="560" width="520" height="50" rx="14" fill="#f5a700"/>
+  <text x="1040" y="593" class="head">Connector'lar</text>
+  <text x="1040" y="650" class="body">Mailpit: yerel posta sunucusu, hesap yok</text>
+  <text x="1040" y="678" class="small">arayüz 127.0.0.1:8025 (SSH tüneli)</text>
+  <text x="1040" y="728" class="body">Gerçek e-posta: Resend SMTP (ya da Gmail)</text>
+  <text x="1040" y="778" class="body">Slack: Incoming Webhook</text>
+  <text x="1040" y="838" class="small">Anahtarlar ~/.lab24-gizli dosyasında (600);</text>
+  <text x="1040" y="866" class="small">Kibana onları şifreli saklar</text>
+
+  <path class="arrow" d="M1400 362 L1400 382 L280 382 L280 552"/>
+  <path class="red" d="M982 740 L1012 740"/>
+</svg>

@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Uygulamadan Elasticsearch: Python client, kısıtlı API key, bulk, search_after ve yeniden deneme</title>
+  <desc id="desc">Python uygulaması Elasticsearch'e yalnız py-* index'lerine yetkili bir API key ile bağlanır. Belgeleri bulk yardımcısıyla parça parça yazar ve reddedilen belgeleri ayrı bir listede alır. Sonuçları sıralı okur; her sayfanın son sıralama değeri bir sonraki sayfanın search_after değeridir. Zaman aşımı ve bağlantı hatasında istek tekrar denenir, 4xx hatalarında denenmez.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 17px Arial,sans-serif; fill:#2e7d32 }
+    .bad { font:700 17px Arial,sans-serif; fill:#bd271e }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+  </style>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker></defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Uygulamadan Elasticsearch: Python client</text>
+  <text x="60" y="116" class="sub">Parola yerine kısıtlı API key; tek tek değil bulk; from/size yerine search_after; hataya göre yeniden deneme.</text>
+
+  <rect x="60" y="170" rx="14" width="420" height="330" class="card"/>
+  <rect x="60" y="170" rx="14" width="420" height="50" fill="#6b5b95"/><rect x="60" y="202" width="420" height="18" fill="#6b5b95"/>
+  <text x="80" y="203" class="head">Python uygulaması</text>
+  <text x="80" y="256" class="mono">Elasticsearch(ES_URL,</text>
+  <text x="80" y="282" class="mono">  api_key=ES_API_KEY,</text>
+  <text x="80" y="308" class="mono">  request_timeout=10,</text>
+  <text x="80" y="334" class="mono">  max_retries=3)</text>
+  <text x="80" y="384" class="body">Anahtar ortam değişkeninde,</text>
+  <text x="80" y="410" class="body">kodda parola yok.</text>
+  <text x="80" y="460" class="small">elasticsearch==9.5.1 · .venv</text>
+
+  <path d="M488,335 L582,335" class="arrow"/>
+  <text x="500" y="318" class="small">API key</text>
+
+  <rect x="590" y="170" rx="14" width="420" height="330" class="card"/>
+  <rect x="590" y="170" rx="14" width="420" height="50" fill="#f5a700"/><rect x="590" y="202" width="420" height="18" fill="#f5a700"/>
+  <text x="610" y="203" class="head">API key: py-uygulama</text>
+  <text x="610" y="256" class="body">Rol: <tspan class="mono">py-*</tspan> index'leri</text>
+  <text x="610" y="284" class="mono">create_index, index, read</text>
+  <text x="610" y="320" class="body">Süre: 1 gün (<tspan class="mono">expiration</tspan>)</text>
+  <text x="610" y="370" class="ok">py-urunler'e yazar</text>
+  <text x="610" y="400" class="bad">belge-deneme → 403</text>
+  <text x="610" y="450" class="small">Sızarsa yalnız bu index'ler etkilenir;</text>
+  <text x="610" y="476" class="small">tek komutla iptal edilir.</text>
+
+  <path d="M1018,335 L1112,335" class="arrow"/>
+
+  <rect x="1120" y="170" rx="14" width="420" height="330" class="card"/>
+  <rect x="1120" y="170" rx="14" width="420" height="50" fill="#0b6e99"/><rect x="1120" y="202" width="420" height="18" fill="#0b6e99"/>
+  <text x="1140" y="203" class="head">Elasticsearch · py-urunler</text>
+  <text x="1140" y="256" class="h2">bulk yardımcısı</text>
+  <text x="1140" y="286" class="body">1000 belge, 250'lik parçalar</text>
+  <text x="1140" y="316" class="body">Reddedilen belge listede döner,</text>
+  <text x="1140" y="342" class="body">diğerleri yazılır.</text>
+  <text x="1140" y="392" class="h2">Hata sınıfları</text>
+  <text x="1140" y="422" class="mono">AuthorizationException 403</text>
+  <text x="1140" y="448" class="mono">NotFoundError 404</text>
+  <text x="1140" y="474" class="mono">BadRequestError 400</text>
+
+  <rect x="60" y="540" rx="14" width="730" height="400" class="card"/>
+  <text x="90" y="590" class="h2">search_after: sayfa sayfa okumak</text>
+  <text x="90" y="630" class="mono">sort = [fiyat desc, urun_id asc]</text>
+  <rect x="90" y="656" width="150" height="56" rx="8" fill="#e8f1f8" stroke="#0b6e99"/><text x="110" y="690" class="body">Sayfa 1</text>
+  <rect x="290" y="656" width="150" height="56" rx="8" fill="#e8f1f8" stroke="#0b6e99"/><text x="310" y="690" class="body">Sayfa 2</text>
+  <rect x="490" y="656" width="150" height="56" rx="8" fill="#e8f1f8" stroke="#0b6e99"/><text x="510" y="690" class="body">Sayfa 3 …</text>
+  <path d="M244,684 L284,684" class="arrow"/><path d="M444,684 L484,684" class="arrow"/>
+  <text x="90" y="750" class="body">Her sayfanın son <tspan class="mono">sort</tspan> değeri bir sonrakine verilir.</text>
+  <text x="90" y="780" class="body">Son alan benzersiz olmalı (<tspan class="mono">urun_id</tspan>).</text>
+  <text x="90" y="830" class="bad">from + size &gt; 10 000 → 400 Result window is too large</text>
+  <text x="90" y="870" class="small">Derin sayfalamada search_after sınırsızdır ve her sayfa</text>
+  <text x="90" y="896" class="small">aynı maliyettedir.</text>
+
+  <rect x="810" y="540" rx="14" width="730" height="400" class="card"/>
+  <text x="840" y="590" class="h2">Hangi hata tekrar denenir?</text>
+  <text x="840" y="640" class="small">Durum</text><text x="1180" y="640" class="small">İstemci</text><text x="1380" y="640" class="small">Deneme</text>
+  <line x1="840" y1="654" x2="1510" y2="654" stroke="#dfe1e6" stroke-width="2"/>
+  <text x="840" y="694" class="body">Zaman aşımı</text><text x="1180" y="694" class="mono">ConnectionTimeout</text><text x="1380" y="694" class="ok">3 kez</text>
+  <text x="840" y="738" class="body">Sunucuya ulaşılamıyor</text><text x="1180" y="738" class="mono">ConnectionError</text><text x="1380" y="738" class="ok">2 kez</text>
+  <text x="840" y="782" class="body">Belge yok (404)</text><text x="1180" y="782" class="mono">NotFoundError</text><text x="1380" y="782" class="bad">denenmez</text>
+  <text x="840" y="826" class="body">Yetki yok (403)</text><text x="1180" y="826" class="mono">Authorization…</text><text x="1380" y="826" class="bad">denenmez</text>
+  <text x="840" y="870" class="small">400/403/404: aynı istek aynı cevabı alır. Geçici: ağ, 429,</text>
+  <text x="840" y="896" class="small">502/503/504. Zaman aşımı yalnız retry_on_timeout=True ise.</text>
+</svg>

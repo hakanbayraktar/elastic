@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Üç node'lu cluster'da shard yerleşimi, node kaybı ve quorum</title>
+  <desc id="desc">2 primary ve 1 replica'lı bir index'in üç node'a dağılımı; es-b durduğunda es-c'deki replica'nın primary'ye terfi etmesi, iki replica'nın atanmamış kalması ve cluster'ın yellow olması; es-b geri döndüğünde replica'ların yeniden kurulup cluster'ın green olması. Altta master seçimi için quorum hesabı yer alır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .node { fill:#eef3f7; stroke:#b3bac5; stroke-width:2 }
+    .nodedown { fill:#f4f5f7; stroke:#bd271e; stroke-width:3; stroke-dasharray:10 6 }
+    .head { font:700 24px Arial,sans-serif; fill:#fff }
+    .nname { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .chip { font:700 20px "Courier New",monospace; fill:#fff }
+    .body { font:400 19px Arial,sans-serif; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .mono { font:400 18px "Courier New",monospace; fill:#172b4d }
+    .arrow { stroke:#0b6e99; stroke-width:6; fill:none; marker-end:url(#arrow) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Shard yerleşimi, node kaybı ve quorum</text>
+  <text x="60" y="116" class="sub">Örnek: 2 primary (P0, P1) + 1 replica (R0, R1). P ve aynı numaralı R asla aynı node'da durmaz.</text>
+  <rect x="60" y="150" rx="16" width="480" height="680" class="card"/>
+  <rect x="60" y="150" rx="16" width="480" height="58" fill="#5aa454"/><rect x="60" y="188" width="480" height="20" fill="#5aa454"/>
+  <text x="84" y="188" class="head">1. Sağlıklı</text>
+  <text x="516" y="188" class="head" text-anchor="end">green · 3 node</text>
+  <rect x="84" y="236" rx="12" width="432" height="128" class="node"/>
+  <text x="104" y="272" class="nname">es-a</text>
+  <rect x="104" y="294" rx="8" width="96" height="44" fill="#005571"/>
+  <text x="152" y="324" class="chip" text-anchor="middle">P0</text>
+  <rect x="84" y="386" rx="12" width="432" height="128" class="node"/>
+  <text x="104" y="422" class="nname">es-b</text>
+  <rect x="104" y="444" rx="8" width="96" height="44" fill="#005571"/>
+  <text x="152" y="474" class="chip" text-anchor="middle">P1</text>
+  <rect x="216" y="444" rx="8" width="96" height="44" fill="#0b6e99"/>
+  <text x="264" y="474" class="chip" text-anchor="middle">R0</text>
+  <rect x="84" y="536" rx="12" width="432" height="128" class="node"/>
+  <text x="104" y="572" class="nname">es-c</text>
+  <rect x="104" y="594" rx="8" width="96" height="44" fill="#0b6e99"/>
+  <text x="152" y="624" class="chip" text-anchor="middle">R1</text>
+  <text x="84" y="724" class="body">Her shard'ın iki kopyası iki ayrı node'da.</text>
+  <text x="84" y="752" class="body">Bir node gitse bile her shard'ın bir</text>
+  <text x="84" y="780" class="body">kopyası kalır.</text>
+  <rect x="560" y="150" rx="16" width="480" height="680" class="card"/>
+  <rect x="560" y="150" rx="16" width="480" height="58" fill="#f5a700"/><rect x="560" y="188" width="480" height="20" fill="#f5a700"/>
+  <text x="584" y="188" class="head">2. es-b durdu</text>
+  <text x="1016" y="188" class="head" text-anchor="end">yellow · 2 node</text>
+  <rect x="584" y="236" rx="12" width="432" height="128" class="node"/>
+  <text x="604" y="272" class="nname">es-a</text>
+  <rect x="604" y="294" rx="8" width="96" height="44" fill="#005571"/>
+  <text x="652" y="324" class="chip" text-anchor="middle">P0</text>
+  <rect x="584" y="386" rx="12" width="432" height="128" class="nodedown"/>
+  <text x="604" y="422" class="nname">es-b  (durduruldu)</text>
+  <rect x="584" y="536" rx="12" width="432" height="128" class="node"/>
+  <text x="604" y="572" class="nname">es-c</text>
+  <rect x="604" y="594" rx="8" width="96" height="44" fill="#005571"/>
+  <text x="652" y="624" class="chip" text-anchor="middle">P1</text>
+  <text x="584" y="724" class="body">R1 (es-c) → P1 terfi etti: veri okunur.</text>
+  <text x="584" y="764" class="body">Atanmamış:</text>
+  <text x="584" y="798" class="small">unassigned_primary_shards: 0 · 1 dk sonra</text>
+  <text x="584" y="820" class="small">(delayed_timeout) replica'lar es-a/es-c'ye kurulur</text>
+  <rect x="700" y="734" rx="8" width="96" height="44" fill="#8a94a6" stroke="#bd271e" stroke-width="3" stroke-dasharray="6 4"/>
+  <text x="748" y="764" class="chip" text-anchor="middle">R0</text>
+  <rect x="810" y="734" rx="8" width="96" height="44" fill="#8a94a6" stroke="#bd271e" stroke-width="3" stroke-dasharray="6 4"/>
+  <text x="858" y="764" class="chip" text-anchor="middle">R1</text>
+  <rect x="1060" y="150" rx="16" width="480" height="680" class="card"/>
+  <rect x="1060" y="150" rx="16" width="480" height="58" fill="#5aa454"/><rect x="1060" y="188" width="480" height="20" fill="#5aa454"/>
+  <text x="1084" y="188" class="head">3. es-b döndü</text>
+  <text x="1516" y="188" class="head" text-anchor="end">green · 3 node</text>
+  <rect x="1084" y="236" rx="12" width="432" height="128" class="node"/>
+  <text x="1104" y="272" class="nname">es-a</text>
+  <rect x="1104" y="294" rx="8" width="96" height="44" fill="#005571"/>
+  <text x="1152" y="324" class="chip" text-anchor="middle">P0</text>
+  <rect x="1084" y="386" rx="12" width="432" height="128" class="node"/>
+  <text x="1104" y="422" class="nname">es-b</text>
+  <rect x="1104" y="444" rx="8" width="96" height="44" fill="#0b6e99"/>
+  <text x="1152" y="474" class="chip" text-anchor="middle">R0</text>
+  <rect x="1216" y="444" rx="8" width="96" height="44" fill="#0b6e99"/>
+  <text x="1264" y="474" class="chip" text-anchor="middle">R1</text>
+  <rect x="1084" y="536" rx="12" width="432" height="128" class="node"/>
+  <text x="1104" y="572" class="nname">es-c</text>
+  <rect x="1104" y="594" rx="8" width="96" height="44" fill="#005571"/>
+  <text x="1152" y="624" class="chip" text-anchor="middle">P1</text>
+  <text x="1084" y="724" class="body">es-b diskteki eski kopyaları yeniden</text>
+  <text x="1084" y="752" class="body">kullanır; yalnızca fark kopyalanır.</text>
+  <text x="1084" y="780" class="small">GET _cat/recovery?v&amp;active_only=true</text>
+  <text x="84" y="690" class="mono">Oy: 3 / 3 ≥ 2 — master seçili</text>
+  <text x="584" y="690" class="mono">Oy: 2 / 3 ≥ 2 — master seçili</text>
+  <text x="1084" y="690" class="mono">Oy: 3 / 3 ≥ 2 — master seçili</text>
+  <path d="M545 480 L575 480" class="arrow"/><path d="M1045 480 L1075 480" class="arrow"/>
+  <rect x="60" y="860" rx="16" width="1480" height="110" class="card"/>
+  <text x="84" y="900" class="nname">Quorum: master seçimi için çoğunluk = ⌊3/2⌋ + 1 = 2</text>
+  <text x="84" y="934" class="body">1 node kaybı: 2 oy kalır, cluster çalışır (yellow, sonra green). 2 node kaybı: 1 oy kalır, master seçilemez,</text>
+  <text x="84" y="958" class="body">istekler master_not_discovered_exception / 503 ile döner. Bu kural iki ayrı master oluşmasını (split-brain) engeller.</text>
+</svg>

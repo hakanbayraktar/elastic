@@ -1,0 +1,7 @@
+# Elastic 9.x Python Otomasyon Bağımlılıkları
+elasticsearch>=8.12.0,<10.0.0
+urllib3>=2.0.0
+
+# Analitik ve Veri Görselleştirme (03_aggregations_matplotlib_export.py için)
+matplotlib>=3.7.0
+pandas>=2.0.0

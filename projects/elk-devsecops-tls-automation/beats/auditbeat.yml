@@ -1,0 +1,15 @@
+auditbeat.modules:
+  - module: file_integrity
+    # Host dizinleri /hostfs altina salt-okunur baglanir (docker-compose.yml);
+    # konteynerin kendi /etc'si izlenirse host'taki degisiklik gorulmez.
+    paths:
+      - /hostfs/usr/bin
+      - /hostfs/usr/sbin
+      - /hostfs/etc
+
+output.elasticsearch:
+  hosts: ["https://elasticsearch:9200"]
+  ssl.enabled: true
+  ssl.certificate_authorities: ["/etc/certs/ca/ca.crt"]
+  username: "elastic"
+  password: "${ELASTIC_PASSWORD}"

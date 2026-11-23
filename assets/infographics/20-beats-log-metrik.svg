@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Filebeat ve Metricbeat ile sunucudan ve container'lardan log ve metrik toplama</title>
+  <desc id="desc">Sunucuda auth.log, Docker'ın container log dosyaları, /proc ve cgroup bilgisi ile Docker soketi bulunur. Filebeat auth.log'u ve container loglarını okur, container parser ile Docker JSON'unu açar, add_docker_metadata ile container adını ekler, dissect ile nginx satırını alanlara ayırır ve beats-log-sistem ile beats-log-docker index'lerine yazar. Metricbeat system ve docker modülleriyle CPU, bellek, disk, süreç ve container metriklerini 10 saniyede bir beats-metric index'ine yazar. Kibana Discover ve ES|QL ile sorgulanır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 20px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Filebeat ve Metricbeat: log ve metrik tek yerde</text>
+  <text x="60" y="116" class="sub">Sunucudaki dosyalar ve sayaçlar Beat'lerle okunur, alanlara ayrılır ve kendi index'lerine yazılır.</text>
+
+  <!-- Sunucu -->
+  <rect class="card" x="60" y="170" width="420" height="600" rx="14"/>
+  <rect x="60" y="170" width="420" height="52" rx="14" fill="#005571"/>
+  <text x="80" y="204" class="head">Sunucu (host)</text>
+  <rect x="85" y="245" width="370" height="80" rx="10" fill="#eef4f8" stroke="#0b6e99" stroke-width="2"/>
+  <text x="105" y="278" class="mono">/var/log/auth.log</text>
+  <text x="105" y="305" class="small">sshd, sudo, logger -p auth</text>
+  <rect x="85" y="345" width="370" height="130" rx="10" fill="#eef4f8" stroke="#0b6e99" stroke-width="2"/>
+  <text x="105" y="378" class="mono">/var/lib/docker/containers/</text>
+  <text x="105" y="405" class="small">her container'ın stdout/stderr'i</text>
+  <text x="105" y="432" class="mono">nginx-beats-lab  (8081)</text>
+  <text x="105" y="458" class="mono">api-beats-lab    (3001)</text>
+  <rect x="85" y="495" width="370" height="80" rx="10" fill="#eef4f8" stroke="#0b6e99" stroke-width="2"/>
+  <text x="105" y="528" class="mono">/proc  /sys/fs/cgroup</text>
+  <text x="105" y="555" class="small">CPU, bellek, disk, süreçler</text>
+  <rect x="85" y="595" width="370" height="80" rx="10" fill="#eef4f8" stroke="#0b6e99" stroke-width="2"/>
+  <text x="105" y="628" class="mono">/var/run/docker.sock</text>
+  <text x="105" y="655" class="small">container adları ve istatistikleri</text>
+  <text x="85" y="735" class="small">Beat container'larına salt okunur bağlanır.</text>
+
+  <!-- Filebeat -->
+  <rect class="card" x="560" y="170" width="520" height="330" rx="14"/>
+  <rect x="560" y="170" width="520" height="52" rx="14" fill="#0b6e99"/>
+  <text x="580" y="204" class="head">Filebeat (filebeat-beats-lab)</text>
+  <text x="580" y="255" class="h2">input: filestream x2</text>
+  <text x="580" y="290" class="mono">parsers: container</text>
+  <text x="580" y="322" class="mono">add_docker_metadata</text>
+  <text x="580" y="354" class="mono">drop_event (öteki container'lar)</text>
+  <text x="580" y="386" class="mono">dissect (nginx satırı)</text>
+  <text x="580" y="418" class="mono">decode_json_fields (API)</text>
+  <text x="580" y="465" class="small">registry: kaldığı yeri volume'de tutar</text>
+
+  <!-- Metricbeat -->
+  <rect class="card" x="560" y="540" width="520" height="230" rx="14"/>
+  <rect x="560" y="540" width="520" height="52" rx="14" fill="#6b5b95"/>
+  <text x="580" y="574" class="head">Metricbeat (metricbeat-beats-lab)</text>
+  <text x="580" y="625" class="mono">module: system (hostfs, 10 sn)</text>
+  <text x="580" y="657" class="mono">module: docker (soket, 10 sn)</text>
+  <text x="580" y="700" class="small">network_mode: host, pid: host</text>
+  <text x="580" y="730" class="small">host.name = sunucunun adı</text>
+
+  <!-- Elasticsearch -->
+  <rect class="card" x="1160" y="170" width="380" height="600" rx="14"/>
+  <rect x="1160" y="170" width="380" height="52" rx="14" fill="#5aa454"/>
+  <text x="1180" y="204" class="head">Elasticsearch ve Kibana</text>
+  <text x="1180" y="262" class="mono">beats-log-sistem-*</text>
+  <text x="1180" y="290" class="small">auth.log satırları</text>
+  <text x="1180" y="345" class="mono">beats-log-docker-*</text>
+  <text x="1180" y="373" class="small">url.path, status_code, api.*</text>
+  <text x="1180" y="625" class="mono">beats-metric-*</text>
+  <text x="1180" y="653" class="small">system.*, docker.memory.*</text>
+  <text x="1180" y="440" class="h2">Discover</text>
+  <text x="1180" y="470" class="mono">status_code &gt;= 400</text>
+  <text x="1180" y="525" class="h2">ES|QL</text>
+  <text x="1180" y="555" class="mono">MAX(docker.memory...)</text>
+
+  <!-- oklar -->
+  <path class="arrow" d="M457 285 L552 270"/>
+  <path class="arrow" d="M457 410 L552 330"/>
+  <path class="arrow" d="M457 535 L552 625"/>
+  <path class="arrow" d="M457 635 L552 655"/>
+  <path class="arrow" d="M1082 300 L1152 300"/>
+  <path class="arrow" d="M1082 640 L1152 640"/>
+
+  <!-- alt -->
+  <rect class="card" x="60" y="820" width="1480" height="130" rx="14"/>
+  <text x="85" y="862" class="h2">Ne zaman Beat, ne zaman Logstash?</text>
+  <text x="85" y="898" class="body">Beat: dosyanın ve sayacın olduğu yerde okur; basit ayrıştırma (dissect, JSON) kendisinde yapılır.</text>
+  <text x="85" y="928" class="body">Logstash: birden çok grok deseni, zenginleştirme, kuyruk ve koşullu yönlendirme gerekiyorsa araya girer.</text>
+</svg>

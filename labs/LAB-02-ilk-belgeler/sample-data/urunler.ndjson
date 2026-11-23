@@ -1,0 +1,10 @@
+{ "index": { "_index": "belge-urunler", "_id": "3" } }
+{ "ad": "Bluetooth Hoparlör", "kategori": "Elektronik", "fiyat": 899.90, "stok": 35 }
+{ "index": { "_index": "belge-urunler", "_id": "4" } }
+{ "ad": "Çelik Tencere Seti", "kategori": "Mutfak", "fiyat": 2499.00, "stok": 12 }
+{ "index": { "_index": "belge-urunler", "_id": "5" } }
+{ "ad": "Koşu Ayakkabısı", "kategori": "Spor", "fiyat": 1899.50, "stok": 60 }
+{ "index": { "_index": "belge-urunler", "_id": "6" } }
+{ "ad": "Yoga Matı", "kategori": "Spor", "fiyat": 449.00, "stok": 80 }
+{ "index": { "_index": "belge-urunler", "_id": "7" } }
+{ "ad": "Kahve Makinesi", "kategori": "Mutfak", "fiyat": 3299.00, "stok": 9 }

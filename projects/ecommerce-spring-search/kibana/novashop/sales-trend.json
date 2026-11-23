@@ -1,0 +1,12 @@
+{
+  "type": "xy",
+  "title": "NovaShop | Günlük Ciro ve Sipariş Trendi",
+  "query": {"language": "kql", "expression": ""},
+  "layers": [{
+    "type": "area",
+    "data_source": {"type": "data_view_reference", "ref_id": "novashop-orders"},
+    "x": {"operation": "date_histogram", "field": "order_date", "label": "Sipariş Tarihi"},
+    "y": [{"operation": "sum", "field": "taxful_total_price", "label": "Günlük Ciro ($)"}]
+  }],
+  "description": "Zamana bağlı sipariş gelirlerinin grafiği."
+}

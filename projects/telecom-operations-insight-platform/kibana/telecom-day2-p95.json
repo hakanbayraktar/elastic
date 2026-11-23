@@ -1,0 +1,29 @@
+{
+  "type": "xy",
+  "title": "API | p95 yanıt süresi (ms)",
+  "query": {
+    "language": "kql",
+    "expression": "event.dataset: \"telecom.day2\" AND service.name: \"edge-proxy\""
+  },
+  "layers": [
+    {
+      "type": "line",
+      "data_source": {
+        "type": "data_view_reference",
+        "ref_id": "telecom-events-lab"
+      },
+      "x": {
+        "operation": "date_histogram",
+        "field": "@timestamp"
+      },
+      "y": [
+        {
+          "operation": "formula",
+          "formula": "percentile(event.duration, percentile=95) / 1000000",
+          "label": "p95 (ms)"
+        }
+      ]
+    }
+  ],
+  "description": "40 proxy isteği; uygulama logları aynı isteği ikinci kez saymaz. Zaman aralığı dashboard tarafından uygulanır."
+}

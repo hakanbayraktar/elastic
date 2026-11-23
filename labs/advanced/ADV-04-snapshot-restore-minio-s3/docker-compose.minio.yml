@@ -1,0 +1,32 @@
+# ADV-04: S3 uyumlu nesne deposu (MinIO). Ana cluster'in Docker agina katilir; Elasticsearch ona
+# elastic-minio:9000 adiyla ulasir (LAB-01 compose'undaki s3.client.default.* ayarlari).
+# Image digest ile sabitlenir: MinIO'nun Docker Hub/quay.io topluluk image'lari artik cekilemiyor,
+# Chainguard'in ucretsiz image'i yalniz 'latest' etiketi veriyor. Bu digest: RELEASE.2026-11-16T00-11-40Z.
+name: minio-s3-lab   # proje adi klasor adindan bagimsiz: lab numarasi degisse de container/volume adlari ayni kalir
+
+services:
+  minio:
+    image: cgr.dev/chainguard/minio@sha256:e9cf6b99c226e9539ed0f14b6f00e37b07da153c7ba1f4f8709c807574b471ec
+    container_name: elastic-minio
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:9000"   # S3 API: yalniz sunucudan (Elasticsearch Docker agindan ulasir)
+      - "9191:9191"             # web konsolu: minio alt alan adi
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: miniopassword2026
+    command: server /data --console-address ":9191"
+    volumes:
+      - minio_data:/data
+    networks:
+      - default
+      - elastic-net
+
+volumes:
+  minio_data:
+
+networks:
+  default:
+  elastic-net:
+    name: elastic-lab00_default
+    external: true

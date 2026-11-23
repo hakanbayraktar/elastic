@@ -1,0 +1,52 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  elasticapm: {}   # trace'lerden APM alanlari (transaction, servis) uretir
+  batch:
+    timeout: 1s
+    send_batch_size: 256
+
+connectors:
+  elasticapm: {}   # trace'lerden Kibana APM ekranlarinin kullandigi servis metriklerini hesaplar
+
+exporters:
+  elasticsearch:
+    endpoint: ${env:ELASTICSEARCH_URL}
+    user: ${env:ELASTIC_USERNAME}
+    password: ${env:ELASTIC_PASSWORD}
+    mapping:
+      mode: otel
+    # EDOT 9.5: *_dynamic_index ve flush ayarlari kaldirildi (dinamik yonlendirme varsayilan;
+    # her acilista "deprecated ... will be removed" uyarisi veriyordu). Gonderim kuyrugu:
+    sending_queue:
+      enabled: true
+      batch:
+        flush_timeout: 1s   # varsayilan 10s: lab'da veri gonderildikten hemen sonra gorunsun
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, elasticapm]
+      exporters: [elasticapm, elasticsearch]
+
+    metrics/aggregated:
+      receivers: [elasticapm]
+      processors: [batch]
+      exporters: [elasticsearch]
+
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [elasticsearch]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [elasticsearch]

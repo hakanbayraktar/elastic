@@ -1,0 +1,4 @@
+# Lab icin izlenen ornek SSH yapilandirmasi (sunucunun gercek dosyasi degil).
+Port 22
+PermitRootLogin no
+PasswordAuthentication no

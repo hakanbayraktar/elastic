@@ -1,0 +1,86 @@
+### ==============================================================================
+### FastAPI ELK: Dev Tools Modül 02 - Kibana KQL ve Query DSL ile Hata İncelemesi
+### (Aşağıdaki KQL ifadelerini Kibana Discover arama çubuğunda doğrudan kullanabilirsiniz)
+### ==============================================================================
+
+### [KQL-01] Sadece 500 ve üzeri Sunucu Hatalarını Filtreleme
+### Kibana Discover KQL: http.response.status_code >= 500 or log.level : "ERROR"
+POST logs-fastapi-*/_search
+{
+  "query": {
+    "bool": {
+      "should": [
+        { "range": { "http.response.status_code": { "gte": 500 } } },
+        { "range": { "http.status_code": { "gte": 500 } } },
+        { "term": { "log.level": "ERROR" } }
+      ],
+      "minimum_should_match": 1
+    }
+  }
+}
+
+### [KQL-02] Belirli bir Exception Tipini Arama (PaymentGatewayTimeoutException)
+### Kibana Discover KQL: error.class : "PaymentGatewayTimeoutException"
+POST logs-fastapi-*/_search
+{
+  "query": {
+    "term": {
+      "error.class": "PaymentGatewayTimeoutException"
+    }
+  }
+}
+
+### [KQL-03] Stack Trace İçinde Belirli Bir Hata Mesajını veya Modülü Arama
+### Kibana Discover KQL: error.stack_trace : "ZeroDivisionError"
+POST logs-fastapi-*/_search
+{
+  "query": {
+    "match_phrase": {
+      "error.stack_trace": "ZeroDivisionError"
+    }
+  },
+  "_source": ["@timestamp", "http.route", "error.class", "error.message"]
+}
+
+### [KQL-04] Belirli bir Request ID (Correlation ID - ECS http.request.id) ile İstek Döngüsünü İnceleme
+### Kibana Discover KQL: http.request.id : "00000000-0000-0000-0000-000000000000"
+POST logs-fastapi-*/_search
+{
+  "query": {
+    "term": {
+      "http.request.id": "REPLACE_WITH_CORRELATION_ID"
+    }
+  }
+}
+
+### [KQL-05] Yavaş İstekler (Gecikmesi 50ms Üzerinde Olan Endpoint'ler)
+### Kibana Discover KQL: http.duration_ms > 50
+POST logs-fastapi-*/_search
+{
+  "query": {
+    "range": {
+      "http.duration_ms": { "gt": 50.0 }
+    }
+  },
+  "sort": [
+    { "http.duration_ms": { "order": "desc" } }
+  ]
+}
+
+### [KQL-06] Log Seviyelerine Göre Doküman Dağılımı (Aggregation)
+POST logs-fastapi-*/_search
+{
+  "size": 0,
+  "aggs": {
+    "by_log_level": {
+      "terms": {
+        "field": "log.level"
+      }
+    },
+    "by_status_code": {
+      "terms": {
+        "field": "http.status_code"
+      }
+    }
+  }
+}

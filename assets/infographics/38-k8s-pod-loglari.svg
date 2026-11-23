@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Kubernetes pod logları: kind node, Filebeat DaemonSet ve ana cluster</title>
+  <desc id="desc">kind node'u bir Docker container'ıdır. Pod'ların çıktısı node'da /var/log/containers altına dosya olarak yazılır. Her node'daki Filebeat DaemonSet pod'u bu dosyaları okur, add_kubernetes_metadata ile namespace, pod ve container alanlarını ekler, multiline ile çok satırlı hatayı tek olayda birleştirir ve kind ağının geçidi üzerinden ana cluster'daki k8s-pod-logs data stream'ine yazar.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .bold { font:700 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 16px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .pod { fill:#e6f1f6; stroke:#0b6e99; stroke-width:2 }
+    .fb { fill:#fff8e1; stroke:#f5a700; stroke-width:2 }
+    .file { fill:#f0edf6; stroke:#6b5b95; stroke-width:2 }
+    .es { fill:#eef7ee; stroke:#5aa454; stroke-width:2 }
+    .arrow { stroke:#42526e; stroke-width:2.5; fill:none; marker-end:url(#ok) }
+  </style>
+  <defs><marker id="ok" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#42526e"/></marker></defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Pod ölse de log kalır: DaemonSet ile toplamak</text>
+  <text x="60" y="116" class="sub">Her node'da bir Filebeat; her kayıtta namespace, pod ve container; çok satırlı hata tek belgede.</text>
+
+  <rect x="60" y="150" rx="14" width="940" height="560" class="card"/>
+  <rect x="60" y="150" rx="14" width="940" height="50" fill="#0b6e99"/><rect x="60" y="182" width="940" height="18" fill="#0b6e99"/>
+  <text x="80" y="183" class="head">kind node: k8s-loglar-control-plane (bir Docker container'ı)</text>
+  <rect x="90" y="230" rx="10" width="270" height="80" class="pod"/><text x="110" y="262" class="bold">payment-service-demo</text><text x="110" y="290" class="small">default · stdout + stderr</text>
+  <rect x="380" y="230" rx="10" width="270" height="80" class="pod"/><text x="400" y="262" class="bold">etcd, kube-apiserver…</text><text x="400" y="290" class="small">kube-system</text>
+  <rect x="670" y="230" rx="10" width="300" height="80" class="pod"/><text x="690" y="262" class="bold">coredns, kindnet…</text><text x="690" y="290" class="small">kube-system</text>
+  <path d="M225,312 L330,380" class="arrow"/><path d="M515,312 L515,380" class="arrow"/><path d="M820,312 L700,380" class="arrow"/>
+  <rect x="190" y="386" rx="10" width="650" height="70" class="file"/>
+  <text x="210" y="416" class="mono">/var/log/containers/&lt;pod&gt;_&lt;namespace&gt;_&lt;container&gt;-&lt;id&gt;.log</text>
+  <text x="210" y="442" class="small">Kubernetes her container'ın çıktısını node'da bir dosyaya yazar</text>
+  <path d="M515,458 L515,500" class="arrow"/>
+  <rect x="190" y="506" rx="10" width="650" height="180" class="fb"/>
+  <text x="210" y="538" class="bold">Filebeat DaemonSet pod'u (logging namespace)</text>
+  <text x="210" y="570" class="body">1 · container parser: JSON zarfını açar (stdout + stderr)</text>
+  <text x="210" y="600" class="body">2 · multiline: tarihle başlamayan satırı öncekine ekler</text>
+  <text x="210" y="630" class="body">3 · add_kubernetes_metadata: dosya adından pod'u bulur</text>
+  <text x="210" y="660" class="small">/var/log node'dan salt okunur; parola Secret'tan</text>
+
+  <rect x="1040" y="150" rx="14" width="500" height="560" class="card"/>
+  <rect x="1040" y="150" rx="14" width="500" height="50" fill="#5aa454"/><rect x="1040" y="182" width="500" height="18" fill="#5aa454"/>
+  <text x="1060" y="183" class="head">Ana cluster (host)</text>
+  <rect x="1070" y="240" rx="10" width="440" height="90" class="es"/>
+  <text x="1090" y="275" class="mono">k8s-pod-logs  (data stream)</text>
+  <text x="1090" y="305" class="small">şablon: replica 0, metin alanlar keyword</text>
+  <text x="1070" y="380" class="bold">Belge</text>
+  <text x="1070" y="410" class="mono">kubernetes.namespace  default</text>
+  <text x="1070" y="436" class="mono">kubernetes.pod.name   payment-…</text>
+  <text x="1070" y="462" class="mono">stream                stderr</text>
+  <text x="1070" y="500" class="mono">message: [..] ERROR … order-…</text>
+  <text x="1070" y="526" class="mono">  Traceback (most recent …</text>
+  <text x="1070" y="552" class="mono">  File "&lt;string&gt;", line 12</text>
+  <text x="1070" y="578" class="mono">  ZeroDivisionError: …</text>
+  <text x="1070" y="630" class="small">Dört satır tek belgede; multiline</text>
+  <text x="1070" y="656" class="small">olmasaydı dört ayrı belge olurdu.</text>
+  <path d="M842,600 L1020,600 L1020,285 L1066,285" class="arrow"/>
+  <text x="852" y="585" class="small">kind ağ geçidi</text>
+  <text x="852" y="628" class="mono">http://&lt;geçit&gt;:9200</text>
+
+  <rect x="60" y="750" rx="14" width="1480" height="190" class="card"/>
+  <rect x="60" y="750" rx="14" width="1480" height="50" fill="#6b5b95"/><rect x="60" y="782" width="1480" height="18" fill="#6b5b95"/>
+  <text x="80" y="783" class="head">Neden böyle?</text>
+  <text x="85" y="840" class="body">DaemonSet replika sayısı almaz: her node'a bir kopya. Node eklenince yeni Filebeat kendiliğinden başlar.</text>
+  <text x="85" y="875" class="body">Pod'un içinden localhost pod'un kendisidir; host'taki Elasticsearch'e kind ağının geçidinden ulaşılır.</text>
+  <text x="85" y="910" class="body">DaemonSet node'daki bütün container'ları okur: uygulama, kube-system bileşenleri ve Filebeat'in kendisi.</text>
+</svg>

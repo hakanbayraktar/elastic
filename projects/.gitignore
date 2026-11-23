@@ -1,0 +1,4 @@
+# Proje ici Python sanal ortamlari
+.venv/
+app.log
+app.pid

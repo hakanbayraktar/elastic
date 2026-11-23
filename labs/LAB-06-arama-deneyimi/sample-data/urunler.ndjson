@@ -1,0 +1,14 @@
+{ "index": { "_index": "deneyim-urunler", "_id": "1" } }
+{ "ad": "Kablosuz Kulaklık", "aciklama": "Gürültü engelleme, 30 saat pil", "kategori": "Elektronik" }
+{ "index": { "_index": "deneyim-urunler", "_id": "2" } }
+{ "ad": "Kablolu Kulaklık", "aciklama": "3.5 mm jak, mikrofonlu", "kategori": "Elektronik" }
+{ "index": { "_index": "deneyim-urunler", "_id": "3" } }
+{ "ad": "Kablosuz Klavye", "aciklama": "Bluetooth, Türkçe Q klavye", "kategori": "Elektronik" }
+{ "index": { "_index": "deneyim-urunler", "_id": "4" } }
+{ "ad": "Akıllı Telefon", "aciklama": "128 GB, çift SIM", "kategori": "Elektronik" }
+{ "index": { "_index": "deneyim-urunler", "_id": "5" } }
+{ "ad": "Telefon Kılıfı", "aciklama": "Silikon, şeffaf", "kategori": "Aksesuar" }
+{ "index": { "_index": "deneyim-urunler", "_id": "6" } }
+{ "ad": "Oyuncu Kulaklığı", "aciklama": "7.1 surround, RGB ışık", "kategori": "Elektronik" }
+{ "index": { "_index": "deneyim-urunler", "_id": "7" } }
+{ "ad": "Şarj Kablosu", "aciklama": "USB-C, 1 metre, kulaklık ve telefon için", "kategori": "Aksesuar" }

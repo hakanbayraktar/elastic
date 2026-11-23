@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Yavaş sorgu teşhisi: slow log, X-Opaque-Id, Profile API ve Tasks API</title>
+  <desc id="desc">Uygulama isteğe X-Opaque-Id başlığı koyar. Eşiği aşan sorgu slow log'a süresi, kullanıcısı ve bu etiketle yazılır. Profile API sorgunun süresini parçalarına ayırır; must alt sorguları puan hesaplar, filter hesaplamaz. Baştaki joker karakter bütün terim sözlüğünü gezer. Tasks API çalışan sorguyu etiketiyle bulur ve iptal eder.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 16px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 17px Arial,sans-serif; fill:#2e7d32 }
+    .bad { font:700 17px Arial,sans-serif; fill:#bd271e }
+  </style>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Yavaş sorguyu bulmak: dört soru, dört araç</text>
+  <text x="60" y="116" class="sub">Cluster green; sorun tek bir sorguda. Önce hangisi, sonra kimin, sonra neden, gerekirse durdur.</text>
+
+  <rect x="60" y="160" rx="14" width="720" height="360" class="card"/>
+  <rect x="60" y="160" rx="14" width="720" height="50" fill="#6b5b95"/><rect x="60" y="192" width="720" height="18" fill="#6b5b95"/>
+  <text x="80" y="193" class="head">1 · Slow log + X-Opaque-Id: hangisi, kimin?</text>
+  <text x="80" y="246" class="small">Uygulama isteğe kendi adını koyar:</text>
+  <text x="80" y="272" class="mono">X-Opaque-Id: rapor-servisi</text>
+  <text x="80" y="316" class="small">Eşiği aşan sorgu slow log'a yazılır:</text>
+  <text x="80" y="342" class="mono">seviye DEBUG · sure 51ms · uygulama rapor-servisi</text>
+  <text x="80" y="366" class="mono">kullanici elastic · kaynak: sorgunun gövdesi</text>
+  <text x="80" y="416" class="body">Eşikler: <tspan class="mono">warn 1s · info 100ms · debug 10ms</tspan></text>
+  <text x="80" y="446" class="small">Seviye, sorgunun aştığı en yüksek eşiktir.</text>
+  <text x="80" y="476" class="small">Eşik index ayarıdır; yalnız o index'in sorgularını loglar.</text>
+
+  <rect x="820" y="160" rx="14" width="720" height="360" class="card"/>
+  <rect x="820" y="160" rx="14" width="720" height="50" fill="#0b6e99"/><rect x="820" y="192" width="720" height="18" fill="#0b6e99"/>
+  <text x="840" y="193" class="head">2 · Profile API: süre nereye gitti?</text>
+  <text x="840" y="246" class="small">Aynı iki koşul, aynı sonuç sayısı:</text>
+  <text x="840" y="284" class="mono">must    +kategori:Ses +fiyat:[1000..5000]</text>
+  <text x="840" y="310" class="bad">        puan hesabı: 4488 · 4488</text>
+  <text x="840" y="352" class="mono">filter  #kategori:Ses #fiyat:[1000..5000]</text>
+  <text x="840" y="378" class="ok">        puan hesabı: 0 · 0 (önbelleğe alınabilir)</text>
+  <text x="840" y="432" class="body">Puanın anlamı olmayan koşul (kategori, fiyat,</text>
+  <text x="840" y="460" class="body">tarih aralığı) <tspan class="h2">filter</tspan>'a yazılır.</text>
+
+  <rect x="60" y="560" rx="14" width="720" height="380" class="card"/>
+  <rect x="60" y="560" rx="14" width="720" height="50" fill="#f5a700"/><rect x="60" y="592" width="720" height="18" fill="#f5a700"/>
+  <text x="80" y="593" class="head">3 · Joker karakterin maliyeti</text>
+  <text x="80" y="650" class="mono">match    "kulaklık"   inverted index'te tek arama</text>
+  <text x="80" y="690" class="mono">prefix   "Nova"       sözlüğün bir bölümü</text>
+  <text x="80" y="730" class="mono">wildcard "*Kulak*"    ~197 bin terimin hepsi</text>
+  <rect x="80" y="756" width="40" height="22" fill="#5aa454"/><text x="132" y="774" class="small">match</text>
+  <rect x="80" y="790" width="180" height="22" fill="#f5a700"/><text x="272" y="808" class="small">prefix</text>
+  <rect x="80" y="824" width="300" height="22" fill="#bd271e"/><text x="392" y="842" class="small">baştaki * (terim sayısıyla büyür)</text>
+  <text x="80" y="892" class="small">Gerçek "içinde geçer" araması gerekiyorsa wildcard alan tipi</text>
+  <text x="80" y="918" class="small">ya da n-gram analyzer tasarlanır.</text>
+
+  <rect x="820" y="560" rx="14" width="720" height="380" class="card"/>
+  <rect x="820" y="560" rx="14" width="720" height="50" fill="#bd271e"/><rect x="820" y="592" width="720" height="18" fill="#bd271e"/>
+  <text x="840" y="593" class="head">4 · Tasks API: şu an ne çalışıyor?</text>
+  <text x="840" y="650" class="mono">GET _tasks?actions=*search&amp;detailed=true</text>
+  <text x="840" y="680" class="small">→ headers.X-Opaque-Id = "rapor-uzun", cancellable: true</text>
+  <text x="840" y="730" class="mono">POST _tasks/&lt;id&gt;/_cancel</text>
+  <text x="840" y="760" class="small">→ cancelled: true</text>
+  <text x="840" y="810" class="body">İstemci: <tspan class="bad">task_cancelled_exception</tspan></text>
+  <text x="840" y="860" class="small">İptal yalnız o isteği durdurur; cluster'a ve diğer</text>
+  <text x="840" y="886" class="small">sorgulara dokunmaz.</text>
+</svg>

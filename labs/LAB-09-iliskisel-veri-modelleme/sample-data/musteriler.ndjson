@@ -1,0 +1,10 @@
+{"index": {"_id": "1"}}
+{"musteri_id": 1, "ad": "Ağaoğlu Yapı", "il": "İstanbul", "segment": "kurumsal"}
+{"index": {"_id": "2"}}
+{"musteri_id": 2, "ad": "Şimşek Lojistik", "il": "Ankara", "segment": "kurumsal"}
+{"index": {"_id": "3"}}
+{"musteri_id": 3, "ad": "Öztürk Gıda", "il": "İzmir", "segment": "bireysel"}
+{"index": {"_id": "4"}}
+{"musteri_id": 4, "ad": "Çınar Eğitim", "il": "Bursa", "segment": "kurumsal"}
+{"index": {"_id": "5"}}
+{"musteri_id": 5, "ad": "Güneş Enerji", "il": "Antalya", "segment": "bireysel"}

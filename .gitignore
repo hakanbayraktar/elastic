@@ -1,0 +1,43 @@
+# Environment-specific access configuration and credentials
+labs/LAB-01-kurulum-kontrol/.env
+labs/LAB-01-kurulum-kontrol/nginx/.env
+labs/LAB-01-kurulum-kontrol/nginx/certs/*
+!labs/LAB-01-kurulum-kontrol/nginx/certs/.gitkeep
+labs/LAB-01-kurulum-kontrol/nginx/auth/*
+!labs/LAB-01-kurulum-kontrol/nginx/auth/.gitkeep
+
+__pycache__/
+*.pyc
+**/target/
+
+# Kimlik ve ortam dosyalari: lab dizini yeniden adlandirilsa bile yakalanmali.
+# (Yola bagli desenler yeniden numaralandirmada kirildi ve kimlik dosyalari
+#  bir commit'e sizdi; bu yuzden artik yoldan bagimsiz glob kullaniliyor.)
+**/.env
+**/.env.fleet
+**/.env.local
+!**/.env.example
+!**/.env.fleet.example
+# LAB-09A: cluster CA kopyasi (ensure_ca)
+**/.ca/
+
+# Internal planning and course delivery documents (local only)
+docs/PLAN.md
+docs/PLAN-COVERAGE.md
+docs/COURSE_DELIVERY.md
+docs/4-GUN-EGITIM-PLANI.md
+docs/4-GUN-EGITIM-PLANI-v2.md
+docs/validation/
+docs/VALIDATION.md
+
+# Test execution reports and evidence
+reports/
+**/reports/
+# LAB-09B verify.sh rapor dosyasi
+**/.runtime-report.json
+
+# macOS Finder dosyalari
+.DS_Store
+
+# Yerel rehber (repoya gönderilmez)
+docs/elastic-guide/

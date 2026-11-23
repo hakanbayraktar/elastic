@@ -1,0 +1,59 @@
+# ==============================================================================
+# NovaCommerce: KQL vs Query DSL vs ES|QL Karşılaştırmalı Arama Sorguları
+# ==============================================================================
+
+###
+# BÖLÜM 1: KQL (Kibana Query Language) Referansı
+# Discover ekranında arama çubuğuna yazılarak test edilir:
+#
+# 1. Kategori ve Ürün Adı Arama:
+#    category: "Men's Clothing" and product_name: "shoes"
+#
+# 2. Fiyat Aralığı ve Stok Filtresi:
+#    price >= 30 and price <= 120 and in_stock: true
+#
+# 3. Wildcard / Joker Karakter:
+#    product_name: casual*
+#
+# 4. Marka veya Kategori Alternatifleri:
+#    brand: ("Elitelligence" or "Oceanavigations")
+
+###
+# BÖLÜM 2: Modern ES|QL (Elasticsearch Piped Query Language)
+# Elasticsearch 8.11+ / 9.x üzerinde boru hattı (|) tabanlı analitik sorgulama
+
+###
+# 2.1 En Yüksek Fiyatlı 10 Ürünü Getir
+POST /_query
+{
+  "query": """
+    FROM ecommerce_search_products
+    | WHERE in_stock == true
+    | SORT price DESC
+    | LIMIT 10
+    | KEEP product_name, brand, category, price
+  """
+}
+
+###
+# 2.2 Kategorilere Göre Ortalama ve Maksimum Fiyat İstatistikleri (STATS)
+POST /_query
+{
+  "query": """
+    FROM ecommerce_search_products
+    | STATS avg_price = AVG(price), max_price = MAX(price), count = COUNT() BY category
+    | SORT avg_price DESC
+  """
+}
+
+###
+# 2.3 Doğrudan Ham Kibana Sample Data Üzerinde ES|QL ile Ürün Analitiği
+POST /_query
+{
+  "query": """
+    FROM kibana_sample_data_ecommerce
+    | WHERE total_quantity > 2
+    | STATS order_count = COUNT(), total_revenue = SUM(taxful_total_price) BY customer_gender
+    | SORT total_revenue DESC
+  """
+}

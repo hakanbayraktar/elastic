@@ -1,0 +1,8 @@
+# Logstash 9.x: izleme API'si ayarlari "api.http.*" adi altindadir
+# (eski "http.host" / "http.port" anahtarlari kaldirildi; yazilirsa servis acilmaz).
+api.http.host: "0.0.0.0"
+api.http.port: 9600
+
+# Isci (worker) sayisi ve toplu islem boyutu: CPU cekirdegi ve gecikme dengesi.
+pipeline.workers: 2
+pipeline.batch.size: 125

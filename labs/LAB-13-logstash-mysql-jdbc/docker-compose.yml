@@ -1,0 +1,62 @@
+name: logstash-mysql-lab
+
+services:
+  # Ornek magaza veritabani. Host'a port acilmaz; Logstash ona Docker agi uzerinden baglanir.
+  mysql:
+    image: mysql:8.4.13
+    container_name: mysql-magaza-lab
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: DevOps2026!
+      MYSQL_DATABASE: magaza
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci"]
+    volumes:
+      - ./sql:/docker-entrypoint-initdb.d:ro
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # TCP'den yanit gelmesi, ilk acilistaki SQL dosyalarinin bittigini gosterir.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pDevOps2026!", "--silent"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    networks:
+      - magaza
+
+  # Siparisleri SQL ile okuyup Elasticsearch'e yazan Logstash.
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.5.5
+    container_name: logstash-mysql-lab
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9604:9600"   # Logstash API (pipeline sayaclari); yalniz sunucudan
+    environment:
+      ES_HOST: http://elasticsearch-lab00:9200
+      LS_USER: mysql_logstash
+      LS_PASSWORD: Mysql2026!
+      DB_USER: logstash_okuyucu
+      DB_PASSWORD: Okuyucu2026!
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./pipeline/mysql.conf:/usr/share/logstash/pipeline/mysql.conf:ro
+      - ./drivers:/usr/share/logstash/drivers:ro
+      # :sql_last_value burada saklanir; konteyner yeniden baslayinca aktarim kaldigi yerden surer.
+      - logstash-data:/usr/share/logstash/data
+    networks:
+      - magaza
+      - elastic_net
+
+volumes:
+  mysql-data:
+  logstash-data:
+
+networks:
+  magaza:
+    name: logstash-mysql-lab_magaza
+  elastic_net:
+    external: true
+    name: elastic-lab00_default

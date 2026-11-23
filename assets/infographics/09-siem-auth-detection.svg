@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1060" viewBox="0 0 1600 1060" role="img" aria-labelledby="title desc">
+  <title id="title">LAB-11 Elastic SIEM mimarisi: toplama, normalizasyon, zenginleştirme, tespit</title>
+  <desc id="desc">Sunucunun gerçek auth.log kayıtlarının ve sentetik saldırı senaryosunun native Filebeat ile toplanması, Logstash'te güvenlik olayı olarak sınıflandırılması, Elasticsearch ingest pipeline'ında GeoIP, ASN ve tehdit istihbaratı ile zenginleştirilip risk skoru alması, ardından Elastic Security tespit kurallarıyla alarma dönüşmesini gösteren Türkçe mimari diyagram.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 38px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 20px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .body { font:400 19px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 16px "Courier New",monospace; fill:#172b4d }
+    .monos { font:400 14px "Courier New",monospace; fill:#42526e }
+    .small { font:400 16px Arial,sans-serif; fill:#42526e }
+    .step { font:700 18px Arial,sans-serif; fill:#fff }
+    .arrow { stroke:#0b6e99; stroke-width:6; fill:none; marker-end:url(#a1) }
+    .redarrow { stroke:#bd271e; stroke-width:6; fill:none; marker-end:url(#a2) }
+    .lbl { font:700 16px Arial,sans-serif; fill:#172b4d }
+  </style>
+  <defs>
+    <marker id="a1" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+    <marker id="a2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#bd271e"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1060"/>
+
+  <text x="60" y="72" class="title">LAB-11 — Elastic SIEM: log satırından alarma</text>
+  <text x="60" y="108" class="sub">Toplama → normalizasyon → zenginleştirme → tespit → triyaj. SIEM'i "log toplama"dan ayıran zincir budur.</text>
+
+  <!-- 1 Kaynaklar -->
+  <circle cx="102" cy="168" r="26" fill="#005571"/><text x="96" y="175" class="step">1</text>
+  <rect x="60" y="208" rx="14" width="300" height="300" class="card"/>
+  <rect x="60" y="208" rx="14" width="300" height="56" fill="#005571"/>
+  <text x="84" y="245" class="head">Güvenlik kaynakları</text>
+  <text x="84" y="296" class="body">Gerçek sistem kaydı:</text>
+  <text x="84" y="326" class="monos">/var/log/auth.log</text>
+  <text x="84" y="352" class="small">sshd, sudo, useradd, PAM</text>
+  <text x="84" y="396" class="body">Kontrollü senaryo:</text>
+  <text x="84" y="426" class="monos">attack-scenario.log</text>
+  <text x="84" y="452" class="small">12 başarısız → 1 başarılı</text>
+  <text x="84" y="478" class="small">→ sudo → yeni kullanıcı</text>
+
+  <!-- 2 Filebeat -->
+  <circle cx="452" cy="168" r="26" fill="#0b6e99"/><text x="446" y="175" class="step">2</text>
+  <rect x="410" y="208" rx="14" width="280" height="300" class="card"/>
+  <rect x="410" y="208" rx="14" width="280" height="56" fill="#0b6e99"/>
+  <text x="434" y="245" class="head">Native Filebeat</text>
+  <text x="434" y="296" class="small">Host üzerinde ikinci örnek:</text>
+  <text x="434" y="326" class="monos">filebeat-siem.service</text>
+  <text x="434" y="358" class="monos">--path.data /var/lib/</text>
+  <text x="434" y="380" class="monos">    filebeat-siem</text>
+  <text x="434" y="420" class="small">Kendi kayıt defteri (registry)</text>
+  <text x="434" y="446" class="small">→ LAB-05'in Filebeat'i</text>
+  <text x="434" y="472" class="small">etkilenmez</text>
+
+  <!-- 3 Logstash -->
+  <circle cx="782" cy="168" r="26" fill="#f5a700"/><text x="776" y="175" class="step">3</text>
+  <rect x="740" y="208" rx="14" width="300" height="300" class="card"/>
+  <rect x="740" y="208" rx="14" width="300" height="56" fill="#f5a700"/>
+  <text x="764" y="245" class="head">Logstash: sınıflandırma</text>
+  <text x="764" y="292" class="small">Satırı alana çevirmek yetmez;</text>
+  <text x="764" y="318" class="small">NE OLDUĞUNA karar verilir:</text>
+  <rect x="762" y="336" rx="8" width="256" height="128" fill="#fff4de" stroke="#f5a700" stroke-width="2"/>
+  <text x="778" y="364" class="mono">event.action</text>
+  <text x="778" y="390" class="mono">event.outcome</text>
+  <text x="778" y="416" class="mono">user.name</text>
+  <text x="778" y="442" class="mono">source.ip</text>
+  <text x="764" y="492" class="small">ssh_login_failed, auth_failure,</text>
+
+  <!-- 4 Enrich -->
+  <circle cx="1132" cy="168" r="26" fill="#6b5b95"/><text x="1126" y="175" class="step">4</text>
+  <rect x="1090" y="208" rx="14" width="450" height="300" class="card"/>
+  <rect x="1090" y="208" rx="14" width="450" height="56" fill="#6b5b95"/>
+  <text x="1114" y="245" class="head">Elasticsearch ingest: zenginleştirme</text>
+  <text x="1114" y="292" class="monos">pipeline: siem-enrich</text>
+  <rect x="1112" y="308" rx="8" width="406" height="40" fill="#eef4f8" stroke="#b3bac5"/>
+  <text x="1128" y="334" class="mono">geoip → source.geo (ülke, konum)</text>
+  <rect x="1112" y="356" rx="8" width="406" height="40" fill="#eef4f8" stroke="#b3bac5"/>
+  <text x="1128" y="382" class="mono">geoip ASN → source.as (ağ sahibi)</text>
+  <rect x="1112" y="404" rx="8" width="406" height="40" fill="#fdeaea" stroke="#bd271e" stroke-width="2"/>
+  <text x="1128" y="430" class="mono">enrich → threat.indicator (IOC eşleşmesi)</text>
+  <rect x="1112" y="452" rx="8" width="406" height="40" fill="#eaf5ea" stroke="#5aa454" stroke-width="2"/>
+  <text x="1128" y="478" class="mono">script → event.risk_score (0–100)</text>
+
+  <path class="arrow" d="M365,350 L405,350"/>
+  <path class="arrow" d="M695,350 L735,350"/>
+  <path class="arrow" d="M1045,350 L1085,350"/>
+
+  <!-- 5 Index -->
+  <rect x="410" y="560" rx="14" width="630" height="92" fill="#fff" stroke="#b3bac5" stroke-width="2"/>
+  <text x="434" y="598" class="body">Normalize + zenginleştirilmiş olay deposu</text>
+  <text x="434" y="630" class="mono">siem-auth-*  (source.ip → ip, geo_point, event.* → keyword)</text>
+  <path class="arrow" d="M1240,515 C1240,560 1100,580 1045,600"/>
+
+  <!-- 6 Detection -->
+  <circle cx="102" cy="712" r="26" fill="#bd271e"/><text x="96" y="719" class="step">5</text>
+  <rect x="60" y="752" rx="14" width="730" height="268" class="card"/>
+  <rect x="60" y="752" rx="14" width="730" height="56" fill="#bd271e"/>
+  <text x="84" y="789" class="head">Elastic Security — Tespit Kuralları (MITRE ATT&amp;CK eşlemeli)</text>
+  <text x="84" y="838" class="mono">threshold</text><text x="250" y="838" class="small">20+ başarısız / 5 dk / kaynak IP → T1110 Brute Force</text>
+  <text x="84" y="876" class="mono">eql sequence</text><text x="250" y="876" class="small">5 başarısız ARDINDAN başarılı → T1078 Valid Accounts</text>
+  <text x="84" y="914" class="mono">query</text><text x="250" y="914" class="small">yeni kullanıcı hesabı → T1136 Create Account</text>
+  <text x="84" y="952" class="mono">query</text><text x="250" y="952" class="small">tehdit istihbaratı eşleşmesi → T1595 Active Scanning</text>
+  <text x="84" y="996" class="small">Tek olay sessizdir; kural olayları sayar, sıralar ve ilişkilendirir.</text>
+  <path class="redarrow" d="M700,660 C640,700 520,720 460,748"/>
+
+  <!-- 7 Triage -->
+  <rect x="830" y="752" rx="14" width="710" height="268" class="card"/>
+  <rect x="830" y="752" rx="14" width="710" height="56" fill="#172b4d"/>
+  <text x="854" y="789" class="head">Alarm → Triyaj (SEM) ve Pano (SIM)</text>
+  <text x="854" y="836" class="small">1. Alarm: hangi kural, hangi kaynak IP, hangi hesap?</text>
+  <text x="854" y="868" class="small">2. Pivot: aynı IP'nin tüm olayları — yalnız başarısız mı, arada başarılı var mı?</text>
+  <text x="854" y="900" class="small">3. Kapsam: girişten SONRA ne yapıldı (sudo, useradd, crontab)?</text>
+  <text x="854" y="932" class="small">4. Karar: gerçek ihlal mi, gürültü mü? (çok başarılı giriş = genelde meşru otomasyon)</text>
+  <text x="854" y="972" class="monos">FROM siem-auth-* | STATS basarisiz=COUNT(*) WHERE event.outcome=="failure",</text>
+  <text x="854" y="996" class="monos">  basarili=COUNT(*) WHERE event.action=="ssh_login_success" BY source.ip</text>
+</svg>

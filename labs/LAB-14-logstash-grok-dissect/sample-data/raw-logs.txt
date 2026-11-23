@@ -1,0 +1,11 @@
+2026-11-02 10:14:02 [INFO] auth-service: {"event":"user_login","user_id":4091,"ip":"10.0.1.50","response_time_ms":42}
+2026-11-02 10:14:05 [WARN] catalog-api: Cache miss for product_id=9821
+2026-11-02 10:14:09 [ERROR] payment-gateway: {"error":"Payment timeout","order_id":"ORD-9912","response_time_ms":30000}
+2026-11-02 10:14:15 [INFO] notification-svc: {"event":"sms_dispatched","recipient":"+905551112233","response_time_ms":118}
+2026-11-02 10:14:20 [ERROR] database-proxy: {"error":"Connection pool exhausted","active_conns":100,"response_time_ms":9500}
+2026-11-02 10:14:24 [INFO] catalog-api: {"event":"product_viewed","product_id":9821,"response_time_ms":37}
+2026-11-02 10:14:26 [WARN] payment-gateway: {"event":"retry_scheduled","order_id":"ORD-9912","response_time_ms":1500}
+2026-11-02 10:14:28 [WARN] auth-service: Token refresh rate limit yaklasti
+2026-11-02 10:14:31 ERROR legacy-batch - nightly reconciliation failed after 3 retries
+2026-11-02 10:14:33 INFO legacy-batch - 1420 kayit islendi
+2026-11-02 10:14:35 bozuk satir: seviye ve servis yok

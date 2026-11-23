@@ -1,0 +1,8 @@
+{ "index": { "_index": "mapping-urunler", "_id": "1" } }
+{ "ad": "Kablosuz Kulaklıklar", "kategori": "Elektronik", "fiyat": 1299.5, "stok": 42, "eklendi": "18.11.2026 10:30" }
+{ "index": { "_index": "mapping-urunler", "_id": "2" } }
+{ "ad": "Yazlık Elbiseler", "kategori": "Giyim", "fiyat": 899.9, "stok": 15, "eklendi": "19.11.2026 14:00" }
+{ "index": { "_index": "mapping-urunler", "_id": "3" } }
+{ "ad": "Deri Ceketler", "kategori": "Giyim", "fiyat": 2499, "stok": 8, "eklendi": "2026-11-20T09:15:00Z" }
+{ "index": { "_index": "mapping-urunler", "_id": "4" } }
+{ "ad": "Işıklı Klavye", "kategori": "Elektronik", "fiyat": 749, "stok": 30, "eklendi": "21.11.2026 08:45" }

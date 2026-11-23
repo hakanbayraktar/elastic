@@ -1,0 +1,21 @@
+{
+  "type": "metric",
+  "title": "API | 5xx oranı",
+  "query": {
+    "language": "kql",
+    "expression": "event.dataset: \"telecom.day2\" AND service.name: \"edge-proxy\""
+  },
+  "data_source": {
+    "type": "data_view_reference",
+    "ref_id": "telecom-events-lab"
+  },
+  "metrics": [
+    {
+      "type": "primary",
+      "operation": "formula",
+      "formula": "count(kql='http.response.status_code >= 500 AND http.response.status_code < 600') / count() * 100",
+      "label": "5xx (%)"
+    }
+  ],
+  "description": "40 proxy isteği; uygulama logları aynı isteği ikinci kez saymaz. Zaman aralığı dashboard tarafından uygulanır."
+}

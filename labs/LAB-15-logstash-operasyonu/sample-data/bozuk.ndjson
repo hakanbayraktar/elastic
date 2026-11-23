@@ -1,0 +1,2 @@
+{"service":"payment-gateway","level":"warn","response_time_ms":"yavas","message":"sure sayi degil"}
+{"service":"catalog-api","level":"error","response_time_ms":"zaman asimi","message":"sure sayi degil"}

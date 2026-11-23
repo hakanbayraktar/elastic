@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">LAB-01 ana cluster mimarisi: Docker single-node Elasticsearch ve Kibana</title>
+  <desc id="desc">Tarayıcının Cloudflare ve host Nginx üzerinden Kibana ve Elasticsearch'e ulaşması; elastic-lab00_default Docker ağında elasticsearch-lab00, kibana-lab00 ve kibana_system parolasını ayarlayıp kapanan setup-lab00 konteynerleri; sonraki labların konteynerlerinin aynı ağa katılması ve 3-node cluster (LAB-19/23) ile ADV-11'in ayrı cluster olarak çalışması.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .zone { fill:#eef3f7; stroke:#8a94a6; stroke-width:2; stroke-dasharray:10 6 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 18px Arial,sans-serif; fill:#5aa454 }
+    .bad { font:700 18px Arial,sans-serif; fill:#bd271e }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+    .arrowg { stroke:#8a94a6; stroke-width:3; fill:none; stroke-dasharray:8 6; marker-end:url(#arrowg) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+    <marker id="arrowg" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#8a94a6"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">LAB-01 ana cluster: bir sunucu, bir Docker ağı, iki servis</text>
+  <text x="60" y="116" class="sub">LAB-02 … LAB-18, LAB-20 … LAB-22, LAB-24 … LAB-27 ve ADV lablarının hepsi bu ana cluster'a bağlanır; kendi ağlarını kurmazlar.</text>
+  <rect x="60" y="170" rx="14" width="300" height="150" class="card"/>
+  <rect x="60" y="170" rx="14" width="300" height="50" fill="#6b5b95"/><rect x="60" y="202" width="300" height="18" fill="#6b5b95"/>
+  <text x="78" y="203" class="head">Tarayıcı / terminal</text>
+  <text x="80" y="250" class="body">studentXX-kibana…</text>
+  <text x="80" y="278" class="body">curl localhost:9200</text>
+  <rect x="60" y="370" rx="14" width="300" height="150" class="card"/>
+  <rect x="60" y="370" rx="14" width="300" height="50" fill="#6b5b95"/><rect x="60" y="402" width="300" height="18" fill="#6b5b95"/>
+  <text x="78" y="403" class="head">Host Nginx</text>
+  <text x="80" y="450" class="body">80 / 443 → alt alan adı</text>
+  <text x="80" y="478" class="small">Cockpit 9090 dokunulmaz</text>
+  <path d="M210 322 L210 366" class="arrow"/>
+  <rect x="420" y="160" rx="18" width="1120" height="560" class="zone"/>
+  <text x="438" y="190" class="h2">Docker ağı: elastic-lab00_default   (compose projesi: elastic-lab00)</text>
+  <rect x="460" y="220" rx="14" width="330" height="230" class="card"/>
+  <rect x="460" y="220" rx="14" width="330" height="50" fill="#005571"/><rect x="460" y="252" width="330" height="18" fill="#005571"/>
+  <text x="478" y="253" class="head">elasticsearch-lab00</text>
+  <text x="480" y="300" class="mono">discovery.type=single-node</text>
+  <text x="480" y="334" class="body">security: açık (elastic)</text>
+  <text x="480" y="368" class="body">heap 1 GB</text>
+  <text x="480" y="402" class="body">port 9200</text>
+  <rect x="860" y="220" rx="14" width="300" height="230" class="card"/>
+  <rect x="860" y="220" rx="14" width="300" height="50" fill="#0b6e99"/><rect x="860" y="252" width="300" height="18" fill="#0b6e99"/>
+  <text x="878" y="253" class="head">kibana-lab00</text>
+  <text x="880" y="300" class="body">kibana_system ile bağlanır</text>
+  <text x="880" y="334" class="body">port 5601</text>
+  <text x="880" y="368" class="body">Dev Tools, Discover,</text>
+  <text x="880" y="402" class="body">Lens, Fleet, Security</text>
+  <rect x="1220" y="220" rx="14" width="290" height="230" class="card"/>
+  <rect x="1220" y="220" rx="14" width="290" height="50" fill="#8a94a6"/><rect x="1220" y="252" width="290" height="18" fill="#8a94a6"/>
+  <text x="1238" y="253" class="head">setup-lab00</text>
+  <text x="1240" y="300" class="body">kibana_system parolasını</text>
+  <text x="1240" y="334" class="body">ayarlar ve kapanır</text>
+  <text x="1240" y="368" class="body">(exited 0 normaldir)</text>
+  <path d="M858 335 L794 335" class="arrow"/>
+  <path d="M1365 218 L1365 204 L640 204 L640 214" class="arrowg"/>
+  <path d="M360 455 L456 410" class="arrow"/>
+  <path d="M360 470 L830 470 L830 440 L856 440" class="arrow"/>
+  <rect x="460" y="490" rx="14" width="330" height="90" class="card"/>
+  <text x="480" y="525" class="h2">Volume</text>
+  <text x="480" y="557" class="mono">elasticsearch_data, _snapshots</text>
+  <rect x="860" y="490" rx="14" width="650" height="200" class="card"/>
+  <rect x="860" y="490" rx="14" width="650" height="50" fill="#5aa454"/><rect x="860" y="522" width="650" height="18" fill="#5aa454"/>
+  <text x="878" y="523" class="head">Sonraki labların konteynerleri bu ağa katılır</text>
+  <text x="880" y="570" class="body">LAB-12/13 Logstash (Excel, MySQL)   ·   LAB-14 logstash-grok-lab</text>
+  <text x="880" y="600" class="body">LAB-16 apache/filebeat/logstash   ·   LAB-11 Fleet   ·   LAB-26 SIEM</text>
+  <text x="880" y="630" class="body">ADV-03, ADV-04, ADV-05, ADV-07 …</text>
+  <text x="880" y="660" class="mono">İçeriden adres: http://elasticsearch-lab00:9200</text>
+  <path d="M1000 488 L700 454" class="arrowg"/>
+  <rect x="60" y="760" rx="14" width="1480" height="200" class="card"/>
+  <rect x="60" y="760" rx="14" width="1480" height="50" fill="#f5a700"/><rect x="60" y="792" width="1480" height="18" fill="#f5a700"/>
+  <text x="78" y="793" class="head">Ana cluster'dan bağımsız çalışan cluster'lar (aynı anda açık olabilir)</text>
+  <text x="84" y="850" class="body">LAB-19 / 23   3-node TLS cluster   ·   HTTPS 127.0.0.1:19208   ·   kendi Docker ağı (elastic-cluster)</text>
+  <text x="84" y="884" class="body">ADV-11          Elastic 8.19 karşılaştırma   ·   9208 / 5608</text>
+  <text x="84" y="918" class="small">Kural: bir labın komutunu çalıştırmadan önce hangi cluster'a (9200, 19208, 9208) gittiğine bakın.</text>
+</svg>

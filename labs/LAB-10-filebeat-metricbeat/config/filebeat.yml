@@ -1,0 +1,45 @@
+filebeat.inputs:
+  # 1) Host'un oturum acma logu (sshd, sudo, logger -p auth.*).
+  - type: filestream
+    id: host-auth
+    paths: ["/hostfs/var/log/auth.log"]
+    index: "beats-log-sistem-%{+yyyy.MM.dd}"
+    fields: { log_type: auth }
+    fields_under_root: true
+
+  # 2) Container loglari: Docker her container'in stdout/stderr'ini JSON dosyaya yazar.
+  - type: filestream
+    id: docker-containers
+    paths: ["/var/lib/docker/containers/*/*.log"]
+    parsers:
+      - container: ~                       # Docker JSON satirini acar: message, stream, zaman
+    prospector.scanner.symlinks: true
+    index: "beats-log-docker-%{+yyyy.MM.dd}"
+    processors:
+      - add_docker_metadata: ~             # container id -> container.name, image
+      - drop_event:                        # yalniz bu labin demo servisleri
+          when.not.or:
+            - equals.container.name: nginx-beats-lab
+            - equals.container.name: api-beats-lab
+      - dissect:                           # nginx erisim satirini alanlara ayirir
+          when.equals.container.name: nginx-beats-lab
+          field: message
+          target_prefix: ""
+          tokenizer: '%{source.ip} - %{} [%{}] "%{http.request.method} %{url.path} %{}" %{http.response.status_code|integer} %{}'
+      - decode_json_fields:                # API satiri zaten JSON
+          when.equals.container.name: api-beats-lab
+          fields: ["message"]
+          target: "api"
+
+processors:
+  - add_host_metadata: ~
+
+# Index sablonlarini Adim 1'de biz kurduk; Beats sablon ve ILM kurmaya calismasin.
+setup.template.enabled: false
+setup.ilm.enabled: false
+
+output.elasticsearch:
+  hosts: ["http://127.0.0.1:9200"]
+  username: "elastic"
+  password: "DevOps2026!"
+  index: "beats-log-diger-%{+yyyy.MM.dd}"

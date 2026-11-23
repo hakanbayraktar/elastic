@@ -1,0 +1,99 @@
+# nginx:alpine imaji bu sablonu envsubst ile /etc/nginx/conf.d/nginx.conf'a yazar ve ana
+# nginx.conf'un http { } blogu icine include eder. Bu yuzden burada yalnizca http baglamindaki
+# yonergeler bulunur; user / worker_processes / events / http { } ana dosyadadir (bu dosyaya
+# konursa nginx '"user" directive is not allowed here' hatasiyla acilmaz).
+# Yalnizca ELASTIC_FQDN, KIBANA_FQDN, LOGSTASH_FQDN ortamda tanimli oldugu icin envsubst
+# $host, $remote_addr gibi nginx degiskenlerine dokunmaz.
+
+log_format json_combined escape=json
+'{'
+    '"time_local":"$time_iso8601",'
+    '"client_ip":"$remote_addr",'
+    '"remote_user":"$remote_user",'
+    '"request":"$request",'
+    '"status": "$status",'
+    '"body_bytes_sent":"$body_bytes_sent",'
+    '"request_time":"$request_time",'
+    '"http_referrer":"$http_referer",'
+    '"http_user_agent":"$http_user_agent",'
+    '"host":"$host"'
+'}';
+
+access_log /var/log/nginx/access.json json_combined;
+
+# sendfile ve keepalive_timeout ana nginx.conf'ta tanimli (tekrar edilirse "duplicate" hatasi)
+
+# SSL Ayarları
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers on;
+ssl_session_cache shared:SSL:10m;
+ssl_session_timeout 10m;
+
+# Upstream Tanımları
+upstream es_upstream {
+    server elasticsearch:9200;
+    keepalive 32;
+}
+
+upstream kb_upstream {
+    server kibana:5601;
+    keepalive 32;
+}
+
+# 1. HTTP -> HTTPS Yönlendirme ve Let's Encrypt ACME Challenge
+server {
+    listen 80;
+    server_name ${ELASTIC_FQDN} ${KIBANA_FQDN} localhost;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# 2. Kibana HTTPS (Port 443 ve 5601)
+server {
+    listen 443 ssl;
+    listen 5601 ssl;
+    server_name ${KIBANA_FQDN};
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/privkey.pem;
+
+    location / {
+        proxy_pass https://kb_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_ssl_verify off;
+        proxy_read_timeout 90;
+    }
+}
+
+# 3. Elasticsearch REST API HTTPS (Port 443 ve 9200)
+server {
+    listen 443 ssl;
+    listen 9200 ssl;
+    server_name ${ELASTIC_FQDN};
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/privkey.pem;
+
+    location / {
+        proxy_pass https://es_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_ssl_verify off;
+        proxy_read_timeout 90;
+    }
+}

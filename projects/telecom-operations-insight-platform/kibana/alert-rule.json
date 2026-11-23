@@ -1,0 +1,45 @@
+{
+  "name": "API Hata Oranı | 5 dakikada 5xx > %5",
+  "rule_type_id": ".es-query",
+  "consumer": "alerts",
+  "enabled": true,
+  "tags": [
+    "api-search-analytics",
+    "synthetic-only"
+  ],
+  "schedule": {
+    "interval": "10s"
+  },
+  "params": {
+    "searchType": "esqlQuery",
+    "esqlQuery": {
+      "esql": "FROM telecom-day2-alert-demo | WHERE event.dataset == \"telecom.day2.alert\" AND service.name == \"edge-proxy\" | STATS requests = COUNT(*), errors = COUNT(*) WHERE http.response.status_code >= 500 AND http.response.status_code < 600 | EVAL error_percent = errors * 100.0 / requests | WHERE requests > 0 AND error_percent > 5"
+    },
+    "timeField": "@timestamp",
+    "timeWindowSize": 5,
+    "timeWindowUnit": "m",
+    "threshold": [
+      0
+    ],
+    "thresholdComparator": ">",
+    "size": 100,
+    "aggType": "count",
+    "groupBy": "all",
+    "excludeHitsFromPreviousRun": false
+  },
+  "actions": [
+    {
+      "id": "telecom-day2-log",
+      "group": "query matched",
+      "params": {
+        "level": "info",
+        "message": "API 5xx hata oranı eşiği aşıldı: {{rule.name}} | {{context.message}} | {{context.hits}}"
+      },
+      "frequency": {
+        "summary": false,
+        "notify_when": "onActionGroupChange",
+        "throttle": null
+      }
+    }
+  ]
+}

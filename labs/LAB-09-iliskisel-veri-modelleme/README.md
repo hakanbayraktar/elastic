@@ -1,0 +1,530 @@
+# LAB-09 — İlişkisel Veriyi Modellemek: Denormalize, nested, join ve LOOKUP JOIN
+
+| Kullanılan Araçlar | Açık / Kullanılan Portlar |
+|---|---|
+| Kibana Dev Tools, `_bulk`, `_update_by_query`, `_reindex`, alias, ES\|QL `LOOKUP JOIN` | 9200 / 5601 — LAB-01 ana cluster'ı |
+
+---
+
+## Bu lab ne öğretiyor?
+
+Veritabanında müşteri, sipariş ve sipariş kalemi ayrı tablolardır ve JOIN ile birleşir. Elasticsearch'te
+JOIN ya yoktur ya da pahalıdır; aynı veri dört farklı biçimde modellenebilir ve her birinin bedeli farklıdır.
+
+Bu labda aynı 5 müşteri ve 6 siparişi dört biçimde kuracak, her birinde aynı soruyu soracak ve verinin
+bir parçası değiştiğinde ne olduğunu göreceğiz.
+
+![İlişkisel veriyi Elasticsearch'te modellemenin dört yolu](../../assets/infographics/18-iliskisel-veri-modelleri.png){width=60%}
+
+---
+
+## Ön Koşullar
+
+- LAB-01 ana cluster'ı çalışıyor. LAB-01'i atladıysanız onun Adım 1-2'sini çalıştırın.
+- Diğer lablara bağlı değildir; örnek veri `sample-data/` altındadır.
+
+```bash
+cd ~/elastic/labs/LAB-09-iliskisel-veri-modelleme
+```
+
+Kibana adresini sunucuda hesaplayın:
+
+```bash
+IP=$(curl -s https://api.ipify.org); H=$(hostname -s)
+echo "Kibana: http://$IP:5601   https://$H-kibana.devopsatolyesi.com"
+```
+
+Beklenen çıktı:
+
+```text
+Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
+```
+
+---
+
+## Kavramlar: hangi model ne zaman?
+
+| Model | Birleştirme ne zaman? | Ne zaman seçilir | Bedeli |
+|---|---|---|---|
+| Denormalize document | Yazarken | Varsayılan; okuma çok, ayrıntı nadiren değişir | Ayrıntı değişince bütün document'ler güncellenir |
+| `nested` | Yazarken (document içinde) | Dizide "aynı öğede iki koşul" aranır | Her öğe ayrı gizli document; mapping yerinde değişmez |
+| `join` (parent/child) | Sorgu anında, aynı shard'da | Çocuklar çok ve sık değişir | Routing şart, sorgular yavaş |
+| ES\|QL `LOOKUP JOIN` | Sorgu anında | Küçük, değişen boyut tablosu (müşteri, ürün) | Yalnız ES\|QL; lookup index tek shard |
+
+---
+
+## Adım Adım Uygulama Rehberi
+
+Bu labdaki `http` blokları **Kibana › Dev Tools**'a, `bash` blokları terminale yapıştırılır.
+
+### 1. Denormalize document: müşteri siparişin içinde
+
+Siparişi müşterisi ve kalemleriyle tek document olarak yazıyoruz. Index'e `-v1` sonekli bir ad, uygulamaya
+ise `model-siparisler` alias'ını veriyoruz; Adım 3'te bunun neden işe yaradığını göreceksiniz:
+
+```http
+PUT /model-siparisler-v1
+{
+  "settings": { "number_of_shards": 1, "number_of_replicas": 0 },
+  "aliases": { "model-siparisler": {} },
+  "mappings": {
+    "properties": {
+      "siparis_id": { "type": "keyword" }, "durum": { "type": "keyword" },
+      "tutar": { "type": "scaled_float", "scaling_factor": 100 },
+      "musteri":  { "properties": { "id": { "type": "integer" }, "ad": { "type": "keyword" }, "il": { "type": "keyword" } } },
+      "kalemler": { "properties": { "urun": { "type": "keyword" }, "adet": { "type": "integer" } } }
+    }
+  }
+}
+```
+
+Önce örnek veri dosyasını oluşturun: `sample-data/siparisler.ndjson`
+
+```bash
+mkdir -p sample-data
+cat > sample-data/siparisler.ndjson << 'EOF'
+{"index": {"_id": "S-1"}}
+{"siparis_id": "S-1", "durum": "kargoda", "tutar": 12294.5, "musteri": {"id": 1, "ad": "Ağaoğlu Yapı", "il": "İstanbul"}, "kalemler": [{"urun": "Kulaklık", "adet": 1}, {"urun": "Akıllı Saat", "adet": 5}]}
+{"index": {"_id": "S-2"}}
+{"siparis_id": "S-2", "durum": "hazırlanıyor", "tutar": 6497.5, "musteri": {"id": 3, "ad": "Öztürk Gıda", "il": "İzmir"}, "kalemler": [{"urun": "Kulaklık", "adet": 5}]}
+{"index": {"_id": "S-3"}}
+{"siparis_id": "S-3", "durum": "teslim edildi", "tutar": 698.0, "musteri": {"id": 3, "ad": "Öztürk Gıda", "il": "İzmir"}, "kalemler": [{"urun": "Termos", "adet": 2}]}
+{"index": {"_id": "S-4"}}
+{"siparis_id": "S-4", "durum": "kargoda", "tutar": 3998.8, "musteri": {"id": 2, "ad": "Şimşek Lojistik", "il": "Ankara"}, "kalemler": [{"urun": "Akıllı Saat", "adet": 1}, {"urun": "Hoparlör", "adet": 2}]}
+{"index": {"_id": "S-5"}}
+{"siparis_id": "S-5", "durum": "teslim edildi", "tutar": 28499.9, "musteri": {"id": 5, "ad": "Güneş Enerji", "il": "Antalya"}, "kalemler": [{"urun": "Dizüstü Bilgisayar", "adet": 1}]}
+{"index": {"_id": "S-6"}}
+{"siparis_id": "S-6", "durum": "kargoda", "tutar": 4344.0, "musteri": {"id": 3, "ad": "Öztürk Gıda", "il": "İzmir"}, "kalemler": [{"urun": "Kulaklık", "adet": 2}, {"urun": "Termos", "adet": 5}]}
+EOF
+```
+
+```bash
+curl -s -u elastic:'DevOps2026!' -H 'Content-Type: application/x-ndjson' -X POST \
+  'http://127.0.0.1:9200/model-siparisler-v1/_bulk?refresh=true&filter_path=errors' --data-binary @sample-data/siparisler.ndjson; echo
+```
+
+Beklenen çıktı:
+
+```text
+{"errors":false}
+```
+
+İzmir'deki müşterinin siparişleri tek sorguyla, JOIN olmadan gelir:
+
+```http
+GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id
+{ "query": { "term": { "musteri.il": "İzmir" } } }
+```
+
+```json
+{"hits":{"total":{"value":3},"hits":[{"_id":"S-2"},{"_id":"S-3"},{"_id":"S-6"}]}}
+```
+
+Bedeli: müşteri adı değişince o müşterinin bütün siparişleri yeniden yazılır.
+
+```http
+POST /model-siparisler/_update_by_query?refresh=true&filter_path=total,updated
+{
+  "query": { "term": { "musteri.id": 3 } },
+  "script": { "source": "ctx._source.musteri.ad = params.ad", "params": { "ad": "Öztürk Gıda A.Ş." } }
+}
+```
+
+```json
+{"total":3,"updated":3}
+```
+
+Burada 3 document; gerçek sistemde bir müşterinin on binlerce siparişi olabilir.
+
+### 2. object tuzağı: dizideki öğeler düzleşir
+
+"İçinde 5 adet kulaklık olan siparişler" sorusunu soralım. Doğru cevap yalnız S-2'dir:
+
+```http
+GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id
+{ "query": { "bool": { "filter": [ { "term": { "kalemler.urun": "Kulaklık" } }, { "term": { "kalemler.adet": 5 } } ] } } }
+```
+
+```json
+{"hits":{"total":{"value":3},"hits":[{"_id":"S-1"},{"_id":"S-2"},{"_id":"S-6"}]}}
+```
+
+S-1'de 1 kulaklık ve 5 akıllı saat, S-6'da 2 kulaklık ve 5 termos var. `object` field'ı diziyi `kalemler.urun = [Kulaklık, Akıllı Saat]` ve `kalemler.adet = [1, 5]` olarak düzleştirir;
+hangi adedin hangi ürüne ait olduğu kaybolur. Çözüm `nested`'dır, ama var olan field'ın tipi değiştirilemez:
+
+```bash
+curl -s -u elastic:'DevOps2026!' -X PUT 'http://127.0.0.1:9200/model-siparisler-v1/_mapping' \
+  -H 'Content-Type: application/json' -d '{"properties": {"kalemler": {"type": "nested"}}}' \
+  | jq -c '{status, type: .error.type, reason: .error.reason}'
+```
+
+Beklenen çıktı:
+
+```text
+{"status":400,"type":"illegal_argument_exception","reason":"can't merge a non-nested mapping [kalemler] with a nested mapping"}
+```
+
+<details>
+<summary><strong>Anahtarları önceden bilinmeyen nesne: <code>flattened</code></summary>
+
+Ürün özellikleri ürüne göre değişir: saatte `kordon`, kulaklıkta `baglanti`, sandalyede `malzeme`. `object`
+olsa her yeni anahtar mapping'e yeni bir field olarak eklenir; binlerce anahtar mapping'i şişirir (mapping
+explosion). `flattened` bütün nesneyi tek field olarak tutar:
+
+```http
+PUT /model-urun-ozellik
+{
+  "settings": { "number_of_shards": 1, "number_of_replicas": 0 },
+  "mappings": { "properties": { "urun": { "type": "keyword" }, "ozellikler": { "type": "flattened" } } }
+}
+```
+
+Önce örnek veri dosyasını oluşturun: `sample-data/urun-ozellik.ndjson`
+
+```bash
+mkdir -p sample-data
+cat > sample-data/urun-ozellik.ndjson << 'EOF'
+{"index": {"_id": "u1"}}
+{"urun": "Akıllı Saat", "ozellikler": {"renk": "siyah", "kordon": "silikon", "garanti_ay": "24"}}
+{"index": {"_id": "u2"}}
+{"urun": "Kulaklık", "ozellikler": {"renk": "beyaz", "baglanti": "bluetooth", "garanti_ay": "12"}}
+{"index": {"_id": "u3"}}
+{"urun": "Ofis Sandalyesi", "ozellikler": {"renk": "siyah", "malzeme": "file", "garanti_ay": "9"}}
+EOF
+```
+
+```bash
+curl -s -u elastic:'DevOps2026!' -H 'Content-Type: application/x-ndjson' -X POST \
+  'http://127.0.0.1:9200/model-urun-ozellik/_bulk?refresh=true&filter_path=errors' --data-binary @sample-data/urun-ozellik.ndjson; echo
+curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/model-urun-ozellik/_mapping?filter_path=*.mappings.properties'; echo
+```
+
+Beklenen çıktı:
+
+```text
+{"errors":false}
+{"model-urun-ozellik":{"mappings":{"properties":{"ozellikler":{"type":"flattened"},"urun":{"type":"keyword"}}}}}
+```
+
+Üç ürünün yedi farklı anahtarı mapping'de tek field'dır. Tam değer araması çalışır:
+
+```http
+GET /model-urun-ozellik/_search?filter_path=hits.hits._source.urun
+{ "_source": ["urun"], "query": { "term": { "ozellikler.renk": "siyah" } } }
+```
+
+```json
+{"hits":{"hits":[{"_source":{"urun":"Akıllı Saat"}},{"_source":{"urun":"Ofis Sandalyesi"}}]}}
+```
+
+Bedeli: bütün değerler `keyword` gibi saklanır. "Garantisi 10 aydan uzun" aralık sorgusu 9 aylık
+sandalyeyi de getirir, çünkü değerler metin olarak karşılaştırılır (`"9"` > `"10"`):
+
+```http
+GET /model-urun-ozellik/_search?filter_path=hits.hits._source
+{ "_source": ["urun", "ozellikler.garanti_ay"], "query": { "range": { "ozellikler.garanti_ay": { "gte": "10" } } } }
+```
+
+```json
+{"hits":{"hits":[{"_source":{"urun":"Akıllı Saat","ozellikler":{"garanti_ay":"24"}}},{"_source":{"urun":"Kulaklık","ozellikler":{"garanti_ay":"12"}}},{"_source":{"urun":"Ofis Sandalyesi","ozellikler":{"garanti_ay":"9"}}}]}}
+```
+
+Sayıyla hesaplanacak ya da tam metinle aranacak field'lar ayrı, tipli field'larda tutulur; `flattened`
+etiket ve özellik gibi yalnız süzülen field'lar içindir.
+
+</details>
+
+### 3. nested: yeni index, `_reindex` ve alias geçişi
+
+Doğru mapping'le yeni bir index açıyoruz; tek fark `kalemler`'in `nested` olması:
+
+```http
+PUT /model-siparisler-v2
+{
+  "settings": { "number_of_shards": 1, "number_of_replicas": 0 },
+  "mappings": {
+    "properties": {
+      "siparis_id": { "type": "keyword" }, "durum": { "type": "keyword" },
+      "tutar": { "type": "scaled_float", "scaling_factor": 100 },
+      "musteri":  { "properties": { "id": { "type": "integer" }, "ad": { "type": "keyword" }, "il": { "type": "keyword" } } },
+      "kalemler": { "type": "nested", "properties": { "urun": { "type": "keyword" }, "adet": { "type": "integer" } } }
+    }
+  }
+}
+```
+
+Document'leri eski index'ten kopyalayın ve alias'ı tek işlemde yeni index'e çevirin:
+
+```http
+POST /_reindex?refresh=true&filter_path=total,created,failures
+{ "source": { "index": "model-siparisler-v1" }, "dest": { "index": "model-siparisler-v2" } }
+```
+
+```json
+{"total":6,"created":6,"failures":[]}
+```
+
+```http
+POST /_aliases
+{
+  "actions": [
+    { "remove": { "index": "model-siparisler-v1", "alias": "model-siparisler" } },
+    { "add":    { "index": "model-siparisler-v2", "alias": "model-siparisler" } }
+  ]
+}
+```
+
+Uygulama hep `model-siparisler` adını kullandığı için bu geçişi fark etmez; iki eylem tek işlemde olduğundan
+alias hiçbir an boşta kalmaz. Aynı soruyu `nested` sorgusuyla tekrar sorun; `inner_hits` hangi kalemin
+eşleştiğini gösterir:
+
+```http
+GET /model-siparisler/_search?filter_path=hits.total.value,hits.hits._id,hits.hits._index,hits.hits.inner_hits.*.hits.hits._source
+{
+  "_source": false,
+  "query": {
+    "nested": {
+      "path": "kalemler",
+      "query": { "bool": { "filter": [ { "term": { "kalemler.urun": "Kulaklık" } }, { "term": { "kalemler.adet": 5 } } ] } },
+      "inner_hits": {}
+    }
+  }
+}
+```
+
+```json
+{"hits":{"total":{"value":1},"hits":[{"_index":"model-siparisler-v2","_id":"S-2","inner_hits":{"kalemler":{"hits":{"hits":[{"_source":{"urun":"Kulaklık","adet":5}}]}}}}]}}
+```
+
+Sonuç 3'ten 1'e indi ve `_index` field'ı document'in artık `v2`'den geldiğini gösteriyor.
+
+### 4. join field'ı: müşteri ve sipariş ayrı document'ler
+
+Müşteri (parent) ve sipariş (child) aynı index'te ayrı document'lerdir; aralarındaki bağı `join` field'ı kurar:
+
+```http
+PUT /model-musteri-siparis
+{
+  "settings": { "number_of_shards": 1, "number_of_replicas": 0 },
+  "mappings": {
+    "properties": {
+      "ad": { "type": "keyword" }, "il": { "type": "keyword" },
+      "siparis_id": { "type": "keyword" }, "durum": { "type": "keyword" },
+      "tutar": { "type": "scaled_float", "scaling_factor": 100 },
+      "iliski": { "type": "join", "relations": { "musteri": "siparis" } }
+    }
+  }
+}
+```
+
+Dosyada önce müşteriler (`"iliski": {"name": "musteri"}`), sonra siparişler
+(`"iliski": {"name": "siparis", "parent": "m3"}` ve `"routing": "m3"`) var:
+
+Önce örnek veri dosyasını oluşturun: `sample-data/musteri-siparis.ndjson`
+
+```bash
+mkdir -p sample-data
+cat > sample-data/musteri-siparis.ndjson << 'EOF'
+{"index": {"_id": "m1"}}
+{"ad": "Ağaoğlu Yapı", "il": "İstanbul", "iliski": {"name": "musteri"}}
+{"index": {"_id": "m2"}}
+{"ad": "Şimşek Lojistik", "il": "Ankara", "iliski": {"name": "musteri"}}
+{"index": {"_id": "m3"}}
+{"ad": "Öztürk Gıda", "il": "İzmir", "iliski": {"name": "musteri"}}
+{"index": {"_id": "m4"}}
+{"ad": "Çınar Eğitim", "il": "Bursa", "iliski": {"name": "musteri"}}
+{"index": {"_id": "m5"}}
+{"ad": "Güneş Enerji", "il": "Antalya", "iliski": {"name": "musteri"}}
+{"index": {"_id": "S-1", "routing": "m1"}}
+{"siparis_id": "S-1", "durum": "kargoda", "tutar": 12294.5, "iliski": {"name": "siparis", "parent": "m1"}}
+{"index": {"_id": "S-2", "routing": "m3"}}
+{"siparis_id": "S-2", "durum": "hazırlanıyor", "tutar": 6497.5, "iliski": {"name": "siparis", "parent": "m3"}}
+{"index": {"_id": "S-3", "routing": "m3"}}
+{"siparis_id": "S-3", "durum": "teslim edildi", "tutar": 698.0, "iliski": {"name": "siparis", "parent": "m3"}}
+{"index": {"_id": "S-4", "routing": "m2"}}
+{"siparis_id": "S-4", "durum": "kargoda", "tutar": 3998.8, "iliski": {"name": "siparis", "parent": "m2"}}
+{"index": {"_id": "S-5", "routing": "m5"}}
+{"siparis_id": "S-5", "durum": "teslim edildi", "tutar": 28499.9, "iliski": {"name": "siparis", "parent": "m5"}}
+{"index": {"_id": "S-6", "routing": "m3"}}
+{"siparis_id": "S-6", "durum": "kargoda", "tutar": 4344.0, "iliski": {"name": "siparis", "parent": "m3"}}
+EOF
+```
+
+```bash
+curl -s -u elastic:'DevOps2026!' -H 'Content-Type: application/x-ndjson' -X POST \
+  'http://127.0.0.1:9200/model-musteri-siparis/_bulk?refresh=true&filter_path=errors' --data-binary @sample-data/musteri-siparis.ndjson; echo
+```
+
+Beklenen çıktı:
+
+```text
+{"errors":false}
+```
+
+Siparişin `routing` değeri müşterisinin `_id`'sidir: ebeveyn ve çocuklar aynı shard'da olmalıdır. Kargoda
+siparişi olan müşteriler ve İzmir'deki müşterinin siparişleri:
+
+```http
+GET /model-musteri-siparis/_search?filter_path=hits.hits._source.ad
+{ "_source": ["ad"], "query": { "has_child": { "type": "siparis", "query": { "term": { "durum": "kargoda" } } } } }
+```
+
+```json
+{"hits":{"hits":[{"_source":{"ad":"Ağaoğlu Yapı"}},{"_source":{"ad":"Şimşek Lojistik"}},{"_source":{"ad":"Öztürk Gıda"}}]}}
+```
+
+```http
+GET /model-musteri-siparis/_search?filter_path=hits.hits._source.siparis_id
+{ "_source": ["siparis_id"], "query": { "has_parent": { "parent_type": "musteri", "query": { "term": { "il": "İzmir" } } } } }
+```
+
+```json
+{"hits":{"hits":[{"_source":{"siparis_id":"S-2"}},{"_source":{"siparis_id":"S-3"}},{"_source":{"siparis_id":"S-6"}}]}}
+```
+
+Müşteri tek document olduğu için adı değişince yalnız o document güncellenir. Ama `routing` verilmeyen sipariş
+`[routing] is missing for join field [iliski]` hatasıyla reddedilir ve `has_child` sorguları büyük veride
+yavaşlar; bu yüzden `join` nadir seçilir.
+
+### 5. ES|QL LOOKUP JOIN: müşteri tablosu sorgu anında birleşir
+
+Müşteriler ayrı bir **lookup** index'inde, satışlarda yalnız `musteri_id` var:
+
+```http
+PUT /model-musteriler
+{
+  "settings": { "index.mode": "lookup", "number_of_replicas": 0 },
+  "mappings": { "properties": { "musteri_id": { "type": "integer" }, "ad": { "type": "keyword" }, "il": { "type": "keyword" }, "segment": { "type": "keyword" } } }
+}
+```
+
+```http
+PUT /model-satislar
+{
+  "settings": { "number_of_shards": 1, "number_of_replicas": 0 },
+  "mappings": { "properties": { "siparis_id": { "type": "keyword" }, "musteri_id": { "type": "integer" }, "tutar": { "type": "scaled_float", "scaling_factor": 100 } } }
+}
+```
+
+Önce örnek veri dosyasını oluşturun: `sample-data/musteriler.ndjson`, `sample-data/satislar.ndjson`
+
+```bash
+mkdir -p sample-data
+cat > sample-data/musteriler.ndjson << 'EOF'
+{"index": {"_id": "1"}}
+{"musteri_id": 1, "ad": "Ağaoğlu Yapı", "il": "İstanbul", "segment": "kurumsal"}
+{"index": {"_id": "2"}}
+{"musteri_id": 2, "ad": "Şimşek Lojistik", "il": "Ankara", "segment": "kurumsal"}
+{"index": {"_id": "3"}}
+{"musteri_id": 3, "ad": "Öztürk Gıda", "il": "İzmir", "segment": "bireysel"}
+{"index": {"_id": "4"}}
+{"musteri_id": 4, "ad": "Çınar Eğitim", "il": "Bursa", "segment": "kurumsal"}
+{"index": {"_id": "5"}}
+{"musteri_id": 5, "ad": "Güneş Enerji", "il": "Antalya", "segment": "bireysel"}
+EOF
+cat > sample-data/satislar.ndjson << 'EOF'
+{"index": {"_id": "S-1"}}
+{"siparis_id": "S-1", "musteri_id": 1, "tutar": 12294.5}
+{"index": {"_id": "S-2"}}
+{"siparis_id": "S-2", "musteri_id": 3, "tutar": 6497.5}
+{"index": {"_id": "S-3"}}
+{"siparis_id": "S-3", "musteri_id": 3, "tutar": 698.0}
+{"index": {"_id": "S-4"}}
+{"siparis_id": "S-4", "musteri_id": 2, "tutar": 3998.8}
+{"index": {"_id": "S-5"}}
+{"siparis_id": "S-5", "musteri_id": 5, "tutar": 28499.9}
+{"index": {"_id": "S-6"}}
+{"siparis_id": "S-6", "musteri_id": 3, "tutar": 4344.0}
+EOF
+```
+
+```bash
+for f in musteriler satislar; do
+  curl -s -u elastic:'DevOps2026!' -H 'Content-Type: application/x-ndjson' -X POST \
+    "http://127.0.0.1:9200/model-$f/_bulk?refresh=true&filter_path=errors" --data-binary @sample-data/$f.ndjson; echo
+done
+```
+
+Beklenen çıktı:
+
+```text
+{"errors":false}
+{"errors":false}
+```
+
+`index.mode: lookup` index'i tek shard'lı tutar ve `LOOKUP JOIN`'in sağ tarafı olmasına izin verir. İl başına
+ciro:
+
+```http
+POST /_query?format=txt
+{ "query": "FROM model-satislar | LOOKUP JOIN model-musteriler ON musteri_id | STATS ciro = SUM(tutar), siparis = COUNT(*) BY il | SORT ciro DESC" }
+```
+
+Beklenen çıktı:
+
+```text
+     ciro      |    siparis    |      il
+---------------+---------------+---------------
+28499.9        |1              |Antalya
+12294.5        |1              |İstanbul
+11539.5        |3              |İzmir
+3998.8         |1              |Ankara
+```
+
+Öztürk Gıda Manisa'ya taşınsın. Değişen yalnız müşteri tablosundaki bir document:
+
+```http
+POST /model-musteriler/_update/3?refresh=true&filter_path=result
+{ "doc": { "il": "Manisa" } }
+```
+
+```json
+{"result":"updated"}
+```
+
+```http
+POST /_query?format=txt
+{ "query": "FROM model-satislar | LOOKUP JOIN model-musteriler ON musteri_id | STATS ciro = SUM(tutar), siparis = COUNT(*) BY il | SORT ciro DESC" }
+```
+
+Beklenen çıktı:
+
+```text
+     ciro      |    siparis    |      il
+---------------+---------------+---------------
+28499.9        |1              |Antalya
+12294.5        |1              |İstanbul
+11539.5        |3              |Manisa
+3998.8         |1              |Ankara
+```
+
+Adım 1'de müşteri adı değişikliği 3 document'i yeniden yazdırmıştı; burada satış document'lerine hiç dokunmadan
+sonuç değişti, çünkü birleştirme sorgu anında yapılıyor.
+
+---
+
+## Temizlik
+
+Yalnız bu labın `model-*` index'lerini siler; alias index'le birlikte gider. Ana cluster'a dokunmaz:
+
+```bash
+./teardown.sh
+```
+
+Beklenen çıktı:
+
+```text
+index model-siparisler-v1 -> 200
+index model-siparisler-v2 -> 200
+index model-urun-ozellik -> 200
+index model-musteri-siparis -> 200
+index model-musteriler -> 200
+index model-satislar -> 200
+```
+
+Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
+başlangıca göredir.
+
+---
+
+Sonraki lab: **[LAB-10 — Filebeat ve Metricbeat: Sunucudan ve Container'lardan Log ve Metrik Toplamak](../LAB-10-filebeat-metricbeat/README.md)**

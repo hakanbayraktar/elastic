@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">ES|QL pipeline'ı: FROM, WHERE, KEEP, SORT, LIMIT</title>
+  <desc id="desc">ES|QL sorgusu soldan sağa okunan bir pipeline'dır. FROM kaynağı seçer ve 4675 siparişi getirir. WHERE kadın müşterilerin 100 doların üstündeki siparişlerini bırakır. KEEP yalnız üç sütunu tutar. SORT tutara göre büyükten küçüğe dizer. LIMIT ilk beşi döndürür. Her adım bir öncekinin çıktısını alır. STATS satırları özet tabloya çevirir, EVAL yeni sütun hesaplar.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 26px "Courier New",monospace; fill:#fff }
+    .body { font:400 19px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 18px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .big { font:700 30px Arial,sans-serif; fill:#005571 }
+    .arrow { stroke:#42526e; stroke-width:3; fill:none; marker-end:url(#ok) }
+  </style>
+  <defs><marker id="ok" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#42526e"/></marker></defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">ES|QL: soldan sağa okunan pipeline</text>
+  <text x="60" y="116" class="sub">Her adım bir öncekinin çıktısını alır. Sorgu yazıldığı sırayla çalışır.</text>
+
+  <rect x="60" y="150" rx="12" width="1480" height="70" class="card"/>
+  <text x="85" y="195" class="mono">FROM kibana_sample_data_ecommerce | WHERE customer_gender == "FEMALE" AND taxful_total_price &gt; 100 | KEEP … | SORT … | LIMIT 5</text>
+
+  <rect x="60" y="270" rx="14" width="260" height="330" class="card"/>
+  <rect x="60" y="270" rx="14" width="260" height="56" fill="#005571"/><rect x="60" y="306" width="260" height="20" fill="#005571"/>
+  <text x="85" y="308" class="head">FROM</text>
+  <text x="85" y="370" class="body">Kaynağı seçer;</text>
+  <text x="85" y="398" class="body">her zaman ilk satır.</text>
+  <text x="85" y="480" class="big">4675</text>
+  <text x="85" y="512" class="small">sipariş</text>
+
+  <path d="M322,435 L352,435" class="arrow"/>
+  <rect x="360" y="270" rx="14" width="260" height="330" class="card"/>
+  <rect x="360" y="270" rx="14" width="260" height="56" fill="#0b6e99"/><rect x="360" y="306" width="260" height="20" fill="#0b6e99"/>
+  <text x="385" y="308" class="head">WHERE</text>
+  <text x="385" y="370" class="body">Satırları süzer:</text>
+  <text x="385" y="398" class="body">kadın müşteri ve</text>
+  <text x="385" y="426" class="body">100 dolar üstü.</text>
+  <text x="385" y="480" class="big">daha az satır</text>
+  <text x="385" y="512" class="small">sütunlar aynı</text>
+
+  <path d="M622,435 L652,435" class="arrow"/>
+  <rect x="660" y="270" rx="14" width="260" height="330" class="card"/>
+  <rect x="660" y="270" rx="14" width="260" height="56" fill="#6b5b95"/><rect x="660" y="306" width="260" height="20" fill="#6b5b95"/>
+  <text x="685" y="308" class="head">KEEP</text>
+  <text x="685" y="370" class="body">Yalnız bu sütunları,</text>
+  <text x="685" y="398" class="body">bu sırayla bırakır.</text>
+  <text x="685" y="480" class="big">3 sütun</text>
+  <text x="685" y="512" class="small">order_id, ad, tutar</text>
+
+  <path d="M922,435 L952,435" class="arrow"/>
+  <rect x="960" y="270" rx="14" width="260" height="330" class="card"/>
+  <rect x="960" y="270" rx="14" width="260" height="56" fill="#f5a700"/><rect x="960" y="306" width="260" height="20" fill="#f5a700"/>
+  <text x="985" y="308" class="head">SORT</text>
+  <text x="985" y="370" class="body">Tutara göre</text>
+  <text x="985" y="398" class="body">büyükten küçüğe.</text>
+  <text x="985" y="480" class="big">sıralı</text>
+  <text x="985" y="512" class="small">DESC</text>
+
+  <path d="M1222,435 L1252,435" class="arrow"/>
+  <rect x="1260" y="270" rx="14" width="280" height="330" class="card"/>
+  <rect x="1260" y="270" rx="14" width="280" height="56" fill="#5aa454"/><rect x="1260" y="306" width="280" height="20" fill="#5aa454"/>
+  <text x="1285" y="308" class="head">LIMIT</text>
+  <text x="1285" y="370" class="body">İlk N satır.</text>
+  <text x="1285" y="398" class="body">Verilmezse 1000.</text>
+  <text x="1285" y="480" class="big">5 satır</text>
+  <text x="1285" y="512" class="small">tablo olarak döner</text>
+
+  <rect x="60" y="650" rx="14" width="720" height="290" class="card"/>
+  <rect x="60" y="650" rx="14" width="720" height="56" fill="#005571"/><rect x="60" y="686" width="720" height="20" fill="#005571"/>
+  <text x="85" y="688" class="head">STATS … BY</text>
+  <text x="85" y="750" class="body">Gruplar ve hesaplar (COUNT, AVG, SUM).</text>
+  <text x="85" y="782" class="body">Sonrasında satırlar sipariş değil, özet tablo:</text>
+  <text x="85" y="830" class="mono">category.keyword | siparis | ort_sepet</text>
+  <text x="85" y="870" class="small">Çok değerli field'da bir sipariş birden çok gruba sayılır.</text>
+
+  <rect x="820" y="650" rx="14" width="720" height="290" class="card"/>
+  <rect x="820" y="650" rx="14" width="720" height="56" fill="#bd271e"/><rect x="820" y="686" width="720" height="20" fill="#bd271e"/>
+  <text x="845" y="688" class="head">Tuzak: == ve çok değerli field</text>
+  <text x="845" y="750" class="body">category bir siparişte birden çok değer taşır.</text>
+  <text x="845" y="782" class="body">== çok değerli field'da null üretir; satır sessizce düşer.</text>
+  <text x="845" y="830" class="mono">MATCH_PHRASE(category, "Women's Clothing")</text>
+  <text x="845" y="870" class="small">ifade araması: KQL category : "Women's Clothing" ile aynı sayı</text>
+</svg>

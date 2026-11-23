@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Linux native kurulum: TLS'siz (HTTP) bağlantılar ve dosyalar</title>
+  <desc id="desc">Tek Ubuntu sunucuda systemd servisi olarak çalışan Elasticsearch (9200) ve Kibana (5601). Tarayıcı Kibana'ya, Kibana ve curl Elasticsearch'e düz HTTP ile bağlanır. elasticsearch.yml'de ssl.enabled false, kibana.yml'de elasticsearch.hosts http adresidir. Kullanıcılar ve parolalar Elasticsearch'ün güvenlik index'inde durur.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 22px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .zone { fill:#eef3f7; stroke:#8a94a6; stroke-width:2; stroke-dasharray:10 6 }
+    .head { font:700 24px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 22px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 20px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 19px "Courier New",monospace; fill:#172b4d }
+    .lbl { font:700 20px Arial,sans-serif; fill:#bd271e }
+    .lblg { font:700 20px Arial,sans-serif; fill:#42526e }
+    .arr { stroke:#bd271e; stroke-width:5; fill:none; marker-end:url(#ar) }
+  </style>
+  <defs>
+    <marker id="ar" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#bd271e"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="900"/>
+  <text class="title" x="60" y="70">Linux kurulumu: TLS'siz bağlantı (HTTP)</text>
+  <text class="sub" x="60" y="108">Tek sunucu, iki systemd servisi. Parola ve veri ağda açık metin gider.</text>
+
+  <!-- tarayıcı ve curl -->
+  <rect class="card" x="60" y="170" width="300" height="150" rx="14"/>
+  <rect x="60" y="170" width="300" height="50" rx="14" fill="#6b5b95"/><rect x="60" y="200" width="300" height="20" fill="#6b5b95"/>
+  <text class="head" x="80" y="204">Tarayıcı</text>
+  <text class="body" x="80" y="260">http://&lt;IP&gt;:5601</text>
+  <text class="body" x="80" y="292">elastic / DevOps2026!</text>
+
+  <rect class="card" x="60" y="445" width="300" height="150" rx="14"/>
+  <rect x="60" y="445" width="300" height="50" rx="14" fill="#6b5b95"/><rect x="60" y="475" width="300" height="20" fill="#6b5b95"/>
+  <text class="head" x="80" y="479">curl, uygulama</text>
+  <text class="mono" x="80" y="535">-u elastic:...</text>
+  <text class="mono" x="80" y="567">http://127.0.0.1:9200</text>
+
+  <!-- sunucu bölgesi -->
+  <rect class="zone" x="470" y="140" width="1070" height="700" rx="18"/>
+  <text class="h2" x="495" y="178">Ubuntu sunucu (systemd)</text>
+
+  <!-- kibana -->
+  <rect class="card" x="500" y="200" width="430" height="275" rx="14"/>
+  <rect x="500" y="200" width="430" height="50" rx="14" fill="#f5a700"/><rect x="500" y="230" width="430" height="20" fill="#f5a700"/>
+  <text class="head" x="520" y="234">Kibana · :5601</text>
+  <text class="h2" x="520" y="288">/etc/kibana/kibana.yml</text>
+  <text class="mono" x="520" y="324">server.host: "0.0.0.0"</text>
+  <text class="mono" x="520" y="356">elasticsearch.hosts:</text>
+  <text class="mono" x="540" y="388">["http://127.0.0.1:9200"]</text>
+  <text class="mono" x="520" y="420">elasticsearch.username:</text>
+  <text class="mono" x="540" y="452">"kibana_system"</text>
+
+  <!-- elasticsearch -->
+  <rect class="card" x="1010" y="200" width="500" height="420" rx="14"/>
+  <rect x="1010" y="200" width="500" height="50" rx="14" fill="#005571"/><rect x="1010" y="230" width="500" height="20" fill="#005571"/>
+  <text class="head" x="1030" y="234">Elasticsearch · :9200</text>
+  <text class="h2" x="1030" y="288">/etc/elasticsearch/elasticsearch.yml</text>
+  <text class="mono" x="1030" y="324">network.host: 0.0.0.0</text>
+  <text class="mono" x="1030" y="356">discovery.type: single-node</text>
+  <text class="mono" x="1030" y="388">xpack.security.enabled: true</text>
+  <text class="mono" x="1030" y="420" fill="#bd271e">...http.ssl.enabled: false</text>
+  <text class="mono" x="1030" y="452" fill="#bd271e">...transport.ssl.enabled: false</text>
+  <text class="h2" x="1030" y="506">Kullanıcılar (güvenlik index'i)</text>
+  <text class="body" x="1030" y="540">elastic · kibana_system · deneme</text>
+  <text class="body" x="1030" y="574">heap: jvm.options.d/heap.options</text>
+
+  <!-- oklar -->
+  <path class="arr" d="M360 245 L495 245"/>
+  <text class="lbl" x="380" y="232">HTTP</text>
+  <path class="arr" d="M930 340 L1005 340"/>
+  <text class="lbl" x="938" y="326">HTTP</text>
+  <path class="arr" d="M360 520 L1005 520"/>
+  <text class="lbl" x="440" y="508">HTTP</text>
+
+  <!-- veri ve log -->
+  <rect class="card" x="1010" y="650" width="500" height="160" rx="14"/>
+  <text class="h2" x="1030" y="690">Disk</text>
+  <text class="mono" x="1030" y="726">/var/lib/elasticsearch  veri</text>
+  <text class="mono" x="1030" y="758">/var/log/elasticsearch  log</text>
+  <text class="mono" x="1030" y="790">/var/lib/kibana         Kibana</text>
+
+  <rect x="500" y="560" width="430" height="250" rx="14" fill="#fff8e1" stroke="#f5a700" stroke-width="2"/>
+  <text class="h2" x="520" y="600">Bu hâlde ne açık?</text>
+  <text class="body" x="520" y="636">Parola her istekte gider; ağı</text>
+  <text class="body" x="520" y="664">dinleyen biri okuyabilir.</text>
+  <text class="body" x="520" y="704">Kimlik doğrulama var (401),</text>
+  <text class="body" x="520" y="732">şifreleme yok.</text>
+  <text class="lblg" x="520" y="780">Çözüm: Adım 8, TLS</text>
+</svg>

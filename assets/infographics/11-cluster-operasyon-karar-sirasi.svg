@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Cluster operasyonu karar sırası</title>
+  <desc id="desc">Semptomdan runbook'a uzanan altı adımlı karar zinciri: semptom, kanıt toplama (health, shard, allocation explain), kök neden, en küçük güvenli düzeltme, yeniden doğrulama ve runbook. Altta LAB-09B adımlarının bu zincirdeki yeri ve kaçınılacak kısa yollar gösterilir.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .bad { font:400 18px Arial,sans-serif; fill:#bd271e }
+    .arrow { stroke:#0b6e99; stroke-width:6; fill:none; marker-end:url(#arrow) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Cluster operasyonu: semptomdan runbook'a</text>
+  <text x="60" y="116" class="sub">Her düzeltme bir kanıta dayanır; düzeltmeden sonra aynı kanıt tekrar alınır.</text>
+  <rect x="60" y="160" rx="14" width="220" height="300" class="card"/>
+  <rect x="60" y="160" rx="14" width="220" height="54" fill="#6b5b95"/><rect x="60" y="194" width="220" height="20" fill="#6b5b95"/>
+  <text x="170" y="195" class="head" text-anchor="middle">1. Semptom</text>
+  <text x="170" y="262" class="body" text-anchor="middle">yellow / red</text>
+  <text x="170" y="306" class="body" text-anchor="middle">yazma reddi</text>
+  <text x="170" y="350" class="body" text-anchor="middle">yavaş sorgu</text>
+  <text x="170" y="394" class="mono" text-anchor="middle">403 / 401</text>
+  <path d="M282 310 L312 310" class="arrow"/>
+  <rect x="316" y="160" rx="14" width="220" height="300" class="card"/>
+  <rect x="316" y="160" rx="14" width="220" height="54" fill="#005571"/><rect x="316" y="194" width="220" height="20" fill="#005571"/>
+  <text x="426" y="195" class="head" text-anchor="middle">2. Kanıt</text>
+  <text x="426" y="262" class="mono" text-anchor="middle">_cluster/health</text>
+  <text x="426" y="306" class="mono" text-anchor="middle">_cat/shards</text>
+  <text x="426" y="350" class="mono" text-anchor="middle">_cat/allocation</text>
+  <text x="426" y="394" class="mono" text-anchor="middle">_nodes/stats</text>
+  <path d="M538 310 L568 310" class="arrow"/>
+  <rect x="572" y="160" rx="14" width="220" height="300" class="card"/>
+  <rect x="572" y="160" rx="14" width="220" height="54" fill="#0b6e99"/><rect x="572" y="194" width="220" height="20" fill="#0b6e99"/>
+  <text x="682" y="195" class="head" text-anchor="middle">3. Neden?</text>
+  <text x="682" y="262" class="mono" text-anchor="middle">allocation/</text>
+  <text x="682" y="306" class="body" text-anchor="middle">explain</text>
+  <text x="682" y="350" class="body" text-anchor="middle">deciders[]</text>
+  <text x="682" y="394" class="body" text-anchor="middle">disk, breaker</text>
+  <path d="M794 310 L824 310" class="arrow"/>
+  <rect x="828" y="160" rx="14" width="220" height="300" class="card"/>
+  <rect x="828" y="160" rx="14" width="220" height="54" fill="#f5a700"/><rect x="828" y="194" width="220" height="20" fill="#f5a700"/>
+  <text x="938" y="195" class="head" text-anchor="middle">4. Düzeltme</text>
+  <text x="938" y="262" class="body" text-anchor="middle">en küçük</text>
+  <text x="938" y="306" class="body" text-anchor="middle">güvenli adım</text>
+  <text x="938" y="350" class="body" text-anchor="middle">yalnızca</text>
+  <text x="938" y="394" class="body" text-anchor="middle">kanıtlanan</text>
+  <path d="M1050 310 L1080 310" class="arrow"/>
+  <rect x="1084" y="160" rx="14" width="220" height="300" class="card"/>
+  <rect x="1084" y="160" rx="14" width="220" height="54" fill="#5aa454"/><rect x="1084" y="194" width="220" height="20" fill="#5aa454"/>
+  <text x="1194" y="195" class="head" text-anchor="middle">5. Doğrula</text>
+  <text x="1194" y="262" class="body" text-anchor="middle">aynı kanıt</text>
+  <text x="1194" y="306" class="body" text-anchor="middle">tekrar</text>
+  <text x="1194" y="350" class="body" text-anchor="middle">yazma + okuma</text>
+  <text x="1194" y="394" class="body" text-anchor="middle">denemesi</text>
+  <path d="M1306 310 L1336 310" class="arrow"/>
+  <rect x="1340" y="160" rx="14" width="220" height="300" class="card"/>
+  <rect x="1340" y="160" rx="14" width="220" height="54" fill="#6b5b95"/><rect x="1340" y="194" width="220" height="20" fill="#6b5b95"/>
+  <text x="1450" y="195" class="head" text-anchor="middle">6. Runbook</text>
+  <text x="1450" y="262" class="body" text-anchor="middle">karar</text>
+  <text x="1450" y="306" class="body" text-anchor="middle">gerekçesi</text>
+  <text x="1450" y="350" class="body" text-anchor="middle">takip</text>
+  <text x="1450" y="394" class="body" text-anchor="middle">aksiyonu</text>
+  <rect x="60" y="500" rx="16" width="1480" height="250" class="card"/>
+  <text x="84" y="540" class="head">LAB-09B adımları bu zincirde nerede?</text>
+  <rect x="60" y="500" rx="16" width="1480" height="58" fill="#005571"/><rect x="60" y="538" width="1480" height="20" fill="#005571"/>
+  <text x="84" y="538" class="head">LAB-09B adımları bu zincirde nerede?</text>
+  <text x="84" y="596" class="body">Adım 1  Allocation filter</text>
+  <text x="400" y="596" class="small">yanlış kural → shard atanmıyor → explain: filter → kuralı null yap → green</text>
+  <text x="84" y="628" class="body">Adım 2  Disk / translog</text>
+  <text x="400" y="628" class="small">watermark + block + breaker okunur; toplu yüklemede async, sonra request</text>
+  <text x="84" y="660" class="body">Adım 3  Snapshot / restore</text>
+  <text x="400" y="660" class="small">index silindi → snapshot'tan restored- önekiyle geri → count + trace aynı</text>
+  <text x="84" y="692" class="body">Adım 4  RBAC / API key</text>
+  <text x="400" y="692" class="small">"dar yetki" iddiası → okuma 200 / yazma 403 ile kanıt</text>
+  <text x="84" y="724" class="body">Adım 5  Runbook</text>
+  <text x="400" y="724" class="small">yukarıdaki dört kanıt zaman sırasıyla tek belgede</text>
+  <rect x="60" y="780" rx="16" width="1480" height="180" class="card"/>
+  <rect x="60" y="780" rx="16" width="1480" height="58" fill="#bd271e"/><rect x="60" y="818" width="1480" height="20" fill="#bd271e"/>
+  <text x="84" y="818" class="head">Kanıtsız kısa yollar (yapmayın)</text>
+  <text x="84" y="876" class="bad">✗ _cluster/reroute?retry_failed — explain okunmadan</text>
+  <text x="824" y="876" class="bad">✗ write block kaldırmak — disk açılmadan</text>
+  <text x="84" y="906" class="bad">✗ tüm cluster'ı restart etmek — neden bilinmeden</text>
+  <text x="824" y="906" class="bad">✗ heap büyütmek — breaker/sorgu kanıtı olmadan</text>
+  <text x="84" y="936" class="bad">✗ herkese superuser — en az ayrıcalık yerine</text>
+  <text x="824" y="936" class="bad">✗ snapshot'ı aynı ada restore — canlı index ezilir</text>
+</svg>

@@ -1,0 +1,5 @@
+{"service":"payment-gateway","level":"info","response_time_ms":380,"message":"kesinti sirasinda gelen odeme"}
+{"service":"auth-service","level":"info","response_time_ms":47,"message":"kesinti sirasinda giris"}
+{"service":"catalog-api","level":"info","response_time_ms":33,"message":"kesinti sirasinda listeleme"}
+{"service":"auth-service","level":"warn","response_time_ms":900,"message":"kesinti sirasinda yavas giris"}
+{"service":"notification-svc","level":"info","response_time_ms":101,"message":"kesinti sirasinda e-posta"}

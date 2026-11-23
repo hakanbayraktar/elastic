@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">MySQL'den Elasticsearch'e: JOIN'li SQL, Logstash JDBC ve artımlı aktarım</title>
+  <desc id="desc">MySQL'deki müşteriler, ürünler ve siparişler tabloları tek bir JOIN sorgusuyla birleşir. Logstash jdbc input bu sorguyu her 10 saniyede, yalnız guncellendi değeri son çalıştırmadan büyük satırlar için çalıştırır. Her satır siparis_id ile mysql-siparisler index'ine tek belge olarak yazılır; güncellenen sipariş aynı belgeyi değiştirir. Logstash MySQL'e yalnız SELECT yetkili kullanıcıyla, Elasticsearch'e yalnız yazma yetkili kullanıcıyla bağlanır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .em { font:700 17px "Courier New",monospace; fill:#bd271e }
+    .ok { font:700 17px "Courier New",monospace; fill:#2e7d32 }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">MySQL'den Elasticsearch'e: JOIN, JDBC, artımlı aktarım</text>
+  <text x="60" y="116" class="sub">Üç tablo tek sorguda birleşir; her sipariş aramaya hazır tek belge olur, değişen satır yeniden gelir.</text>
+
+  <rect x="60" y="170" rx="14" width="380" height="380" class="card"/>
+  <rect x="60" y="170" rx="14" width="380" height="50" fill="#6b5b95"/><rect x="60" y="202" width="380" height="18" fill="#6b5b95"/>
+  <text x="80" y="203" class="head">MySQL · mysql-magaza-lab</text>
+  <rect x="84" y="244" width="332" height="74" rx="8" fill="#f4f1fa" stroke="#6b5b95"/>
+  <text x="100" y="272" class="h2">musteriler</text><text x="100" y="302" class="mono">id, ad, il</text>
+  <rect x="84" y="332" width="332" height="74" rx="8" fill="#f4f1fa" stroke="#6b5b95"/>
+  <text x="100" y="360" class="h2">urunler</text><text x="100" y="390" class="mono">id, ad, kategori, fiyat</text>
+  <rect x="84" y="420" width="332" height="104" rx="8" fill="#f4f1fa" stroke="#6b5b95"/>
+  <text x="100" y="448" class="h2">siparisler</text><text x="100" y="478" class="mono">id, musteri_id, urun_id,</text>
+  <text x="100" y="504" class="mono">adet, durum, <tspan class="em">guncellendi</tspan></text>
+
+  <path d="M448,360 L502,360" class="arrow"/>
+
+  <rect x="510" y="170" rx="14" width="560" height="380" class="card"/>
+  <rect x="510" y="170" rx="14" width="560" height="50" fill="#005571"/><rect x="510" y="202" width="560" height="18" fill="#005571"/>
+  <text x="530" y="203" class="head">Logstash jdbc · logstash-mysql-lab</text>
+  <text x="530" y="256" class="mono">SELECT s.id AS siparis_id, m.ad AS musteri,</text>
+  <text x="530" y="282" class="mono">       m.il, u.ad AS urun, s.adet * u.fiyat AS tutar</text>
+  <text x="530" y="308" class="mono">FROM siparisler s JOIN musteriler m JOIN urunler u</text>
+  <text x="530" y="334" class="mono">WHERE s.guncellendi &gt; <tspan class="em">:sql_last_value</tspan></text>
+  <line x1="530" y1="356" x2="1050" y2="356" stroke="#dfe1e6" stroke-width="2"/>
+  <text x="530" y="390" class="body"><tspan class="mono">schedule</tspan>: her 10 saniyede bir çalışır</text>
+  <text x="530" y="424" class="body"><tspan class="mono">:sql_last_value</tspan>: en son okunan <tspan class="mono">guncellendi</tspan></text>
+  <text x="530" y="452" class="small">  diskte saklanır; yeniden başlayınca kaldığı yerden sürer</text>
+  <text x="530" y="490" class="body">MySQL kullanıcısı: <tspan class="mono">logstash_okuyucu</tspan> (yalnız SELECT)</text>
+  <text x="530" y="520" class="small">API: 127.0.0.1:9604 (sayaçlar)</text>
+
+  <path d="M1078,360 L1132,360" class="arrow"/>
+
+  <rect x="1140" y="170" rx="14" width="400" height="380" class="card"/>
+  <rect x="1140" y="170" rx="14" width="400" height="50" fill="#0b6e99"/><rect x="1140" y="202" width="400" height="18" fill="#0b6e99"/>
+  <text x="1160" y="203" class="head">Elasticsearch</text>
+  <text x="1160" y="256" class="mono">mysql-siparisler</text>
+  <text x="1160" y="296" class="body">Her sipariş tek belge:</text>
+  <text x="1160" y="324" class="body">müşteri, il, ürün, tutar içinde</text>
+  <text x="1160" y="364" class="body"><tspan class="mono">_id = siparis_id</tspan></text>
+  <text x="1160" y="392" class="small">güncellenen sipariş aynı belgeyi</text>
+  <text x="1160" y="418" class="small">değiştirir, kopya oluşmaz</text>
+  <text x="1160" y="466" class="body">Kullanıcı: <tspan class="mono">mysql_logstash</tspan></text>
+  <text x="1160" y="494" class="small">yalnız <tspan class="mono">mysql-*</tspan> index'lerine yazar</text>
+
+  <rect x="60" y="600" rx="14" width="1480" height="340" class="card"/>
+  <text x="90" y="650" class="h2">Artımlı aktarım: uygulama yazar, Logstash bir sonraki turda alır</text>
+  <text x="90" y="704" class="small">Zaman</text>
+  <text x="300" y="704" class="small">MySQL'de</text>
+  <text x="820" y="704" class="small">Logstash'in sorgusu</text>
+  <text x="1230" y="704" class="small">Index'te</text>
+  <line x1="90" y1="720" x2="1510" y2="720" stroke="#dfe1e6" stroke-width="2"/>
+  <text x="90" y="760" class="body">İlk tur</text>
+  <text x="300" y="760" class="body">20 sipariş</text>
+  <text x="820" y="760" class="mono">guncellendi &gt; 1970-01-01</text>
+  <text x="1230" y="760" class="ok">20 belge</text>
+  <text x="90" y="810" class="body">Uygulama</text>
+  <text x="300" y="810" class="mono">INSERT 121 · UPDATE 103 durum</text>
+  <text x="820" y="810" class="small">(guncellendi = şimdi)</text>
+  <text x="1230" y="810" class="small">henüz eski</text>
+  <text x="90" y="860" class="body">Sonraki tur</text>
+  <text x="300" y="860" class="body">2 satır değişti</text>
+  <text x="820" y="860" class="mono">guncellendi &gt; son değer</text>
+  <text x="1230" y="860" class="ok">21 belge · 103 güncel</text>
+  <text x="90" y="910" class="small">Silinen satır bu yöntemle gelmez: silme için "silindi" bayrağı ya da CDC gerekir.</text>
+</svg>

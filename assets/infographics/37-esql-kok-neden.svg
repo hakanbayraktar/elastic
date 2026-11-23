@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Zincirleme arızada ES|QL ile kök neden analizi</title>
+  <desc id="desc">Dört servis zincirleme çağrılır: storefront, checkout-service, payment-service, ledger-service. Arızada dördü de 150 hata yazar. ES|QL ile her işlemde dört servisin de bozulduğu, her işlemde ilk hatayı ledger-service'in verdiği ve hatanın payment, checkout, storefront sırasıyla yukarı yayıldığı gösterilir. Kök neden ledger-service'in bağlantı havuzunun dolmasıdır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .bold { font:700 19px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .bad { font:700 18px Arial,sans-serif; fill:#bd271e }
+    .svc { fill:#e6f1f6; stroke:#0b6e99; stroke-width:2 }
+    .root { fill:#fdecea; stroke:#bd271e; stroke-width:3 }
+    .call { stroke:#0b6e99; stroke-width:3; fill:none; marker-end:url(#mavi) }
+    .hata { stroke:#bd271e; stroke-width:3; fill:none; stroke-dasharray:9 6; marker-end:url(#kirmizi) }
+  </style>
+  <defs>
+    <marker id="mavi" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0b6e99"/></marker>
+    <marker id="kirmizi" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#bd271e"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Dördü de kırmızı: ilk çöken servisi ES|QL ile bulmak</text>
+  <text x="60" y="116" class="sub">Hata sayısı suçluyu göstermez; işlem kimliği ve zaman sırası gösterir.</text>
+
+  <rect x="60" y="150" rx="14" width="1480" height="330" class="card"/>
+  <rect x="60" y="150" rx="14" width="1480" height="50" fill="#0b6e99"/><rect x="60" y="182" width="1480" height="18" fill="#0b6e99"/>
+  <text x="80" y="183" class="head">Çağrı zinciri ve hatanın yayılışı</text>
+  <rect x="100" y="240" rx="12" width="300" height="90" class="svc"/><text x="130" y="280" class="bold">storefront</text><text x="130" y="310" class="bad">150 hata</text>
+  <rect x="460" y="240" rx="12" width="300" height="90" class="svc"/><text x="490" y="280" class="bold">checkout-service</text><text x="490" y="310" class="bad">150 hata</text>
+  <rect x="820" y="240" rx="12" width="300" height="90" class="svc"/><text x="850" y="280" class="bold">payment-service</text><text x="850" y="310" class="bad">150 hata</text>
+  <rect x="1180" y="240" rx="12" width="320" height="90" class="root"/><text x="1210" y="280" class="bold">ledger-service</text><text x="1210" y="310" class="bad">150 hata · kök</text>
+  <path d="M402,262 L456,262" class="call"/><path d="M762,262 L816,262" class="call"/><path d="M1122,262 L1176,262" class="call"/>
+  <path d="M1176,312 L1124,312" class="hata"/><path d="M816,312 L764,312" class="hata"/><path d="M456,312 L404,312" class="hata"/>
+  <text x="100" y="375" class="small">Mavi: çağrı yönü (upstream.service → service.name)   ·   Kırmızı kesikli: hatanın yukarı yayılışı</text>
+  <text x="100" y="420" class="mono">ilk görülme:  payment→ledger 15:34:58.580   checkout→payment .625   storefront→checkout .655</text>
+  <text x="100" y="455" class="small">Zincirin ucundaki servis çökünce onu çağıran her servis de hata verir; sayılar eşitlenir.</text>
+
+  <rect x="60" y="520" rx="14" width="720" height="430" class="card"/>
+  <rect x="60" y="520" rx="14" width="720" height="50" fill="#6b5b95"/><rect x="60" y="552" width="720" height="18" fill="#6b5b95"/>
+  <text x="80" y="553" class="head">Daraltma adımları</text>
+  <text x="85" y="612" class="bold">1 · Belirti</text><text x="270" y="612" class="mono">STATS BY service.name → 4 × 150</text>
+  <text x="85" y="662" class="bold">2 · Zincirleme mi?</text><text x="270" y="662" class="mono">trace başına 4 servis → 150</text>
+  <text x="85" y="712" class="bold">3 · İlk hata</text><text x="270" y="712" class="mono">MIN(zaman|servis) BY trace.id</text>
+  <text x="270" y="740" class="mono">→ ledger-service 150/150</text>
+  <text x="85" y="790" class="bold">4 · Yön</text><text x="270" y="790" class="mono">upstream → service, ilk görülme</text>
+  <text x="85" y="840" class="bold">5 · Neden</text><text x="270" y="840" class="mono">yalnız ledger-service alanları</text>
+  <text x="85" y="900" class="small">İki aşamalı STATS: önce işlem başına özet, sonra özetin özeti.</text>
+
+  <rect x="820" y="520" rx="14" width="720" height="430" class="card"/>
+  <rect x="820" y="520" rx="14" width="720" height="50" fill="#bd271e"/><rect x="820" y="552" width="720" height="18" fill="#bd271e"/>
+  <text x="840" y="553" class="head">Kök neden</text>
+  <text x="845" y="615" class="mono">error.kind   db_connection_pool_exhausted</text>
+  <text x="845" y="650" class="mono">pool.size    50</text>
+  <text x="845" y="685" class="mono">available    0</text>
+  <text x="845" y="745" class="body">Bağlantı havuzu doldu; yeni bağlantı alamayan</text>
+  <text x="845" y="775" class="body">istekler hata verdi ve zincir boyunca yukarı yayıldı.</text>
+  <text x="845" y="835" class="bold">Düzeltme ledger-service'te:</text>
+  <text x="845" y="865" class="body">havuz boyutu ve bağlantıyı bırakmayan sorgu.</text>
+  <text x="845" y="915" class="small">storefront ya da checkout ekibini suçlamak yanlış olurdu.</text>
+</svg>

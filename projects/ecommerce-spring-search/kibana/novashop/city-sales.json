@@ -1,0 +1,15 @@
+{
+  "type": "data_table",
+  "title": "NovaShop | Şehir Bazında Sipariş ve Gelir Tablosu",
+  "query": {"language": "kql", "expression": "geoip.city_name: *"},
+  "data_source": {"type": "data_view_reference", "ref_id": "novashop-orders"},
+  "rows": [
+    {"operation": "terms", "fields": ["geoip.country_iso_code"], "limit": 10, "label": "Ülke"},
+    {"operation": "terms", "fields": ["geoip.city_name"], "limit": 20, "label": "Şehir"}
+  ],
+  "metrics": [
+    {"operation": "count", "label": "Sipariş Adedi"},
+    {"operation": "sum", "field": "taxful_total_price", "label": "Toplam Satış ($)"}
+  ],
+  "description": "Müşterilerin coğrafi konumlarına göre sipariş sayısı ve toplam harcama tutarları."
+}

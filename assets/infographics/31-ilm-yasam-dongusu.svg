@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Template, data stream ve ILM: hot, warm, delete</title>
+  <desc id="desc">İki component template bir index template'te birleşir ve ilm-uygulama data stream'ini tanımlar. Uygulama tek bir ada yazar; arkasında .ds index'leri vardır. ILM politikası yazılan index 100 document'e ulaşınca rollover yapar; eski index 1 dakika sonra warm fazında salt okunur olur, 3 dakika sonra bütün olarak silinir. Altta saklama süresinin disk maliyetine etkisi hesaplanır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+  </style>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker></defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Template, data stream ve ILM</text>
+  <text x="60" y="116" class="sub">Uygulama tek bir ada yazar; index'leri bölmek, kilitlemek ve silmek politikanın işidir.</text>
+
+  <rect x="60" y="160" rx="14" width="440" height="300" class="card"/>
+  <rect x="60" y="160" rx="14" width="440" height="50" fill="#6b5b95"/><rect x="60" y="192" width="440" height="18" fill="#6b5b95"/>
+  <text x="80" y="193" class="head">Şablonlar</text>
+  <rect x="84" y="232" width="190" height="72" rx="8" fill="#f4f1fa" stroke="#6b5b95"/><text x="98" y="262" class="h2">ilm-ayarlar</text><text x="98" y="290" class="small">shard, replica, ILM</text>
+  <rect x="290" y="232" width="190" height="72" rx="8" fill="#f4f1fa" stroke="#6b5b95"/><text x="304" y="262" class="h2">ilm-mappings</text><text x="304" y="290" class="small">field tipleri</text>
+  <path d="M280,312 L280,344" class="arrow"/>
+  <rect x="84" y="352" width="396" height="84" rx="8" fill="#fff" stroke="#6b5b95" stroke-width="2"/>
+  <text x="98" y="384" class="h2">index template ilm-uygulama*</text>
+  <text x="98" y="414" class="mono">data_stream: {}  priority: 200</text>
+
+  <path d="M508,310 L572,310" class="arrow"/>
+
+  <rect x="580" y="160" rx="14" width="960" height="300" class="card"/>
+  <rect x="580" y="160" rx="14" width="960" height="50" fill="#0b6e99"/><rect x="580" y="192" width="960" height="18" fill="#0b6e99"/>
+  <text x="600" y="193" class="head">Data stream ilm-uygulama (yazma adı)</text>
+  <rect x="610" y="240" width="280" height="96" rx="10" fill="#fdecea" stroke="#bd271e" stroke-width="2"/>
+  <text x="626" y="272" class="mono">.ds-…-000001</text><text x="626" y="300" class="body">150 document · kapalı</text><text x="626" y="324" class="small">warm → delete</text>
+  <rect x="930" y="240" width="280" height="96" rx="10" fill="#e8f5ee" stroke="#2e7d32" stroke-width="2"/>
+  <text x="946" y="272" class="mono">.ds-…-000002</text><text x="946" y="300" class="body">yazma index'i</text><text x="946" y="324" class="small">hot</text>
+  <path d="M896,288 L924,288" class="arrow"/>
+  <text x="1240" y="272" class="body">Yazma hep en</text><text x="1240" y="298" class="body">yeni index'e;</text><text x="1240" y="324" class="body">okuma hepsinden.</text>
+  <text x="610" y="390" class="body">Eski veri tek tek document olarak değil, <tspan class="h2">index bütün olarak</tspan> silinir.</text>
+  <text x="610" y="424" class="small">_delete_by_query'den çok daha ucuz; disk hemen boşalır.</text>
+
+  <rect x="60" y="500" rx="14" width="1480" height="230" class="card"/>
+  <text x="90" y="546" class="h2">ILM politikası ilm-politika (labda / üretimde)</text>
+  <rect x="90" y="572" width="420" height="132" rx="10" fill="#fdf0e6" stroke="#f5a700" stroke-width="2"/>
+  <text x="110" y="606" class="h2">hot</text><text x="110" y="636" class="mono">rollover max_docs: 100</text><text x="110" y="666" class="small">üretimde: 1d ya da 50 GB shard</text>
+  <rect x="550" y="572" width="420" height="132" rx="10" fill="#e8f1f8" stroke="#0b6e99" stroke-width="2"/>
+  <text x="570" y="606" class="h2">warm · min_age 1m</text><text x="570" y="636" class="mono">readonly, priority 50</text><text x="570" y="666" class="small">üretimde: 7 gün</text>
+  <rect x="1010" y="572" width="420" height="132" rx="10" fill="#fdecea" stroke="#bd271e" stroke-width="2"/>
+  <text x="1030" y="606" class="h2">delete · min_age 3m</text><text x="1030" y="636" class="mono">delete</text><text x="1030" y="666" class="small">üretimde: 30–90 gün (saklama)</text>
+  <path d="M514,638 L544,638" class="arrow"/><path d="M974,638 L1004,638" class="arrow"/>
+  <text x="1030" y="694" class="small">min_age rollover'dan itibaren sayılır</text>
+
+  <rect x="60" y="770" rx="14" width="1480" height="170" class="card"/>
+  <text x="90" y="816" class="h2">Saklama süresi = disk</text>
+  <text x="90" y="858" class="mono">günlük veri × saklama günü × (1 + replica)</text>
+  <text x="90" y="900" class="body">30 gün: 20 GB × 30 × 2 = <tspan class="h2">1,2 TB</tspan></text>
+  <text x="620" y="900" class="body">7 gün: 20 GB × 7 × 2 = <tspan class="h2">280 GB</tspan></text>
+</svg>

@@ -1,0 +1,3 @@
+# Logstash 9.x: izleme API'si "api.http.*" altindadir.
+api.http.host: "0.0.0.0"
+api.http.port: 9600

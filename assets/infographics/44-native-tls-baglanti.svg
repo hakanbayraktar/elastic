@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Linux native kurulum: TLS açıldıktan sonra sertifikalar ve değişen ayarlar</title>
+  <desc id="desc">certutil ile üretilen CA (elastic-ca.p12) node sertifikasını (elastic-certs.p12, 127.0.0.1 ve localhost için) imzalar. Elasticsearch sertifikayı ve keystore'daki parolayı kullanır, 9200'de HTTPS ve 9300'de node'lar arası TLS konuşur. CA'nın PEM kopyası istemcilere verilir: curl --cacert, Kibana elasticsearch.ssl.certificateAuthorities, Logstash ssl_certificate_authorities, Beats ssl.certificate_authorities. Kibana'nın tarayıcıya açtığı 5601 ayrı bir katmandır ve HTTP kalır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 22px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .zone { fill:#eef3f7; stroke:#8a94a6; stroke-width:2; stroke-dasharray:10 6 }
+    .head { font:700 24px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 19px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 18px "Courier New",monospace; fill:#172b4d }
+    .monog { font:700 18px "Courier New",monospace; fill:#2f7d32 }
+    .lbl { font:700 20px Arial,sans-serif; fill:#2f7d32 }
+    .lblb { font:700 20px Arial,sans-serif; fill:#6b5b95 }
+    .lblr { font:700 19px Arial,sans-serif; fill:#bd271e }
+    .arr { stroke:#5aa454; stroke-width:5; fill:none; marker-end:url(#ag) }
+    .arrc { stroke:#f5a700; stroke-width:4; fill:none; stroke-dasharray:10 6; marker-end:url(#ao) }
+    .arrb { stroke:#6b5b95; stroke-width:4; fill:none; marker-end:url(#ab) }
+  </style>
+  <defs>
+    <marker id="ag" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#5aa454"/></marker>
+    <marker id="ao" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#f5a700"/></marker>
+    <marker id="ab" markerUnits="userSpaceOnUse" markerWidth="18" markerHeight="18" refX="16" refY="9" orient="auto"><path d="M0,0 L18,9 L0,18 z" fill="#6b5b95"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text class="title" x="60" y="66">TLS açıldıktan sonra: sertifikalar ve değişen ayarlar</text>
+  <text class="sub" x="60" y="102">Yeşil çizgi şifreli (HTTPS/TLS). CA'nın PEM kopyası (3) her istemciye verilir.</text>
+
+  <!-- 1 CA -->
+  <rect class="card" x="60" y="140" width="430" height="330" rx="14"/>
+  <rect x="60" y="140" width="430" height="50" rx="14" fill="#f5a700"/><rect x="60" y="170" width="430" height="20" fill="#f5a700"/>
+  <text class="head" x="80" y="174">1 · CA (noter)  8.1</text>
+  <text class="mono" x="80" y="228">elastic-ca.p12</text>
+  <text class="body" x="80" y="260">sertifikaları imzalar</text>
+  <text class="h2" x="80" y="310">2 · Node sertifikası  8.2</text>
+  <text class="mono" x="80" y="344">elastic-certs.p12</text>
+  <text class="body" x="80" y="376">geçerli adres: 127.0.0.1, localhost</text>
+  <text class="h2" x="80" y="418">3 · CA'nın PEM kopyası  8.7</text>
+  <text class="mono" x="80" y="450">~/elastic-ca.pem</text>
+
+  <!-- elasticsearch -->
+  <rect class="card" x="600" y="140" width="520" height="470" rx="14"/>
+  <rect x="600" y="140" width="520" height="50" rx="14" fill="#005571"/><rect x="600" y="170" width="520" height="20" fill="#005571"/>
+  <text class="head" x="620" y="174">Elasticsearch · https :9200</text>
+  <text class="h2" x="620" y="226">elasticsearch.yml  8.5</text>
+  <text class="monog" x="620" y="260">...http.ssl.enabled: true</text>
+  <text class="monog" x="620" y="290">...transport.ssl.enabled: true</text>
+  <text class="mono" x="620" y="320">...http.ssl.keystore.path:</text>
+  <text class="mono" x="640" y="350">elastic-certs.p12</text>
+  <text class="mono" x="620" y="380">...transport.ssl.keystore.path</text>
+  <text class="mono" x="620" y="410">...verification_mode: certificate</text>
+  <text class="h2" x="620" y="464">elasticsearch.keystore  8.4</text>
+  <text class="mono" x="620" y="496">...ssl.keystore.secure_password</text>
+  <text class="body" x="620" y="530">sertifika parolası açık yazılmaz</text>
+  <text class="lblr" x="620" y="584">reset-password: --url https://127.0.0.1:9200</text>
+
+  <path class="arrb" d="M490 305 L598 305"/>
+  <text class="lblb" x="500" y="290">imzalar</text>
+
+  <!-- transport -->
+  <rect class="card" x="1200" y="140" width="340" height="220" rx="14"/>
+  <rect x="1200" y="140" width="340" height="50" rx="14" fill="#0b6e99"/><rect x="1200" y="170" width="340" height="20" fill="#0b6e99"/>
+  <text class="head" x="1220" y="174">Diğer node'lar · :9300</text>
+  <text class="body" x="1220" y="226">her node kendi sertifikası,</text>
+  <text class="body" x="1220" y="256">aynı CA'nın imzası</text>
+  <text class="body" x="1220" y="300">tek node'da ayar açık,</text>
+  <text class="body" x="1220" y="330">konuşacak node yok</text>
+  <path class="arr" d="M1120 255 L1198 255"/>
+  <text class="lbl" x="1130" y="240">TLS</text>
+
+  <!-- istemciler -->
+  <text class="h2" x="60" y="512">Bağlanan herkes: https:// adres + CA (3)</text>
+
+  <rect class="card" x="60" y="535" width="460" height="190" rx="14"/>
+  <rect x="60" y="535" width="460" height="48" rx="14" fill="#f5a700"/><rect x="60" y="565" width="460" height="18" fill="#f5a700"/>
+  <text class="head" x="80" y="568">Kibana · kibana.yml  8.8</text>
+  <text class="monog" x="80" y="619">elasticsearch.hosts:</text>
+  <text class="monog" x="100" y="649">["https://127.0.0.1:9200"]</text>
+  <text class="monog" x="80" y="681">elasticsearch.ssl.certificate</text>
+  <text class="monog" x="100" y="709">Authorities: [".../elastic-ca.pem"]</text>
+
+  <rect class="card" x="60" y="745" width="460" height="110" rx="14"/>
+  <text class="h2" x="80" y="783">curl, uygulama</text>
+  <text class="monog" x="80" y="815">curl --cacert ~/elastic-ca.pem</text>
+  <text class="mono" x="80" y="843">https://127.0.0.1:9200</text>
+
+  <rect class="card" x="620" y="680" width="500" height="170" rx="14"/>
+  <text class="h2" x="640" y="716">Logstash · elasticsearch çıktısı</text>
+  <text class="mono" x="640" y="748">hosts =&gt; ["https://...:9200"]</text>
+  <text class="mono" x="640" y="778">ssl_certificate_authorities =&gt;</text>
+  <text class="mono" x="660" y="808">["/etc/logstash/elastic-ca.pem"]</text>
+  <text class="body" x="640" y="838">Beats: ssl.certificate_authorities</text>
+
+  <path class="arr" d="M520 600 L598 600"/>
+  <path class="arr" d="M520 800 L575 800 L575 560 L598 560"/>
+  <path class="arr" d="M870 680 L870 614"/>
+  <text class="lbl" x="885" y="655">HTTPS</text>
+
+
+  <!-- tarayıcı -->
+  <rect x="1200" y="420" width="340" height="430" rx="14" fill="#fff8e1" stroke="#f5a700" stroke-width="2"/>
+  <text class="h2" x="1220" y="462">Ayrı katman:</text>
+  <text class="h2" x="1220" y="492">tarayıcı → Kibana :5601</text>
+  <text class="body" x="1220" y="534">Bu rehberde HTTP kalır.</text>
+  <text class="body" x="1220" y="568">Şifrelemek için Kibana'ya</text>
+  <text class="body" x="1220" y="598">kendi sertifikası verilir</text>
+  <text class="mono" x="1220" y="630">(server.ssl.*)</text>
+  <text class="body" x="1220" y="676">Eğitim sunucusunda bu işi</text>
+  <text class="body" x="1220" y="706">Nginx yapar: alan adlı</text>
+  <text class="body" x="1220" y="736">adres zaten HTTPS.</text>
+  <text class="lblr" x="1220" y="790">CA'sı verilmeyen istemci</text>
+  <text class="lblr" x="1220" y="818">bağlanamaz.</text>
+</svg>

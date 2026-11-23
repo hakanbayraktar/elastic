@@ -1,0 +1,22 @@
+{
+  "description": "LAB-04 ECS normalization, synthetic PII removal and failure tagging",
+  "processors": [
+    {"set": {"field": "event.ingested", "value": "{{{_ingest.timestamp}}}"}},
+    {"date": {"if": "ctx.temp != null && ctx.temp.timestamp != null", "field": "temp.timestamp", "formats": ["ISO8601"]}},
+    {"rename": {"field": "temp.status", "target_field": "http.response.status_code", "ignore_missing": true}},
+    {"convert": {"field": "http.response.status_code", "type": "integer", "ignore_missing": true}},
+    {"script": {"if": "ctx.temp != null && ctx.temp.duration_ms != null", "source": "double ms = Double.parseDouble(ctx.temp.duration_ms.toString()); if (ms < 0) { throw new IllegalArgumentException('negative duration'); } if (ctx.event == null) { ctx.event = [:]; } ctx.event.duration = (long)(ms * 1000000);"}},
+    {"set": {"field": "event.dataset", "value": "telecom.capstone"}},
+    {"set": {"field": "data_stream.type", "value": "logs"}},
+    {"set": {"field": "data_stream.dataset", "value": "telecom.capstone"}},
+    {"set": {"field": "data_stream.namespace", "value": "prod"}},
+    {"set": {"field": "message", "value": "Synthetic capstone event; personal fields removed"}},
+    {"remove": {"field": ["raw", "temp", "event.original", "user.email", "email", "user"], "ignore_missing": true}}
+  ],
+  "on_failure": [
+    {"remove": {"field": ["raw", "temp", "user.email", "email", "user"], "ignore_missing": true}},
+    {"append": {"field": "tags", "value": "lab04_ingest_failure"}},
+    {"set": {"field": "error.type", "value": "lab04_normalization_failure"}},
+    {"set": {"field": "error.message", "value": "Synthetic capstone normalization failed; inspect the processor with simulate."}}
+  ]
+}

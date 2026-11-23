@@ -1,0 +1,70 @@
+# ADV-09: ECK operatorune "ne istedigimizi" anlatan iki kaynak. Sertifika, parola, StatefulSet, Service ve PVC'yi
+# operator kendisi uretir.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eck-lab
+---
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: eck
+  namespace: eck-lab
+spec:
+  version: 9.5.5
+  http:
+    service:
+      spec:
+        type: NodePort
+        ports:
+          - name: https
+            port: 9200
+            targetPort: 9200
+            nodePort: 30087
+  nodeSets:
+    - name: default
+      count: 1
+      config:
+        node.store.allow_mmap: false   # host'ta vm.max_map_count ayari gerekmesin
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data   # ECK'nin bekledigi ad; veri bu PVC'de, pod silinse de kalir
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 2Gi
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests: { memory: 1Gi, cpu: 500m }
+                limits: { memory: 1536Mi, cpu: "1" }   # heap limitin yarisi olarak otomatik ayarlanir
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: eck
+  namespace: eck-lab
+spec:
+  version: 9.5.5
+  count: 1
+  elasticsearchRef:
+    name: eck          # baglanti adresi, CA ve servis hesabi operator tarafindan baglanir
+  http:
+    service:
+      spec:
+        type: NodePort
+        ports:
+          - name: https
+            port: 5601
+            targetPort: 5601
+            nodePort: 30086
+  podTemplate:
+    spec:
+      containers:
+        - name: kibana
+          resources:
+            requests: { memory: 768Mi, cpu: 500m }
+            limits: { memory: 1536Mi, cpu: "1" }

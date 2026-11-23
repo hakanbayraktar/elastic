@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="740" viewBox="0 0 1600 740" role="img" aria-labelledby="title desc">
+  <title id="title">Discover'da araştırma akışı</title>
+  <desc id="desc">Data view, zaman, KQL, document.</desc>
+  <rect width="1600" height="740" fill="#f7fafc"/>
+<defs><marker id="ok" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker></defs>
+  <rect x="20" y="40" width="360" height="300" rx="16" fill="#ffffff" stroke="#005571" stroke-width="4"/>
+  <circle cx="80" cy="110" r="36" fill="#005571"/>
+  <text x="68" y="124" style="font:700 36px Arial,sans-serif;fill:#ffffff">1</text>
+  <text x="50" y="210" style="font:700 32px Arial,sans-serif;fill:#005571">Data view</text>
+  <text x="50" y="270" style="font:400 28px Arial,sans-serif;fill:#172b4d">Hangi index?</text>
+  <line x1="384" y1="190" x2="414" y2="190" stroke="#0b6e99" stroke-width="5" marker-end="url(#ok)"/>
+  <rect x="420" y="40" width="360" height="300" rx="16" fill="#ffffff" stroke="#0b6e99" stroke-width="4"/>
+  <circle cx="480" cy="110" r="36" fill="#0b6e99"/>
+  <text x="468" y="124" style="font:700 36px Arial,sans-serif;fill:#ffffff">2</text>
+  <text x="450" y="210" style="font:700 32px Arial,sans-serif;fill:#0b6e99">Zaman</text>
+  <text x="450" y="270" style="font:400 28px Arial,sans-serif;fill:#172b4d">Hangi aralık?</text>
+  <line x1="784" y1="190" x2="814" y2="190" stroke="#0b6e99" stroke-width="5" marker-end="url(#ok)"/>
+  <rect x="820" y="40" width="360" height="300" rx="16" fill="#ffffff" stroke="#6b5b95" stroke-width="4"/>
+  <circle cx="880" cy="110" r="36" fill="#6b5b95"/>
+  <text x="868" y="124" style="font:700 36px Arial,sans-serif;fill:#ffffff">3</text>
+  <text x="850" y="210" style="font:700 32px Arial,sans-serif;fill:#6b5b95">KQL ve filtre</text>
+  <text x="850" y="270" style="font:400 28px Arial,sans-serif;fill:#172b4d">Hangi kayıtlar?</text>
+  <line x1="1184" y1="190" x2="1214" y2="190" stroke="#0b6e99" stroke-width="5" marker-end="url(#ok)"/>
+  <rect x="1220" y="40" width="360" height="300" rx="16" fill="#ffffff" stroke="#c97a00" stroke-width="4"/>
+  <circle cx="1280" cy="110" r="36" fill="#c97a00"/>
+  <text x="1268" y="124" style="font:700 36px Arial,sans-serif;fill:#ffffff">4</text>
+  <text x="1250" y="210" style="font:700 32px Arial,sans-serif;fill:#c97a00">Document</text>
+  <text x="1250" y="270" style="font:400 28px Arial,sans-serif;fill:#172b4d">Ne yazıyor?</text>
+  <rect x="20" y="390" rx="14" width="1560" height="150" fill="#eef6f8" stroke="#005571" stroke-width="2"/>
+  <text x="50" y="450" style="font:700 28px Arial,sans-serif;fill:#172b4d">Discover, pano kurmadan önce verinin doğru geldiğini görmenin yeridir.</text>
+  <text x="50" y="504" style="font:400 26px Arial,sans-serif;fill:#172b4d">Field'lar doğru tipte mi, zaman doğru mu, beklenen kayıtlar var mı?</text>
+  <rect x="20" y="570" rx="14" width="1560" height="150" fill="#fdecea" stroke="#bd271e" stroke-width="2"/>
+  <text x="50" y="630" style="font:700 28px Arial,sans-serif;fill:#bd271e">"Hiç sonuç yok"</text>
+  <text x="50" y="684" style="font:400 26px Arial,sans-serif;fill:#172b4d">Önce zaman aralığına, sonra data view'a bakın; sorguyu en son değiştirin.</text>
+</svg>

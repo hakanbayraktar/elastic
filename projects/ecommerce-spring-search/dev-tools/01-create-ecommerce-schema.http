@@ -1,0 +1,124 @@
+# NovaShop E-Commerce: Ürün, Müşteri ve Sipariş Şemaları (Explicit Mapping ve Alias)
+# Kaynak: Ex_Files_Elasticsearch_Esst_Training (Exercise Files 03_01 & 03_02)
+# Bu dosya bağımsız ecommerce-* indexlerini ve alias'larını kurar.
+
+###
+# Önceki denemelerden kalan indexleri temizleyin
+DELETE ecommerce-products-v1?ignore_unavailable=true
+
+###
+DELETE ecommerce-customers-v1?ignore_unavailable=true
+
+###
+DELETE ecommerce-orders-v1?ignore_unavailable=true
+
+###
+# 1. ÜRÜN ŞEMASI (ecommerce-products-v1)
+# name hem analizli full-text hem exact keyword aramayı destekler.
+# price alanı scaled_float veya float, tags keyword dizisi olarak modellenir.
+PUT ecommerce-products-v1
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "product_id": { "type": "keyword" },
+      "name": {
+        "type": "text",
+        "fields": {
+          "keyword": { "type": "keyword", "ignore_above": 256 }
+        }
+      },
+      "description": { "type": "text" },
+      "brand": { "type": "keyword" },
+      "category": { "type": "keyword" },
+      "price": { "type": "scaled_float", "scaling_factor": 100 },
+      "in_stock": { "type": "boolean" },
+      "release_date": { "type": "date" },
+      "tags": { "type": "keyword" }
+    }
+  }
+}
+
+###
+# 2. MÜŞTERİ ŞEMASI (ecommerce-customers-v1)
+# address nesne (object) alanında şehir/eyalet filtreleri keyword yapılır.
+# loyalty_tier null gelebilir (null_value atanabilir).
+PUT ecommerce-customers-v1
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "customer_id": { "type": "keyword" },
+      "name": {
+        "type": "text",
+        "fields": {
+          "keyword": { "type": "keyword" }
+        }
+      },
+      "email": { "type": "keyword" },
+      "address": {
+        "properties": {
+          "street": { "type": "text" },
+          "city": { "type": "keyword" },
+          "state": { "type": "keyword" },
+          "zip": { "type": "keyword" }
+        }
+      },
+      "join_date": { "type": "date" },
+      "loyalty_tier": {
+        "type": "keyword",
+        "null_value": "NONE"
+      }
+    }
+  }
+}
+
+###
+# 3. SİPARİŞ ŞEMASI (ecommerce-orders-v1)
+# items alanı nested olarak tanımlanır; böylece ürün_id ve miktar ilişkisi korunur.
+PUT ecommerce-orders-v1
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "properties": {
+      "order_id": { "type": "keyword" },
+      "customer_id": { "type": "keyword" },
+      "order_date": { "type": "date" },
+      "status": { "type": "keyword" },
+      "total_amount": { "type": "scaled_float", "scaling_factor": 100 },
+      "items": {
+        "type": "nested",
+        "properties": {
+          "product_id": { "type": "keyword" },
+          "product_name": { "type": "text" },
+          "quantity": { "type": "integer" },
+          "price": { "type": "scaled_float", "scaling_factor": 100 }
+        }
+      }
+    }
+  }
+}
+
+###
+# 4. ALIAS TANIMLARI — Kodun doğrudan 'products', 'customers', 'orders' alias'larını kullanabilmesi için
+POST _aliases
+{
+  "actions": [
+    { "add": { "index": "ecommerce-products-v1", "alias": "products" } },
+    { "add": { "index": "ecommerce-customers-v1", "alias": "customers" } },
+    { "add": { "index": "ecommerce-orders-v1", "alias": "orders" } }
+  ]
+}
+
+###
+# Mapping doğrulaması
+GET products/_mapping

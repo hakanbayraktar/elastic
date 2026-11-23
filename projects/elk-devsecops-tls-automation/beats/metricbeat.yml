@@ -1,0 +1,18 @@
+metricbeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+metricbeat.modules:
+  - module: system
+    metricsets: ["cpu", "memory", "network", "process_summary"]
+    period: 10s
+    processes: ['.*']
+    # Host /proc ve cgroup'u /hostfs altina baglandi; yoksa konteynerin kendi metrikleri olculur
+    hostfs: "/hostfs"
+
+output.elasticsearch:
+  hosts: ["https://elasticsearch:9200"]
+  ssl.enabled: true
+  ssl.certificate_authorities: ["/etc/certs/ca/ca.crt"]
+  username: "elastic"
+  password: "${ELASTIC_PASSWORD}"

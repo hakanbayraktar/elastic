@@ -1,0 +1,300 @@
+services:
+  # ============================================================================
+  # 1. Otomatik Sertifika ve Güvenlik Hazırlayıcısı
+  # ============================================================================
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-cert-setup
+    user: "0"
+    entrypoint: ["bash", "/setup-certs.sh"]
+    environment:
+      - ELASTIC_FQDN=${ELASTIC_FQDN:-student101-elastic.devopsatolyesi.com}
+      - KIBANA_FQDN=${KIBANA_FQDN:-student101-kibana.devopsatolyesi.com}
+      - LOGSTASH_FQDN=${LOGSTASH_FQDN:-student101-logstash.devopsatolyesi.com}
+    volumes:
+      - ./scripts/setup-certs.sh:/setup-certs.sh:ro
+      # Sertifikalar host'taki ./certs dizinine yazılır: README'deki
+      # `curl --cacert certs/ca/ca.crt` ve `openssl s_client -CAfile certs/ca/ca.crt`
+      # komutları konteynerlerin kullandığı CA ile aynı dosyayı kullanır.
+      - ./certs:/certs
+
+  # ============================================================================
+  # 1b. PKCS#8 dönüşümü + Nginx geçici sertifikası (openssl Logstash imajında var,
+  #     Elasticsearch 9.x imajında yok)
+  # ============================================================================
+  setup-convert:
+    image: docker.elastic.co/logstash/logstash:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-cert-convert
+    user: "0"
+    entrypoint: ["bash", "/setup-tls-convert.sh"]
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    environment:
+      - ELASTIC_FQDN=${ELASTIC_FQDN:-student101-elastic.devopsatolyesi.com}
+      - KIBANA_FQDN=${KIBANA_FQDN:-student101-kibana.devopsatolyesi.com}
+      - LOGSTASH_FQDN=${LOGSTASH_FQDN:-student101-logstash.devopsatolyesi.com}
+    volumes:
+      - ./scripts/setup-tls-convert.sh:/setup-tls-convert.sh:ro
+      - ./certs:/certs
+      - ./nginx/certs:/nginx/certs
+
+  # ============================================================================
+  # 2. Elasticsearch (Full TLS HTTP + Transport)
+  # ============================================================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-elasticsearch
+    depends_on:
+      setup-convert:
+        condition: service_completed_successfully
+    environment:
+      - node.name=devsecops-node1
+      - cluster.name=${CLUSTER_NAME:-devsecops-cluster}
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+      # TLS / SSL Yapılandırması
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=/usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.key
+      - xpack.security.http.ssl.certificate=/usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.crt
+      - xpack.security.http.ssl.certificate_authorities=/usr/share/elasticsearch/config/certs/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.key=/usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.key
+      - xpack.security.transport.ssl.certificate=/usr/share/elasticsearch/config/certs/elasticsearch/elasticsearch.crt
+      - xpack.security.transport.ssl.certificate_authorities=/usr/share/elasticsearch/config/certs/ca/ca.crt
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      # Yalnız loopback: host ağındaki Packetbeat ve README'deki dahili CA doğrulaması için.
+      # Dış erişim Nginx gateway'inden (ELASTIC_GATEWAY_PORT) geçer.
+      - "127.0.0.1:${ELASTIC_DIRECT_PORT:-9201}:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+      - ./certs:/usr/share/elasticsearch/config/certs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -k -u elastic:${ELASTIC_PASSWORD:-DevOps2026!} https://localhost:9200/_cluster/health | grep -E 'green|yellow'"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+
+  # ============================================================================
+  # 2b. kibana_system parolası
+  # Kibana 8+ 'elastic' süper kullanıcısıyla bağlanmayı reddeder
+  # ('value of "elastic" is forbidden'); yerleşik kibana_system kullanıcısının
+  # parolası ES ayağa kalkınca API ile atanır.
+  # ============================================================================
+  setup-passwords:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-setup-passwords
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./certs:/certs:ro
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        until curl -s --cacert /certs/ca/ca.crt -u "elastic:$${ELASTIC_PASSWORD}" \
+            -X POST https://elasticsearch:9200/_security/user/kibana_system/_password \
+            -H 'Content-Type: application/json' \
+            -d "{\"password\":\"$${KIBANA_PASSWORD}\"}" | grep -q '^{}$$'; do
+          echo "kibana_system parolasi ayarlanamadi, 5 sn sonra tekrar"; sleep 5
+        done
+        echo "kibana_system parolasi ayarlandi"
+
+  # ============================================================================
+  # 3. Kibana (HTTPS Web Arayüzü)
+  # ============================================================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-kibana
+    depends_on:
+      setup-passwords:
+        condition: service_completed_successfully
+    environment:
+      - SERVER_NAME=${KIBANA_FQDN:-student101-kibana.devopsatolyesi.com}
+      - ELASTICSEARCH_HOSTS=["https://elasticsearch:9200"]
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD:-DevOps2026!}
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=/usr/share/kibana/config/certs/ca/ca.crt
+      - SERVER_SSL_ENABLED=true
+      - SERVER_SSL_CERTIFICATE=/usr/share/kibana/config/certs/kibana/kibana.crt
+      - SERVER_SSL_KEY=/usr/share/kibana/config/certs/kibana/kibana.key
+    volumes:
+      - ./certs:/usr/share/kibana/config/certs:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -k -I https://localhost:5601/login | grep -E 'HTTP/.* (200|302)'"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+
+  # ============================================================================
+  # 4. Logstash (Beats TLS Input + ES TLS Output)
+  # ============================================================================
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-logstash
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    ports:
+      - "${LOGSTASH_BEATS_PORT:-5044}:5044"
+    environment:
+      - "LS_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./certs:/usr/share/logstash/config/certs:ro
+
+  # ============================================================================
+  # 5. Filebeat (TLS Log Gönderimi)
+  # ============================================================================
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-filebeat
+    # Beat, config dosyasi root'a (veya kendi uid'ine) ait degilse acilmaz. Bind-mount edilen
+    # yml host kullanicisina aittir; dosya :ro baglandigi icin konteyner icinden degistirilemez.
+    command: ["--environment", "container", "--strict.perms=false"]
+    user: root
+    depends_on:
+      logstash:
+        condition: service_started
+    volumes:
+      - ./beats/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./certs:/etc/certs:ro
+      # Nginx'in JSON erişim logu paylaşılan volume'den okunur
+      - nginx_logs:/var/log/nginx:ro
+
+  # ============================================================================
+  # 6. Metricbeat (TLS Metrik Gönderimi)
+  # ============================================================================
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-metricbeat
+    # Beat, config dosyasi root'a (veya kendi uid'ine) ait degilse acilmaz. Bind-mount edilen
+    # yml host kullanicisina aittir; dosya :ro baglandigi icin konteyner icinden degistirilemez.
+    command: ["--environment", "container", "--strict.perms=false"]
+    user: root
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./beats/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - ./certs:/etc/certs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /proc:/hostfs/proc:ro
+
+  # ============================================================================
+  # 7. Heartbeat (Uptime ve SSL Sağlık İzleme)
+  # ============================================================================
+  heartbeat:
+    image: docker.elastic.co/beats/heartbeat:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-heartbeat
+    # Beat, config dosyasi root'a (veya kendi uid'ine) ait degilse acilmaz. Bind-mount edilen
+    # yml host kullanicisina aittir; dosya :ro baglandigi icin konteyner icinden degistirilemez.
+    command: ["--environment", "container", "--strict.perms=false"]
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./beats/heartbeat.yml:/usr/share/heartbeat/heartbeat.yml:ro
+      - ./certs:/etc/certs:ro
+
+  # ============================================================================
+  # 8. Packetbeat (Ağ Trafiği ve Protokol Dinleyici)
+  # ============================================================================
+  packetbeat:
+    image: docker.elastic.co/beats/packetbeat:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-packetbeat
+    # Beat, config dosyasi root'a (veya kendi uid'ine) ait degilse acilmaz. Bind-mount edilen
+    # yml host kullanicisina aittir; dosya :ro baglandigi icin konteyner icinden degistirilemez.
+    command: ["--environment", "container", "--strict.perms=false"]
+    user: root
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: host
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./beats/packetbeat.yml:/usr/share/packetbeat/packetbeat.yml:ro
+      - ./certs:/etc/certs:ro
+
+  # ============================================================================
+  # 9. Auditbeat (Linux Çekirdek ve Dosya Bütünlüğü - FIM)
+  # ============================================================================
+  auditbeat:
+    image: docker.elastic.co/beats/auditbeat:${STACK_VERSION:-9.5.5}
+    container_name: devsecops-auditbeat
+    # Beat, config dosyasi root'a (veya kendi uid'ine) ait degilse acilmaz. Bind-mount edilen
+    # yml host kullanicisina aittir; dosya :ro baglandigi icin konteyner icinden degistirilemez.
+    command: ["--environment", "container", "--strict.perms=false"]
+    user: root
+    pid: host
+    cap_add:
+      - AUDIT_CONTROL
+      - AUDIT_READ
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./beats/auditbeat.yml:/usr/share/auditbeat/auditbeat.yml:ro
+      - ./certs:/etc/certs:ro
+      # Dosya bütünlüğü host dizinlerinde izlenir (konteynerin kendi dosyaları değil)
+      - /etc:/hostfs/etc:ro
+      - /usr/bin:/hostfs/usr/bin:ro
+      - /usr/sbin:/hostfs/usr/sbin:ro
+
+  # ============================================================================
+  # 10. Nginx Reverse Proxy (SSL Gateway)
+  # ============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: devsecops-nginx
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      kibana:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${ELASTIC_GATEWAY_PORT:-9200}:9200"
+      - "${KIBANA_GATEWAY_PORT:-5601}:5601"
+    environment:
+      - ELASTIC_FQDN=${ELASTIC_FQDN:-student101-elastic.devopsatolyesi.com}
+      - KIBANA_FQDN=${KIBANA_FQDN:-student101-kibana.devopsatolyesi.com}
+      - LOGSTASH_FQDN=${LOGSTASH_FQDN:-student101-logstash.devopsatolyesi.com}
+    volumes:
+      # default.conf adıyla: imajın kendi default.conf'unun yerine geçer
+      - ./nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/certbot-challenge:/var/www/certbot:ro
+      - nginx_logs:/var/log/nginx
+
+volumes:
+  es_data:
+  nginx_logs:

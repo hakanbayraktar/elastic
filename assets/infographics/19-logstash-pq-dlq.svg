@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Tek Logstash, iki pipeline: persistent queue ve dead letter queue</title>
+  <desc id="desc">Uygulama olayları TCP 5001 ile ingest pipeline'ına gelir. Olaylar önce diskteki persistent queue'ya yazılır, sonra Elasticsearch'teki ops-app index'ine gider. Elasticsearch'e ulaşılamazsa olaylar kuyrukta bekler ve Logstash çökse bile kaybolmaz. Elasticsearch bir belgeyi 400 ile reddederse belge diskteki dead letter queue'ya yazılır. dlq-onarim pipeline'ı DLQ'yu okur, red sebebini alana kopyalar, belgeyi onarır ve dlq_onarildi etiketiyle ops-app'e yeniden yazar. commit_offsets okunan konumu saklar; yeniden başlatmada hiçbir şey tekrar yazılmaz.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .em { font:700 18px Arial,sans-serif; fill:#bd271e }
+    .ok { font:700 18px Arial,sans-serif; fill:#2e7d32 }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+    .red { stroke:#bd271e; stroke-width:5; fill:none; stroke-dasharray:10 6; marker-end:url(#arrowr) }
+    .grn { stroke:#5aa454; stroke-width:5; fill:none; marker-end:url(#arrowg) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+    <marker id="arrowr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#bd271e"/></marker>
+    <marker id="arrowg" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#5aa454"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Tek Logstash, iki pipeline: kuyruk ve DLQ</text>
+  <text x="60" y="116" class="sub">Kesintide olay diskte bekler; reddedilen belge silinmez, onarılıp geri yazılır.</text>
+
+  <!-- Uygulama -->
+  <rect class="card" x="60" y="200" width="250" height="170" rx="14"/>
+  <rect x="60" y="200" width="250" height="52" rx="14" fill="#005571"/>
+  <text x="80" y="234" class="head">Uygulama</text>
+  <text x="80" y="290" class="body">JSON olaylar</text>
+  <text x="80" y="320" class="mono">TCP 5001</text>
+  <text x="80" y="350" class="small">satır başına bir olay</text>
+
+  <!-- Logstash cercevesi -->
+  <rect x="380" y="160" width="800" height="560" rx="18" fill="none" stroke="#0b6e99" stroke-width="3" stroke-dasharray="8 6"/>
+  <text x="400" y="195" class="h2">Logstash (config/pipelines.yml)</text>
+
+  <!-- ingest -->
+  <rect class="card" x="410" y="215" width="740" height="190" rx="14"/>
+  <rect x="410" y="215" width="740" height="52" rx="14" fill="#0b6e99"/>
+  <text x="430" y="249" class="head">pipeline: ingest</text>
+  <rect x="440" y="295" width="170" height="80" rx="10" fill="#eef4f8" stroke="#0b6e99" stroke-width="2"/>
+  <text x="460" y="330" class="mono">tcp input</text>
+  <text x="460" y="355" class="small">port 5000</text>
+  <rect x="660" y="295" width="230" height="80" rx="10" fill="#fff4d6" stroke="#f5a700" stroke-width="2"/>
+  <text x="680" y="328" class="h2">Persistent queue</text>
+  <text x="680" y="355" class="small">disk: data/queue</text>
+  <rect x="940" y="295" width="180" height="80" rx="10" fill="#eef4f8" stroke="#0b6e99" stroke-width="2"/>
+  <text x="960" y="330" class="mono">es output</text>
+  <text x="960" y="355" class="small">index ops-app</text>
+  <path class="arrow" d="M612 335 L652 335"/>
+  <path class="arrow" d="M892 335 L932 335"/>
+
+  <!-- DLQ disk -->
+  <rect x="860" y="440" width="290" height="80" rx="10" fill="#fdecea" stroke="#bd271e" stroke-width="2"/>
+  <text x="880" y="473" class="h2">Dead letter queue</text>
+  <text x="880" y="500" class="small">disk: data/dead_letter_queue</text>
+
+  <!-- dlq-onarim -->
+  <rect class="card" x="410" y="550" width="740" height="150" rx="14"/>
+  <rect x="410" y="550" width="740" height="52" rx="14" fill="#6b5b95"/>
+  <text x="430" y="584" class="head">pipeline: dlq-onarim</text>
+  <text x="430" y="635" class="mono">dead_letter_queue input → [dlq][reason] → rename</text>
+  <text x="430" y="665" class="small">commit_offsets: okunan konum diskte; clean_consumed: okunan dosya silinir</text>
+
+  <!-- Elasticsearch -->
+  <rect class="card" x="1260" y="200" width="290" height="500" rx="14"/>
+  <rect x="1260" y="200" width="290" height="52" rx="14" fill="#5aa454"/>
+  <text x="1280" y="234" class="head">Elasticsearch</text>
+  <text x="1280" y="290" class="mono">index ops-app</text>
+  <text x="1280" y="325" class="body">response_time_ms:</text>
+  <text x="1280" y="350" class="mono">integer</text>
+  <text x="1280" y="420" class="ok">201: yazıldı</text>
+  <text x="1280" y="455" class="em">400: reddedildi</text>
+  <text x="1280" y="480" class="small">("yavas" sayı değil)</text>
+  <text x="1280" y="620" class="body">Onarılan belge:</text>
+  <text x="1280" y="648" class="mono">tags: dlq_onarildi</text>
+  <text x="1280" y="676" class="mono">response_time_raw</text>
+
+  <!-- oklar -->
+  <path class="arrow" d="M312 285 L432 330"/>
+  <path class="grn" d="M1122 320 L1252 320"/>
+  <path class="red" d="M1255 470 L1158 478"/>
+  <path class="arrow" d="M1125 522 L1125 545"/>
+  <path class="grn" d="M1152 640 L1252 640"/>
+
+  <!-- alt kartlar -->
+  <rect class="card" x="60" y="770" width="470" height="180" rx="14"/>
+  <text x="85" y="812" class="h2">Kesinti ve çökme</text>
+  <text x="85" y="848" class="body">Elasticsearch erişilemez: olay kuyrukta bekler.</text>
+  <text x="85" y="878" class="body">Logstash kill edilir: kuyruk diskten geri gelir.</text>
+  <text x="85" y="918" class="ok">8 + 5 = 13 belge, kayıp yok</text>
+
+  <rect class="card" x="565" y="770" width="470" height="180" rx="14"/>
+  <text x="590" y="812" class="h2">Kalıcı red (400 / 404)</text>
+  <text x="590" y="848" class="body">Yeniden denemek sonucu değiştirmez: DLQ.</text>
+  <text x="590" y="878" class="body">429 / 5xx / bağlantı yok: yeniden denenir.</text>
+  <text x="590" y="918" class="ok">2 belge onarıldı: 15 belge</text>
+
+  <rect class="card" x="1070" y="770" width="470" height="180" rx="14"/>
+  <text x="1095" y="812" class="h2">Yeniden başlatma</text>
+  <text x="1095" y="848" class="body">Kuyruk boş, DLQ konumu saklı.</text>
+  <text x="1095" y="878" class="body">Hiçbir olay ikinci kez yazılmaz.</text>
+  <text x="1095" y="918" class="ok">in: 0, belge sayısı 15</text>
+</svg>

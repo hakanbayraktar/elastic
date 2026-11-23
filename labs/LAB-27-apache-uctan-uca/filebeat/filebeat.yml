@@ -1,0 +1,31 @@
+filebeat.inputs:
+  - type: filestream
+    id: apache-access
+    paths: ["/var/log/apache/access_log"]
+    fields:
+      dataset: apache.access
+    fields_under_root: false
+
+  - type: filestream
+    id: apache-error
+    paths: ["/var/log/apache/error_log"]
+    fields:
+      dataset: apache.error
+    fields_under_root: false
+
+  - type: filestream
+    id: apache-traffic-generator
+    paths: ["/var/log/traffic/traffic.jsonl"]
+    parsers:
+      - ndjson:
+          target: ""
+          add_error_key: true
+    fields:
+      source_component: traffic-generator
+    fields_under_root: false
+
+output.logstash:
+  hosts: ["logstash:5044"]
+
+logging.level: info
+monitoring.enabled: false

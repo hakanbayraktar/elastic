@@ -1,0 +1,189 @@
+# NovaShop E-Commerce: Full-Text Arama, Filtreleme, Boolean Mantık ve Sıralama
+# Kaynak: Ex_Files_Elasticsearch_Esst_Training (Exercise Files 03_06, 03_07, 04_02, 04_03, 04_04, 04_05)
+# Önce 01-create-ecommerce-schema.http ve 02-bulk-ecommerce-data.http çalıştırılmalıdır.
+
+###
+# 1. TEMEL VE OPERATÖRLÜ MATCH ARAMASI
+# Standart match kelimeler arasında varsayılan olarak OR mantığı uygular.
+# 'operator': 'and' ile her iki kelimenin de geçmesi şart koşulur.
+GET products/_search
+{
+  "query": {
+    "match": {
+      "name": {
+        "query": "Wireless Headphones",
+        "operator": "and"
+      }
+    }
+  }
+}
+
+###
+# 2. MINIMUM_SHOULD_MATCH (Yüzdelik ve Sayısal Terim Eşiği)
+# Uzun sorgularda kaç terimin eşleşmesi gerektiğini belirler.
+GET products/_search
+{
+  "query": {
+    "match": {
+      "description": {
+        "query": "wireless noise cancelling over ear headphones",
+        "minimum_should_match": "75%"
+      }
+    }
+  }
+}
+
+###
+# 3. EXACT PHRASE VE SLOP (Kelime Yakınlığı Toleransı)
+# match_phrase kelimelerin sıralı olmasını ister; slop: 2 araya 2 kelime girmesine izin verir.
+GET products/_search
+{
+  "query": {
+    "match_phrase": {
+      "description": {
+        "query": "noise cancelling headphones",
+        "slop": 2
+      }
+    }
+  }
+}
+
+###
+# 4. MULTI_MATCH VE ALAN BOOSTING (name^2)
+# Birden çok alanda arama yapar; ürün adındaki eşleşmeye açıklamadan 2 kat fazla skor verir.
+GET products/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "wireless",
+      "fields": ["name^2", "description"]
+    }
+  }
+}
+
+###
+# 5. FUZZY MATCH (Yazım Hatası / Typo Toleransı)
+# 'wirless' araması 'wireless' içeren ürünleri Levenshtein mesafesiyle bulur.
+GET products/_search
+{
+  "query": {
+    "match": {
+      "name": {
+        "query": "wirless",
+        "fuzziness": "AUTO"
+      }
+    }
+  }
+}
+
+###
+# 6. TERM VE TERMS LEVEL SORGULARI (Structured Exact Filter)
+# Exact eşleşme; keyword alanlar için büyük/küçük harf duyarlıdır ("Electronics").
+GET products/_search
+{
+  "query": {
+    "terms": {
+      "category": ["Electronics", "Computers", "Gaming"]
+    }
+  }
+}
+
+###
+# Müşteri e-postası üzerinde exact term filtresi
+GET customers/_search
+{
+  "query": {
+    "term": {
+      "email": "jhanson@villegas.com"
+    }
+  }
+}
+
+###
+# 7. RANGE VE DATE MATH SORGULARI
+# Sayısal fiyat aralığı (50 ile 500 arası)
+GET products/_search
+{
+  "query": {
+    "range": {
+      "price": {
+        "gte": 50,
+        "lte": 500
+      }
+    }
+  }
+}
+
+###
+# Sabit sentetik verinin tarih aralığı (2022-2025); göreli now filtresi zaman geçtikçe boş sonuç verebilir.
+GET orders/_search
+{
+  "query": {
+    "range": {
+      "order_date": {
+        "gte": "2022-01-01",
+        "lte": "2026-01-01"
+      }
+    }
+  }
+}
+
+###
+# 8. BOOL SORGUSU (Filter, Must, Must_Not, Should Birlikte)
+# Filter context skor üretmez ve cache'lenir; Must skor üretir; Must_Not dışlar.
+GET products/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "in_stock": true } }
+      ],
+      "filter": [
+        { "terms": { "category": ["Electronics", "Gaming", "Computers"] } },
+        { "range": { "price": { "lte": 1000 } } }
+      ],
+      "must_not": [
+        { "term": { "tags": "bestseller" } }
+      ],
+      "should": [
+        { "term": { "tags": "eco" } }
+      ]
+    }
+  }
+}
+
+###
+# 9. SIRALAMA (SORTING) VE MISSING VALUES
+# Fiyata göre artan, çıkış tarihine göre azalan; tarihi olmayanlar en sona ('_last').
+GET products/_search
+{
+  "sort": [
+    { "category": "asc" },
+    { "price": "asc" },
+    {
+      "release_date": {
+        "order": "desc",
+        "missing": "_last"
+      }
+    }
+  ]
+}
+
+###
+# 10. SAYFALAMA (PAGINATION: from / size)
+# 1. Sayfa (İlk 5 ürün)
+GET products/_search
+{
+  "from": 0,
+  "size": 5,
+  "sort": [{ "price": "asc" }]
+}
+
+###
+# 2. Sayfa (Sonraki 5 ürün)
+GET products/_search
+{
+  "from": 5,
+  "size": 5,
+  "sort": [{ "price": "asc" }]
+}

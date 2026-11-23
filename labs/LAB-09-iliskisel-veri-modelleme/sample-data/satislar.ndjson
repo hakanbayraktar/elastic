@@ -1,0 +1,12 @@
+{"index": {"_id": "S-1"}}
+{"siparis_id": "S-1", "musteri_id": 1, "tutar": 12294.5}
+{"index": {"_id": "S-2"}}
+{"siparis_id": "S-2", "musteri_id": 3, "tutar": 6497.5}
+{"index": {"_id": "S-3"}}
+{"siparis_id": "S-3", "musteri_id": 3, "tutar": 698.0}
+{"index": {"_id": "S-4"}}
+{"siparis_id": "S-4", "musteri_id": 2, "tutar": 3998.8}
+{"index": {"_id": "S-5"}}
+{"siparis_id": "S-5", "musteri_id": 5, "tutar": 28499.9}
+{"index": {"_id": "S-6"}}
+{"siparis_id": "S-6", "musteri_id": 3, "tutar": 4344.0}

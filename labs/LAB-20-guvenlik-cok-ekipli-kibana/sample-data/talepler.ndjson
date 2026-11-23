@@ -1,0 +1,16 @@
+{"index": {"_id": "T-101"}}
+{"@timestamp": "2026-11-10T09:00:00Z", "talep_id": "T-101", "ekip": "destek", "konu": "Şifre sıfırlama", "durum": "acik", "musteri_email": "ayse.demir@ornek.com.tr", "telefon": "0532 000 01 01"}
+{"index": {"_id": "T-102"}}
+{"@timestamp": "2026-11-11T09:00:00Z", "talep_id": "T-102", "ekip": "satis", "konu": "Toplu alım teklifi", "durum": "acik", "musteri_email": "mehmet.kaya@ornek.com.tr", "telefon": "0533 000 02 02"}
+{"index": {"_id": "T-103"}}
+{"@timestamp": "2026-11-12T09:00:00Z", "talep_id": "T-103", "ekip": "destek", "konu": "Fatura görünmüyor", "durum": "kapali", "musteri_email": "elif.sahin@ornek.com.tr", "telefon": "0534 000 03 03"}
+{"index": {"_id": "T-104"}}
+{"@timestamp": "2026-11-13T09:00:00Z", "talep_id": "T-104", "ekip": "destek", "konu": "Kargo gecikmesi", "durum": "acik", "musteri_email": "can.yildiz@ornek.com.tr", "telefon": "0535 000 04 04"}
+{"index": {"_id": "T-105"}}
+{"@timestamp": "2026-11-14T09:00:00Z", "talep_id": "T-105", "ekip": "satis", "konu": "Kurumsal indirim", "durum": "kapali", "musteri_email": "zeynep.arslan@ornek.com.tr", "telefon": "0536 000 05 05"}
+{"index": {"_id": "T-106"}}
+{"@timestamp": "2026-11-15T09:00:00Z", "talep_id": "T-106", "ekip": "destek", "konu": "İade talebi", "durum": "acik", "musteri_email": "emre.celik@ornek.com.tr", "telefon": "0537 000 06 06"}
+{"index": {"_id": "T-107"}}
+{"@timestamp": "2026-11-16T09:00:00Z", "talep_id": "T-107", "ekip": "satis", "konu": "Bayilik başvurusu", "durum": "acik", "musteri_email": "selin.koc@ornek.com.tr", "telefon": "0538 000 07 07"}
+{"index": {"_id": "T-108"}}
+{"@timestamp": "2026-11-17T09:00:00Z", "talep_id": "T-108", "ekip": "destek", "konu": "Hesap kilitlendi", "durum": "kapali", "musteri_email": "burak.aydin@ornek.com.tr", "telefon": "0539 000 08 08"}

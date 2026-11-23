@@ -1,0 +1,72 @@
+name: elastic-lab00
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5
+    container_name: elasticsearch-lab00
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.license.self_generated.type=basic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - path.repo=/usr/share/elasticsearch/snapshots
+      - s3.client.default.endpoint=elastic-minio:9000
+      - s3.client.default.protocol=http
+      - s3.client.default.path_style_access=true
+    ports:
+      - "${ELASTIC_BIND_ADDR:-0.0.0.0}:9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - elasticsearch_snapshots:/usr/share/elasticsearch/snapshots
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k -fsS -u elastic:${ELASTIC_PASSWORD:-DevOps2026!} http://localhost:9200/_cluster/health?wait_for_status=yellow >/dev/null || curl -k -fsS -u elastic:${ELASTIC_PASSWORD:-DevOps2026!} https://localhost:9200/_cluster/health?wait_for_status=yellow >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.5
+    container_name: setup-lab00
+    restart: "no"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    command: >
+      bash -c '
+        ES_PROTO="http";
+        if ! curl -k -s -u elastic:${ELASTIC_PASSWORD:-DevOps2026!} http://elasticsearch:9200/_cluster/health >/dev/null 2>&1; then
+          ES_PROTO="https";
+        fi;
+        echo "Elasticsearch hazır ($${ES_PROTO}://elasticsearch:9200), kibana_system şifresi ayarlanıyor...";
+        curl -k -s -X POST -u elastic:${ELASTIC_PASSWORD:-DevOps2026!} -H "Content-Type: application/json" \
+          $${ES_PROTO}://elasticsearch:9200/_security/user/kibana_system/_password \
+          -d "{\"password\":\"${KIBANA_PASSWORD:-${ELASTIC_PASSWORD:-DevOps2026!}}\"}";
+        echo "kibana_system şifresi başarıyla ayarlandı.";
+      '
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:9.5.5
+    container_name: kibana-lab00
+    restart: unless-stopped
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      setup:
+        condition: service_completed_successfully
+    environment:
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS:-http://elasticsearch:9200}
+      - ELASTICSEARCH_SSL_VERIFICATIONMODE=none
+      - SERVER_PUBLICBASEURL=${KIBANA_PUBLIC_BASE_URL:-http://localhost:5601}
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD:-${ELASTIC_PASSWORD:-DevOps2026!}}
+      - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY:-c3VwZXJzZWNyZXRrZXlmb3JraWJhbmExMjM0NTY3OA==}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY:-c3VwZXJzZWNyZXRrZXlmb3JraWJhbmExMjM0NTY3OA==}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_ENCRYPTION_KEY:-c3VwZXJzZWNyZXRrZXlmb3JraWJhbmExMjM0NTY3OA==}
+    ports:
+      - "${KIBANA_BIND_ADDR:-0.0.0.0}:5601:5601"
+
+volumes:
+  elasticsearch_data:
+  elasticsearch_snapshots:

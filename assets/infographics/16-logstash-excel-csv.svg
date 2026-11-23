@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Excel'den Elasticsearch'e: CSV, Logstash ve yalnız yazma yetkili kullanıcı</title>
+  <desc id="desc">Excel dosyası Türkçe biçimli bir CSV'ye çevrilir; Logstash dosyayı okur, noktalı virgülle böler, başlık satırını atar, binlik nokta ve ondalık virgülü düzeltir, gg.aa.yyyy tarihini @timestamp yapar ve yalnız excel-* index'lerine yazabilen excel_logstash kullanıcısıyla excel-satislar index'ine yazar. Altta ham değerlerle index'lenen değerler yan yana gösterilir.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .bad { font:700 18px "Courier New",monospace; fill:#bd271e }
+    .good { font:700 18px "Courier New",monospace; fill:#2e7d32 }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker>
+  </defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Excel'den Elasticsearch'e: CSV, Logstash, yalnız yazma yetkisi</text>
+  <text x="60" y="116" class="sub">Türkçe Excel'in biçimi Logstash'te düzeltilir; Logstash yalnız kendi index'ine yazabilen kullanıcıyla bağlanır.</text>
+
+  <rect x="60" y="170" rx="14" width="250" height="250" class="card"/>
+  <rect x="60" y="170" rx="14" width="250" height="50" fill="#5aa454"/><rect x="60" y="202" width="250" height="18" fill="#5aa454"/>
+  <text x="80" y="203" class="head">Excel</text>
+  <text x="80" y="256" class="mono">satislar.xlsx</text>
+  <text x="80" y="292" class="body">24 fatura, 8 sütun</text>
+  <text x="80" y="340" class="small">Farklı Kaydet › CSV</text>
+  <text x="80" y="368" class="small">ya da sunucuda</text>
+  <text x="80" y="396" class="mono">xlsx_to_csv.py</text>
+
+  <path d="M318,295 L372,295" class="arrow"/>
+
+  <rect x="380" y="170" rx="14" width="300" height="250" class="card"/>
+  <rect x="380" y="170" rx="14" width="300" height="50" fill="#6b5b95"/><rect x="380" y="202" width="300" height="18" fill="#6b5b95"/>
+  <text x="400" y="203" class="head">data/satislar.csv</text>
+  <text x="400" y="256" class="body">ayırıcı <tspan class="bad">;</tspan></text>
+  <text x="400" y="296" class="body">tutar <tspan class="bad">28.499,90</tspan></text>
+  <text x="400" y="336" class="body">tarih <tspan class="bad">09.01.2026</tspan></text>
+  <text x="400" y="376" class="body">1. satır başlık</text>
+
+  <path d="M688,295 L742,295" class="arrow"/>
+
+  <rect x="750" y="170" rx="14" width="420" height="250" class="card"/>
+  <rect x="750" y="170" rx="14" width="420" height="50" fill="#005571"/><rect x="750" y="202" width="420" height="18" fill="#005571"/>
+  <text x="770" y="203" class="head">Logstash · logstash-excel-lab</text>
+  <text x="770" y="256" class="mono">csv     separator ";"</text>
+  <text x="770" y="292" class="mono">drop    başlık satırı</text>
+  <text x="770" y="328" class="mono">mutate  1.234,50 → 1234.50</text>
+  <text x="770" y="364" class="mono">date    dd.MM.yyyy → @timestamp</text>
+  <text x="770" y="400" class="small">API: 127.0.0.1:9603 (sayaçlar)</text>
+
+  <path d="M1178,295 L1232,295" class="arrow"/>
+
+  <rect x="1240" y="170" rx="14" width="300" height="250" class="card"/>
+  <rect x="1240" y="170" rx="14" width="300" height="50" fill="#0b6e99"/><rect x="1240" y="202" width="300" height="18" fill="#0b6e99"/>
+  <text x="1260" y="203" class="head">Elasticsearch</text>
+  <text x="1260" y="256" class="mono">excel-satislar</text>
+  <text x="1260" y="292" class="body">şablon: tipler önceden</text>
+  <text x="1260" y="328" class="body">_id = fatura_no</text>
+  <text x="1260" y="376" class="small">Kibana Discover ile bakılır</text>
+
+  <rect x="750" y="460" rx="14" width="790" height="130" class="card"/>
+  <rect x="750" y="460" rx="14" width="790" height="50" fill="#f5a700"/><rect x="750" y="492" width="790" height="18" fill="#f5a700"/>
+  <text x="770" y="493" class="head">Kullanıcı: excel_logstash · rol: excel-logstash-writer</text>
+  <text x="770" y="546" class="body">Yetki: yalnız <tspan class="mono">excel-*</tspan> index'lerine yazma (<tspan class="mono">create_index</tspan>, <tspan class="mono">index</tspan>)</text>
+  <text x="770" y="576" class="body">Başka index'e yazmak isterse: <tspan class="bad">403 security_exception</tspan></text>
+  <path d="M960,452 L960,428" class="arrow"/>
+
+  <rect x="60" y="640" rx="14" width="1480" height="300" class="card"/>
+  <text x="90" y="690" class="h2">Önce ve sonra: aynı fatura</text>
+  <text x="90" y="740" class="small">Alan</text>
+  <text x="380" y="740" class="small">CSV'de (metin)</text>
+  <text x="760" y="740" class="small">Index'te</text>
+  <text x="1170" y="740" class="small">Neden önemli</text>
+  <line x1="90" y1="756" x2="1510" y2="756" stroke="#dfe1e6" stroke-width="2"/>
+  <text x="90" y="796" class="mono">tutar</text>
+  <text x="380" y="796" class="bad">28.500,00</text>
+  <text x="760" y="796" class="good">28500.0</text>
+  <text x="1170" y="796" class="body">toplam ve ortalama alınır</text>
+  <text x="90" y="846" class="mono">tarih</text>
+  <text x="380" y="846" class="bad">04.02.2026</text>
+  <text x="760" y="846" class="good">2026-02-03T21:00:00Z</text>
+  <text x="1170" y="846" class="body">zaman aralığıyla aranır</text>
+  <text x="90" y="896" class="mono">adet</text>
+  <text x="380" y="896" class="bad">"6"</text>
+  <text x="760" y="896" class="good">6</text>
+  <text x="1170" y="896" class="body">sayı olarak sıralanır</text>
+</svg>

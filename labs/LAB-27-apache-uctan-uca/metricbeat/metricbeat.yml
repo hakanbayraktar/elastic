@@ -1,0 +1,26 @@
+metricbeat.modules:
+  - module: apache
+    metricsets: ["status"]
+    period: 10s
+    hosts: ["http://apache/server-status?auto"]
+
+  - module: docker
+    metricsets: ["container", "cpu", "diskio", "healthcheck", "info", "memory", "network"]
+    hosts: ["unix:///var/run/docker.sock"]
+    period: 10s
+
+setup.dashboards.enabled: false
+# Tek node'lu ana cluster: Metricbeat'in kurdugu sablon replica 0 versin, yoksa data stream yellow kalir.
+setup.template.settings:
+  index.number_of_shards: 1
+  index.number_of_replicas: 0
+setup.kibana:
+  host: "${KIBANA_URL:http://kibana:5601}"
+
+output.elasticsearch:
+  hosts: ["${ELASTIC_URL:http://elasticsearch:9200}"]
+  username: "${ELASTIC_USER:}"
+  password: "${ELASTIC_PASSWORD:}"
+
+logging.level: info
+monitoring.enabled: false

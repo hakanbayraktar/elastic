@@ -1,0 +1,53 @@
+### ==============================================================================
+### FastAPI ELK: Dev Tools Modül 03 - ES|QL ile Kök Neden Analizi (Root Cause Analysis - RCA)
+### ==============================================================================
+
+### 1. HTTP Durum Kodları Genel Dağılımı (ES|QL)
+POST _query
+{
+  "query": """
+    FROM logs-fastapi-*
+    | WHERE http.response.status_code IS NOT NULL OR http.status_code IS NOT NULL
+    | EVAL status = coalesce(http.response.status_code, http.status_code)
+    | STATS count = count() BY status
+    | SORT count DESC
+  """
+}
+
+### 2. En Çok 500 Hatası Veren Endpoint'ler ve Hata Sınıfları (ES|QL)
+POST _query
+{
+  "query": """
+    FROM logs-fastapi-*
+    | WHERE http.response.status_code >= 500 OR http.status_code >= 500 OR log.level == "ERROR"
+    | STATS fail_count = count() BY http.route, error.class
+    | SORT fail_count DESC
+    | LIMIT 10
+  """
+}
+
+### 3. Endpoint Bazında Yanıt Süresi Metrikleri (P50, P90, Ortalama ms)
+POST _query
+{
+  "query": """
+    FROM logs-fastapi-*
+    | WHERE http.duration_ms IS NOT NULL
+    | STATS avg_lat = round(avg(http.duration_ms), 2),
+            p90_lat = round(percentile(http.duration_ms, 90), 2),
+            max_lat = round(max(http.duration_ms), 2),
+            total_req = count() BY http.route
+    | SORT avg_lat DESC
+  """
+}
+
+### 4. Kök Neden Analizi (RCA): Son Hata Olaylarının Zaman Damgası ve Detayları
+POST _query
+{
+  "query": """
+    FROM logs-fastapi-*
+    | WHERE log.level == "ERROR"
+    | KEEP @timestamp, http.route, error.class, error.message, http.request.id
+    | SORT @timestamp DESC
+    | LIMIT 20
+  """
+}

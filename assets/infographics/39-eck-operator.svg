@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">ECK: istenen durum, operatör ve ürettiği Kubernetes nesneleri</title>
+  <desc id="desc">Kullanıcı iki kısa kaynak yazar: Elasticsearch ve Kibana. ECK operatörü bunları izler ve StatefulSet, PVC, Service, sertifika ve parola Secret'larını, Kibana Deployment'ını üretir. NodePort'lar kind extraPortMappings ile host'un 127.0.0.1 adresine bağlanır; Kibana'ya SSH tüneliyle girilir. Pod silinince StatefulSet aynı adla yeni pod açar ve aynı PVC'yi bağlar, veri kalır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .bold { font:700 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 16px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .want { fill:#fff8e1; stroke:#f5a700; stroke-width:2 }
+    .op { fill:#f0edf6; stroke:#6b5b95; stroke-width:2 }
+    .obj { fill:#e6f1f6; stroke:#0b6e99; stroke-width:2 }
+    .data { fill:#eef7ee; stroke:#5aa454; stroke-width:2 }
+    .arrow { stroke:#42526e; stroke-width:2.5; fill:none; marker-end:url(#ok) }
+  </style>
+  <defs><marker id="ok" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#42526e"/></marker></defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">İki kısa kaynak yazın, gerisini operatör üretsin</text>
+  <text x="60" y="116" class="sub">ECK, "ne istiyorum"u izler ve Kubernetes nesnelerini kendisi kurup ayakta tutar.</text>
+
+  <rect x="60" y="160" rx="14" width="400" height="420" class="card"/>
+  <rect x="60" y="160" rx="14" width="400" height="50" fill="#f5a700"/><rect x="60" y="192" width="400" height="18" fill="#f5a700"/>
+  <text x="80" y="193" class="head">1 · İstenen durum (siz)</text>
+  <rect x="90" y="240" rx="10" width="340" height="150" class="want"/>
+  <text x="110" y="272" class="mono">kind: Elasticsearch</text>
+  <text x="110" y="300" class="mono">version: 9.5.5</text>
+  <text x="110" y="328" class="mono">nodeSets: count: 1</text>
+  <text x="110" y="356" class="mono">volumeClaimTemplates: 2Gi</text>
+  <rect x="90" y="410" rx="10" width="340" height="120" class="want"/>
+  <text x="110" y="442" class="mono">kind: Kibana</text>
+  <text x="110" y="470" class="mono">version: 9.5.5</text>
+  <text x="110" y="498" class="mono">elasticsearchRef: eck</text>
+
+  <path d="M462,370 L530,370" class="arrow"/>
+  <rect x="540" y="160" rx="14" width="300" height="420" class="card"/>
+  <rect x="540" y="160" rx="14" width="300" height="50" fill="#6b5b95"/><rect x="540" y="192" width="300" height="18" fill="#6b5b95"/>
+  <text x="560" y="193" class="head">2 · Operatör</text>
+  <rect x="570" y="240" rx="10" width="240" height="110" class="op"/>
+  <text x="590" y="275" class="bold">elastic-operator</text>
+  <text x="590" y="302" class="small">elastic-system</text>
+  <text x="590" y="328" class="small">ECK 3.5.0</text>
+  <text x="570" y="395" class="body">İzler: istenen ile</text>
+  <text x="570" y="422" class="body">gerçek farklı mı?</text>
+  <text x="570" y="460" class="body">Farkı kapatır:</text>
+  <text x="570" y="487" class="body">kurar, onarır,</text>
+  <text x="570" y="514" class="body">sırayla yükseltir.</text>
+  <path d="M842,370 L910,370" class="arrow"/>
+
+  <rect x="920" y="160" rx="14" width="620" height="420" class="card"/>
+  <rect x="920" y="160" rx="14" width="620" height="50" fill="#0b6e99"/><rect x="920" y="192" width="620" height="18" fill="#0b6e99"/>
+  <text x="940" y="193" class="head">3 · Üretilen nesneler (eck-lab namespace)</text>
+  <rect x="950" y="235" rx="10" width="270" height="70" class="obj"/><text x="968" y="265" class="bold">StatefulSet</text><text x="968" y="290" class="mono">eck-es-default</text>
+  <rect x="1240" y="235" rx="10" width="270" height="70" class="data"/><text x="1258" y="265" class="bold">PVC (veri burada)</text><text x="1258" y="290" class="mono">elasticsearch-data-…</text>
+  <rect x="950" y="320" rx="10" width="270" height="70" class="obj"/><text x="968" y="350" class="bold">Service</text><text x="968" y="375" class="mono">eck-es-http :30087</text>
+  <rect x="1240" y="320" rx="10" width="270" height="70" class="obj"/><text x="1258" y="350" class="bold">Service</text><text x="1258" y="375" class="mono">eck-kb-http :30086</text>
+  <rect x="950" y="405" rx="10" width="270" height="70" class="obj"/><text x="968" y="435" class="bold">Secret: parola</text><text x="968" y="460" class="mono">eck-es-elastic-user</text>
+  <rect x="1240" y="405" rx="10" width="270" height="70" class="obj"/><text x="1258" y="435" class="bold">Secret: CA + TLS</text><text x="1258" y="460" class="mono">eck-es-http-certs-…</text>
+  <text x="950" y="515" class="small">Onlarca Secret daha: transport sertifikaları, iç kullanıcılar,</text>
+  <text x="950" y="541" class="small">Kibana'nın servis hesabı. Hiçbirini siz yazmazsınız.</text>
+
+  <rect x="60" y="620" rx="14" width="720" height="320" class="card"/>
+  <rect x="60" y="620" rx="14" width="720" height="50" fill="#5aa454"/><rect x="60" y="652" width="720" height="18" fill="#5aa454"/>
+  <text x="80" y="653" class="head">Pod silinince</text>
+  <rect x="90" y="700" rx="10" width="200" height="70" class="obj"/><text x="108" y="732" class="mono">eck-es-default-0</text><text x="108" y="756" class="small">eski uid</text>
+  <path d="M292,735 L360,735" class="arrow"/>
+  <rect x="370" y="700" rx="10" width="200" height="70" class="obj"/><text x="388" y="732" class="mono">eck-es-default-0</text><text x="388" y="756" class="small">yeni uid, aynı ad</text>
+  <path d="M470,772 L470,820" class="arrow"/>
+  <rect x="370" y="826" rx="10" width="380" height="70" class="data"/><text x="388" y="858" class="bold">Aynı PVC bağlanır</text><text x="388" y="882" class="small">eck-siparis: 3 belge yerinde</text>
+  <text x="90" y="820" class="body">StatefulSet aynı adla</text>
+  <text x="90" y="847" class="body">yeni pod açar.</text>
+
+  <rect x="820" y="620" rx="14" width="720" height="320" class="card"/>
+  <rect x="820" y="620" rx="14" width="720" height="50" fill="#bd271e"/><rect x="820" y="652" width="720" height="18" fill="#bd271e"/>
+  <text x="840" y="653" class="head">Erişim: yalnız loopback</text>
+  <text x="850" y="710" class="body">kind extraPortMappings: 30086 / 30087 → 127.0.0.1</text>
+  <text x="850" y="748" class="bold">TLS</text>
+  <text x="850" y="776" class="mono">https://127.0.0.1:30087   → ad sertifikada yok, red</text>
+  <text x="850" y="804" class="mono">https://eck-es-http.eck-lab.svc:30087</text>
+  <text x="850" y="830" class="mono">  --resolve …:127.0.0.1    → doğrulanır</text>
+  <text x="850" y="872" class="bold">Kibana</text>
+  <text x="850" y="900" class="mono">ssh -L 30086:127.0.0.1:30086 → https://127.0.0.1:30086</text>
+</svg>

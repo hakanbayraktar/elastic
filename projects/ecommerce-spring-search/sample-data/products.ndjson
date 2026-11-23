@@ -1,0 +1,40 @@
+{"index": {"_id": "P1001", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1001", "name": "Wireless Noise Cancelling Headphones Pro", "description": "Wireless noise-cancelling over-ear headphones with long battery life.", "category": "Electronics", "price": 1448.39, "in_stock": true, "release_date": "2023-02-28", "tags": ["gaming", "wireless", "4k", "eco"], "brand": "NovaSound"}
+{"index": {"_id": "P1002", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1002", "name": "Wireless Headphones Lite", "description": "Light wireless headphones for daily travel.", "category": "Electronics", "price": 150.04, "in_stock": true, "release_date": "2022-05-27", "tags": ["limited", "eco", "new"], "brand": "NovaSound"}
+{"index": {"_id": "P1003", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1003", "name": "Gaming Wireless Headset", "description": "Wireless gaming headset with surround sound.", "category": "Gaming", "price": 296.82, "in_stock": false, "release_date": "2022-05-15", "tags": ["new", "discount", "portable"], "brand": "NovaPlay"}
+{"index": {"_id": "P1004", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1004", "name": "Smart Watch Active", "description": "Smart fitness watch with heart rate tracking.", "category": "Electronics", "price": 1274.34, "in_stock": true, "release_date": "2025-01-03", "tags": ["wireless", "smart", "limited"], "brand": "NovaTech"}
+{"index": {"_id": "P1005", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1005", "name": "Series Lite", "description": "Voice reality enough friend.", "category": "Gaming", "price": 134.1, "in_stock": true, "release_date": "2022-12-19", "tags": ["smart"], "brand": "NovaHome"}
+{"index": {"_id": "P1006", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1006", "name": "Should X", "description": "War song off.", "category": "Books", "price": 54.8, "in_stock": true, "release_date": "2022-06-25", "tags": ["portable", "bestseller"], "brand": "NovaHome"}
+{"index": {"_id": "P1007", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1007", "name": "Significant Lite", "description": "Tell hotel clear order.", "category": "Home Appliances", "price": 148.42, "in_stock": false, "release_date": "2023-07-21", "tags": ["new", "smart"], "brand": "NovaHome"}
+{"index": {"_id": "P1008", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1008", "name": "Bill Plus", "description": "Recognize truth same people camera foot.", "category": "Computers", "price": 1423.01, "in_stock": true, "release_date": "2025-01-12", "tags": ["smart", "gaming", "eco"], "brand": "NovaTech"}
+{"index": {"_id": "P1009", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1009", "name": "At Max", "description": "Size short somebody.", "category": "Gaming", "price": 840.3, "in_stock": true, "release_date": "2024-03-27", "tags": ["bestseller", "portable", "gaming"], "brand": "NovaHome"}
+{"index": {"_id": "P1010", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1010", "name": "Change Max", "description": "Alone economic lose couple necessary cup feeling.", "category": "Home Appliances", "price": 363.16, "in_stock": true, "release_date": "2022-11-10", "tags": ["eco", "wireless"], "brand": "NovaHome"}
+{"index": {"_id": "P1011", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1011", "name": "Organization Lite", "description": "Mission cold each young.", "category": "Computers", "price": 188.66, "in_stock": false, "release_date": "2023-12-22", "tags": ["gaming", "limited", "bestseller", "4k"], "brand": "NovaTech"}
+{"index": {"_id": "P1012", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1012", "name": "Trouble Max", "description": "She contain follow site perform.", "category": "Books", "price": 242.48, "in_stock": true, "release_date": "2023-04-21", "tags": ["eco", "wireless", "4k", "gaming"], "brand": "NovaHome"}
+{"index": {"_id": "P1013", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1013", "name": "South X", "description": "That avoid actually remember minute.", "category": "Home Appliances", "price": 1407.08, "in_stock": true, "release_date": "2024-02-09", "tags": ["eco"], "brand": "NovaHome"}
+{"index": {"_id": "P1014", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1014", "name": "Difference Plus", "description": "Significant market process own move sort.", "category": "Gaming", "price": 1275.59, "in_stock": false, "release_date": "2025-01-04", "tags": ["smart", "discount", "portable", "bestseller"], "brand": "NovaHome"}
+{"index": {"_id": "P1015", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1015", "name": "Shake Plus", "description": "Baby resource finish wall.", "category": "Electronics", "price": 1089.95, "in_stock": true, "release_date": "2023-11-10", "tags": ["discount", "new", "4k", "gaming"], "brand": "NovaTech"}
+{"index": {"_id": "P1016", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1016", "name": "Total X", "description": "Point into art you most natural.", "category": "Mobile", "price": 40.91, "in_stock": true, "release_date": "2024-02-27", "tags": ["eco"], "brand": "NovaTech"}
+{"index": {"_id": "P1017", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1017", "name": "That X", "description": "Admit girl effort remain color standard trouble.", "category": "Gaming", "price": 973.41, "in_stock": true, "release_date": "2022-08-08", "tags": ["bestseller"], "brand": "NovaHome"}
+{"index": {"_id": "P1018", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1018", "name": "Rise Plus", "description": "Shoulder throw plant minute phone Congress.", "category": "Gaming", "price": 642.65, "in_stock": false, "release_date": "2023-07-20", "tags": ["portable", "bestseller", "new"], "brand": "NovaHome"}
+{"index": {"_id": "P1019", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1019", "name": "Away Max", "description": "Pass point should eat decide.", "category": "Books", "price": 1085.04, "in_stock": true, "release_date": "2024-03-17", "tags": ["wireless", "gaming", "bestseller", "smart"], "brand": "NovaHome"}
+{"index": {"_id": "P1020", "_index": "ecommerce-products-v1"}}
+{"product_id": "P1020", "name": "Mention X", "description": "Effort main a art crime.", "category": "Gaming", "price": 688.9, "in_stock": true, "release_date": "2023-11-18", "tags": ["discount"], "brand": "NovaHome"}

@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">SIEM hattı: senaryo logu, Logstash, zenginleştirme, tespit kuralları, alarm ve triyaj</title>
+  <desc id="desc">Senaryo logu Filebeat ile Logstash'e gider, ECS güvenlik olayına çevrilir ve ingest pipeline'da tehdit istihbaratı ile zenginleşir. Auditbeat izlenen dizindeki değişikliği ayrı bir data stream'e yazar. Beş tespit kuralı olaylardan alarm üretir; alarm triyaj edilir, yanlış pozitif kural istisnasıyla ayarlanır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .h2 { font:700 21px Arial,sans-serif; fill:#172b4d }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 16px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 17px Arial,sans-serif; fill:#2e7d32 }
+    .bad { font:700 17px Arial,sans-serif; fill:#bd271e }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#arrow) }
+  </style>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker></defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">SIEM: satırdan alarma, alarmdan karara</text>
+  <text x="60" y="116" class="sub">Kurallar ham metne değil normalleştirilmiş alanlara bakar; alarmı okuyup karar veren insandır.</text>
+
+  <rect x="60" y="160" rx="14" width="330" height="330" class="card"/>
+  <rect x="60" y="160" rx="14" width="330" height="50" fill="#6b5b95"/><rect x="60" y="192" width="330" height="18" fill="#6b5b95"/>
+  <text x="80" y="193" class="head">Toplama</text>
+  <text x="80" y="246" class="h2">Filebeat</text>
+  <text x="80" y="272" class="mono">data/attack-scenario.log</text>
+  <text x="80" y="300" class="small">saldırgan 203.0.113.77</text>
+  <text x="80" y="324" class="small">yedekleme 198.51.100.20</text>
+  <text x="80" y="372" class="h2">Auditbeat (FIM)</text>
+  <text x="80" y="398" class="mono">izlenen/sshd_config</text>
+  <text x="80" y="426" class="small">değişiklik → siem-fim-auditbeat</text>
+
+  <path d="M398,325 L452,325" class="arrow"/>
+
+  <rect x="460" y="160" rx="14" width="400" height="330" class="card"/>
+  <rect x="460" y="160" rx="14" width="400" height="50" fill="#005571"/><rect x="460" y="192" width="400" height="18" fill="#005571"/>
+  <text x="480" y="193" class="head">Normalleştirme + zenginleştirme</text>
+  <text x="480" y="246" class="small">Ham satır</text>
+  <text x="480" y="272" class="mono">Failed password for devops</text>
+  <text x="480" y="296" class="mono">from 203.0.113.77 port 41001</text>
+  <text x="480" y="340" class="small">Güvenlik olayı (siem-auth-*)</text>
+  <text x="480" y="366" class="mono">event.action  ssh_login_failed</text>
+  <text x="480" y="390" class="mono">event.outcome failure</text>
+  <text x="480" y="414" class="mono">source.ip     203.0.113.77</text>
+  <text x="480" y="438" class="mono">threat.indicator high · risk 50</text>
+
+  <path d="M868,325 L922,325" class="arrow"/>
+
+  <rect x="930" y="160" rx="14" width="610" height="330" class="card"/>
+  <rect x="930" y="160" rx="14" width="610" height="50" fill="#bd271e"/><rect x="930" y="192" width="610" height="18" fill="#bd271e"/>
+  <text x="950" y="193" class="head">Tespit kuralları (dakikada bir)</text>
+  <text x="950" y="246" class="body"><tspan class="h2">eşik</tspan>  aynı IP'den ≥ 10 başarısız</text>
+  <text x="950" y="282" class="body"><tspan class="h2">EQL</tspan>  ≥ 5 başarısız, ardından başarılı giriş</text>
+  <text x="950" y="318" class="body"><tspan class="h2">sorgu</tspan>  yeni kullanıcı · tehdit IP'si</text>
+  <text x="950" y="354" class="body"><tspan class="h2">sorgu</tspan>  izlenen dosya güncellendi</text>
+  <text x="950" y="410" class="small">Eşleşme → alarm (.alerts-security.alerts-default)</text>
+  <text x="950" y="438" class="small">critical 1 · high 3 · medium 19 (yapı taşları hariç)</text>
+
+  <rect x="60" y="530" rx="14" width="720" height="410" class="card"/>
+  <text x="90" y="578" class="h2">Triyaj: alarm gerçek mi?</text>
+  <text x="90" y="626" class="body">İhlal alarmı: hesabı, kaynak IP'yi, girişten sonraki</text>
+  <text x="90" y="654" class="body">olayları (sudo, useradd, crontab) incele.</text>
+  <rect x="90" y="684" width="190" height="56" rx="10" fill="#fdecea" stroke="#bd271e"/><text x="140" y="719" class="h2">open</text>
+  <path d="M286,712 L340,712" class="arrow"/>
+  <rect x="348" y="684" width="210" height="56" rx="10" fill="#fdf0e6" stroke="#f5a700"/><text x="366" y="719" class="h2">acknowledged</text>
+  <path d="M564,712 L618,712" class="arrow"/>
+  <rect x="626" y="684" width="130" height="56" rx="10" fill="#e8f5ee" stroke="#2e7d32"/><text x="650" y="719" class="h2">closed</text>
+  <text x="90" y="790" class="small">Durum, aynı alarma iki kişinin bakmasını önler.</text>
+  <text x="90" y="830" class="small">Kararı yazıya dökmek: docs/OLAY-RAPORU-SABLONU.md</text>
+
+  <rect x="820" y="530" rx="14" width="720" height="410" class="card"/>
+  <text x="850" y="578" class="h2">Yanlış pozitif: kuralı kapatma, istisna ekle</text>
+  <text x="850" y="626" class="body">Yedekleme sunucusu 25 hatalı giriş → brute force alarmı</text>
+  <text x="850" y="662" class="mono">event.outcome : "failure"</text>
+  <text x="850" y="688" class="mono">  and not source.ip : "198.51.100.20"</text>
+  <text x="850" y="738" class="ok">yedekleme sunucusu tekrar dener → yeni alarm 0</text>
+  <text x="850" y="770" class="ok">saldırgan aynı kuralla yakalanmaya devam eder</text>
+  <text x="850" y="820" class="small">Olaylar silinmez; aramada ve panolarda görünür.</text>
+</svg>

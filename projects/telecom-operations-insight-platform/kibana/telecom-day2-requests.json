@@ -1,0 +1,29 @@
+{
+  "type": "xy",
+  "title": "API | İstek sayısı",
+  "query": {
+    "language": "kql",
+    "expression": "event.dataset: \"telecom.day2\" AND service.name: \"edge-proxy\""
+  },
+  "layers": [
+    {
+      "type": "line",
+      "data_source": {
+        "type": "data_view_reference",
+        "ref_id": "telecom-events-lab"
+      },
+      "x": {
+        "operation": "date_histogram",
+        "field": "@timestamp",
+        "label": "Zaman"
+      },
+      "y": [
+        {
+          "operation": "count",
+          "label": "İstek sayısı"
+        }
+      ]
+    }
+  ],
+  "description": "40 proxy isteği; uygulama logları aynı isteği ikinci kez saymaz. Zaman aralığı dashboard tarafından uygulanır."
+}

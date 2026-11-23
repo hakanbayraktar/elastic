@@ -1,0 +1,300 @@
+{"create": {}}
+{"@timestamp": "2026-11-21T08:00:00Z", "servis": "odeme", "seviye": "info", "sure_ms": 20, "mesaj": "istek 1 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:00:37Z", "servis": "sepet", "seviye": "warn", "sure_ms": 33, "mesaj": "istek 2 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:01:14Z", "servis": "katalog", "seviye": "info", "sure_ms": 46, "mesaj": "istek 3 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:01:51Z", "servis": "kimlik", "seviye": "error", "sure_ms": 59, "mesaj": "istek 4 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:02:28Z", "servis": "bildirim", "seviye": "info", "sure_ms": 72, "mesaj": "istek 5 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:03:05Z", "servis": "odeme", "seviye": "info", "sure_ms": 85, "mesaj": "istek 6 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:03:42Z", "servis": "sepet", "seviye": "warn", "sure_ms": 98, "mesaj": "istek 7 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:04:19Z", "servis": "katalog", "seviye": "info", "sure_ms": 111, "mesaj": "istek 8 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:04:56Z", "servis": "kimlik", "seviye": "error", "sure_ms": 124, "mesaj": "istek 9 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:05:33Z", "servis": "bildirim", "seviye": "info", "sure_ms": 137, "mesaj": "istek 10 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:06:10Z", "servis": "odeme", "seviye": "info", "sure_ms": 150, "mesaj": "istek 11 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:06:47Z", "servis": "sepet", "seviye": "warn", "sure_ms": 163, "mesaj": "istek 12 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:07:24Z", "servis": "katalog", "seviye": "info", "sure_ms": 176, "mesaj": "istek 13 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:08:01Z", "servis": "kimlik", "seviye": "error", "sure_ms": 189, "mesaj": "istek 14 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:08:38Z", "servis": "bildirim", "seviye": "info", "sure_ms": 202, "mesaj": "istek 15 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:09:15Z", "servis": "odeme", "seviye": "info", "sure_ms": 215, "mesaj": "istek 16 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:09:52Z", "servis": "sepet", "seviye": "warn", "sure_ms": 228, "mesaj": "istek 17 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:10:29Z", "servis": "katalog", "seviye": "info", "sure_ms": 241, "mesaj": "istek 18 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:11:06Z", "servis": "kimlik", "seviye": "error", "sure_ms": 254, "mesaj": "istek 19 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:11:43Z", "servis": "bildirim", "seviye": "info", "sure_ms": 267, "mesaj": "istek 20 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:12:20Z", "servis": "odeme", "seviye": "info", "sure_ms": 280, "mesaj": "istek 21 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:12:57Z", "servis": "sepet", "seviye": "warn", "sure_ms": 293, "mesaj": "istek 22 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:13:34Z", "servis": "katalog", "seviye": "info", "sure_ms": 306, "mesaj": "istek 23 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:14:11Z", "servis": "kimlik", "seviye": "error", "sure_ms": 319, "mesaj": "istek 24 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:14:48Z", "servis": "bildirim", "seviye": "info", "sure_ms": 332, "mesaj": "istek 25 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:15:25Z", "servis": "odeme", "seviye": "info", "sure_ms": 345, "mesaj": "istek 26 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:16:02Z", "servis": "sepet", "seviye": "warn", "sure_ms": 358, "mesaj": "istek 27 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:16:39Z", "servis": "katalog", "seviye": "info", "sure_ms": 371, "mesaj": "istek 28 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:17:16Z", "servis": "kimlik", "seviye": "error", "sure_ms": 384, "mesaj": "istek 29 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:17:53Z", "servis": "bildirim", "seviye": "info", "sure_ms": 397, "mesaj": "istek 30 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:18:30Z", "servis": "odeme", "seviye": "info", "sure_ms": 410, "mesaj": "istek 31 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:19:07Z", "servis": "sepet", "seviye": "warn", "sure_ms": 423, "mesaj": "istek 32 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:19:44Z", "servis": "katalog", "seviye": "info", "sure_ms": 436, "mesaj": "istek 33 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:20:21Z", "servis": "kimlik", "seviye": "error", "sure_ms": 449, "mesaj": "istek 34 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:20:58Z", "servis": "bildirim", "seviye": "info", "sure_ms": 462, "mesaj": "istek 35 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:21:35Z", "servis": "odeme", "seviye": "info", "sure_ms": 475, "mesaj": "istek 36 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:22:12Z", "servis": "sepet", "seviye": "warn", "sure_ms": 488, "mesaj": "istek 37 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:22:49Z", "servis": "katalog", "seviye": "info", "sure_ms": 21, "mesaj": "istek 38 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:23:26Z", "servis": "kimlik", "seviye": "error", "sure_ms": 34, "mesaj": "istek 39 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:24:03Z", "servis": "bildirim", "seviye": "info", "sure_ms": 47, "mesaj": "istek 40 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:24:40Z", "servis": "odeme", "seviye": "info", "sure_ms": 60, "mesaj": "istek 41 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:25:17Z", "servis": "sepet", "seviye": "warn", "sure_ms": 73, "mesaj": "istek 42 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:25:54Z", "servis": "katalog", "seviye": "info", "sure_ms": 86, "mesaj": "istek 43 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:26:31Z", "servis": "kimlik", "seviye": "error", "sure_ms": 99, "mesaj": "istek 44 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:27:08Z", "servis": "bildirim", "seviye": "info", "sure_ms": 112, "mesaj": "istek 45 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:27:45Z", "servis": "odeme", "seviye": "info", "sure_ms": 125, "mesaj": "istek 46 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:28:22Z", "servis": "sepet", "seviye": "warn", "sure_ms": 138, "mesaj": "istek 47 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:28:59Z", "servis": "katalog", "seviye": "info", "sure_ms": 151, "mesaj": "istek 48 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:29:36Z", "servis": "kimlik", "seviye": "error", "sure_ms": 164, "mesaj": "istek 49 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:30:13Z", "servis": "bildirim", "seviye": "info", "sure_ms": 177, "mesaj": "istek 50 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:30:50Z", "servis": "odeme", "seviye": "info", "sure_ms": 190, "mesaj": "istek 51 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:31:27Z", "servis": "sepet", "seviye": "warn", "sure_ms": 203, "mesaj": "istek 52 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:32:04Z", "servis": "katalog", "seviye": "info", "sure_ms": 216, "mesaj": "istek 53 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:32:41Z", "servis": "kimlik", "seviye": "error", "sure_ms": 229, "mesaj": "istek 54 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:33:18Z", "servis": "bildirim", "seviye": "info", "sure_ms": 242, "mesaj": "istek 55 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:33:55Z", "servis": "odeme", "seviye": "info", "sure_ms": 255, "mesaj": "istek 56 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:34:32Z", "servis": "sepet", "seviye": "warn", "sure_ms": 268, "mesaj": "istek 57 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:35:09Z", "servis": "katalog", "seviye": "info", "sure_ms": 281, "mesaj": "istek 58 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:35:46Z", "servis": "kimlik", "seviye": "error", "sure_ms": 294, "mesaj": "istek 59 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:36:23Z", "servis": "bildirim", "seviye": "info", "sure_ms": 307, "mesaj": "istek 60 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:37:00Z", "servis": "odeme", "seviye": "info", "sure_ms": 320, "mesaj": "istek 61 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:37:37Z", "servis": "sepet", "seviye": "warn", "sure_ms": 333, "mesaj": "istek 62 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:38:14Z", "servis": "katalog", "seviye": "info", "sure_ms": 346, "mesaj": "istek 63 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:38:51Z", "servis": "kimlik", "seviye": "error", "sure_ms": 359, "mesaj": "istek 64 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:39:28Z", "servis": "bildirim", "seviye": "info", "sure_ms": 372, "mesaj": "istek 65 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:40:05Z", "servis": "odeme", "seviye": "info", "sure_ms": 385, "mesaj": "istek 66 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:40:42Z", "servis": "sepet", "seviye": "warn", "sure_ms": 398, "mesaj": "istek 67 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:41:19Z", "servis": "katalog", "seviye": "info", "sure_ms": 411, "mesaj": "istek 68 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:41:56Z", "servis": "kimlik", "seviye": "error", "sure_ms": 424, "mesaj": "istek 69 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:42:33Z", "servis": "bildirim", "seviye": "info", "sure_ms": 437, "mesaj": "istek 70 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:43:10Z", "servis": "odeme", "seviye": "info", "sure_ms": 450, "mesaj": "istek 71 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:43:47Z", "servis": "sepet", "seviye": "warn", "sure_ms": 463, "mesaj": "istek 72 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:44:24Z", "servis": "katalog", "seviye": "info", "sure_ms": 476, "mesaj": "istek 73 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:45:01Z", "servis": "kimlik", "seviye": "error", "sure_ms": 489, "mesaj": "istek 74 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:45:38Z", "servis": "bildirim", "seviye": "info", "sure_ms": 22, "mesaj": "istek 75 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:46:15Z", "servis": "odeme", "seviye": "info", "sure_ms": 35, "mesaj": "istek 76 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:46:52Z", "servis": "sepet", "seviye": "warn", "sure_ms": 48, "mesaj": "istek 77 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:47:29Z", "servis": "katalog", "seviye": "info", "sure_ms": 61, "mesaj": "istek 78 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:48:06Z", "servis": "kimlik", "seviye": "error", "sure_ms": 74, "mesaj": "istek 79 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:48:43Z", "servis": "bildirim", "seviye": "info", "sure_ms": 87, "mesaj": "istek 80 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:49:20Z", "servis": "odeme", "seviye": "info", "sure_ms": 100, "mesaj": "istek 81 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:49:57Z", "servis": "sepet", "seviye": "warn", "sure_ms": 113, "mesaj": "istek 82 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:50:34Z", "servis": "katalog", "seviye": "info", "sure_ms": 126, "mesaj": "istek 83 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:51:11Z", "servis": "kimlik", "seviye": "error", "sure_ms": 139, "mesaj": "istek 84 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:51:48Z", "servis": "bildirim", "seviye": "info", "sure_ms": 152, "mesaj": "istek 85 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:52:25Z", "servis": "odeme", "seviye": "info", "sure_ms": 165, "mesaj": "istek 86 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:53:02Z", "servis": "sepet", "seviye": "warn", "sure_ms": 178, "mesaj": "istek 87 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:53:39Z", "servis": "katalog", "seviye": "info", "sure_ms": 191, "mesaj": "istek 88 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:54:16Z", "servis": "kimlik", "seviye": "error", "sure_ms": 204, "mesaj": "istek 89 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:54:53Z", "servis": "bildirim", "seviye": "info", "sure_ms": 217, "mesaj": "istek 90 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:55:30Z", "servis": "odeme", "seviye": "info", "sure_ms": 230, "mesaj": "istek 91 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:56:07Z", "servis": "sepet", "seviye": "warn", "sure_ms": 243, "mesaj": "istek 92 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:56:44Z", "servis": "katalog", "seviye": "info", "sure_ms": 256, "mesaj": "istek 93 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:57:21Z", "servis": "kimlik", "seviye": "error", "sure_ms": 269, "mesaj": "istek 94 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:57:58Z", "servis": "bildirim", "seviye": "info", "sure_ms": 282, "mesaj": "istek 95 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:58:35Z", "servis": "odeme", "seviye": "info", "sure_ms": 295, "mesaj": "istek 96 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:59:12Z", "servis": "sepet", "seviye": "warn", "sure_ms": 308, "mesaj": "istek 97 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T08:59:49Z", "servis": "katalog", "seviye": "info", "sure_ms": 321, "mesaj": "istek 98 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:00:26Z", "servis": "kimlik", "seviye": "error", "sure_ms": 334, "mesaj": "istek 99 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:01:03Z", "servis": "bildirim", "seviye": "info", "sure_ms": 347, "mesaj": "istek 100 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:01:40Z", "servis": "odeme", "seviye": "info", "sure_ms": 360, "mesaj": "istek 101 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:02:17Z", "servis": "sepet", "seviye": "warn", "sure_ms": 373, "mesaj": "istek 102 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:02:54Z", "servis": "katalog", "seviye": "info", "sure_ms": 386, "mesaj": "istek 103 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:03:31Z", "servis": "kimlik", "seviye": "error", "sure_ms": 399, "mesaj": "istek 104 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:04:08Z", "servis": "bildirim", "seviye": "info", "sure_ms": 412, "mesaj": "istek 105 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:04:45Z", "servis": "odeme", "seviye": "info", "sure_ms": 425, "mesaj": "istek 106 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:05:22Z", "servis": "sepet", "seviye": "warn", "sure_ms": 438, "mesaj": "istek 107 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:05:59Z", "servis": "katalog", "seviye": "info", "sure_ms": 451, "mesaj": "istek 108 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:06:36Z", "servis": "kimlik", "seviye": "error", "sure_ms": 464, "mesaj": "istek 109 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:07:13Z", "servis": "bildirim", "seviye": "info", "sure_ms": 477, "mesaj": "istek 110 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:07:50Z", "servis": "odeme", "seviye": "info", "sure_ms": 490, "mesaj": "istek 111 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:08:27Z", "servis": "sepet", "seviye": "warn", "sure_ms": 23, "mesaj": "istek 112 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:09:04Z", "servis": "katalog", "seviye": "info", "sure_ms": 36, "mesaj": "istek 113 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:09:41Z", "servis": "kimlik", "seviye": "error", "sure_ms": 49, "mesaj": "istek 114 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:10:18Z", "servis": "bildirim", "seviye": "info", "sure_ms": 62, "mesaj": "istek 115 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:10:55Z", "servis": "odeme", "seviye": "info", "sure_ms": 75, "mesaj": "istek 116 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:11:32Z", "servis": "sepet", "seviye": "warn", "sure_ms": 88, "mesaj": "istek 117 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:12:09Z", "servis": "katalog", "seviye": "info", "sure_ms": 101, "mesaj": "istek 118 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:12:46Z", "servis": "kimlik", "seviye": "error", "sure_ms": 114, "mesaj": "istek 119 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:13:23Z", "servis": "bildirim", "seviye": "info", "sure_ms": 127, "mesaj": "istek 120 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:14:00Z", "servis": "odeme", "seviye": "info", "sure_ms": 140, "mesaj": "istek 121 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:14:37Z", "servis": "sepet", "seviye": "warn", "sure_ms": 153, "mesaj": "istek 122 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:15:14Z", "servis": "katalog", "seviye": "info", "sure_ms": 166, "mesaj": "istek 123 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:15:51Z", "servis": "kimlik", "seviye": "error", "sure_ms": 179, "mesaj": "istek 124 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:16:28Z", "servis": "bildirim", "seviye": "info", "sure_ms": 192, "mesaj": "istek 125 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:17:05Z", "servis": "odeme", "seviye": "info", "sure_ms": 205, "mesaj": "istek 126 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:17:42Z", "servis": "sepet", "seviye": "warn", "sure_ms": 218, "mesaj": "istek 127 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:18:19Z", "servis": "katalog", "seviye": "info", "sure_ms": 231, "mesaj": "istek 128 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:18:56Z", "servis": "kimlik", "seviye": "error", "sure_ms": 244, "mesaj": "istek 129 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:19:33Z", "servis": "bildirim", "seviye": "info", "sure_ms": 257, "mesaj": "istek 130 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:20:10Z", "servis": "odeme", "seviye": "info", "sure_ms": 270, "mesaj": "istek 131 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:20:47Z", "servis": "sepet", "seviye": "warn", "sure_ms": 283, "mesaj": "istek 132 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:21:24Z", "servis": "katalog", "seviye": "info", "sure_ms": 296, "mesaj": "istek 133 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:22:01Z", "servis": "kimlik", "seviye": "error", "sure_ms": 309, "mesaj": "istek 134 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:22:38Z", "servis": "bildirim", "seviye": "info", "sure_ms": 322, "mesaj": "istek 135 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:23:15Z", "servis": "odeme", "seviye": "info", "sure_ms": 335, "mesaj": "istek 136 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:23:52Z", "servis": "sepet", "seviye": "warn", "sure_ms": 348, "mesaj": "istek 137 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:24:29Z", "servis": "katalog", "seviye": "info", "sure_ms": 361, "mesaj": "istek 138 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:25:06Z", "servis": "kimlik", "seviye": "error", "sure_ms": 374, "mesaj": "istek 139 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:25:43Z", "servis": "bildirim", "seviye": "info", "sure_ms": 387, "mesaj": "istek 140 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:26:20Z", "servis": "odeme", "seviye": "info", "sure_ms": 400, "mesaj": "istek 141 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:26:57Z", "servis": "sepet", "seviye": "warn", "sure_ms": 413, "mesaj": "istek 142 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:27:34Z", "servis": "katalog", "seviye": "info", "sure_ms": 426, "mesaj": "istek 143 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:28:11Z", "servis": "kimlik", "seviye": "error", "sure_ms": 439, "mesaj": "istek 144 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:28:48Z", "servis": "bildirim", "seviye": "info", "sure_ms": 452, "mesaj": "istek 145 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:29:25Z", "servis": "odeme", "seviye": "info", "sure_ms": 465, "mesaj": "istek 146 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:30:02Z", "servis": "sepet", "seviye": "warn", "sure_ms": 478, "mesaj": "istek 147 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:30:39Z", "servis": "katalog", "seviye": "info", "sure_ms": 491, "mesaj": "istek 148 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:31:16Z", "servis": "kimlik", "seviye": "error", "sure_ms": 24, "mesaj": "istek 149 tamamlandi"}
+{"create": {}}
+{"@timestamp": "2026-11-21T09:31:53Z", "servis": "bildirim", "seviye": "info", "sure_ms": 37, "mesaj": "istek 150 tamamlandi"}

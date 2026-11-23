@@ -1,0 +1,40 @@
+instances:
+- name: es-a
+  dns:
+  - es-a
+  - es-master
+  - localhost
+  ip:
+  - 127.0.0.1
+- name: es-b
+  dns:
+  - es-b
+  - es-data
+  - localhost
+  ip:
+  - 127.0.0.1
+- name: es-c
+  dns:
+  - es-c
+  - es-ingest
+  - localhost
+  ip:
+  - 127.0.0.1
+- name: es-master
+  dns:
+  - es-master
+  - localhost
+  ip:
+  - 127.0.0.1
+- name: es-data
+  dns:
+  - es-data
+  - localhost
+  ip:
+  - 127.0.0.1
+- name: es-ingest
+  dns:
+  - es-ingest
+  - localhost
+  ip:
+  - 127.0.0.1

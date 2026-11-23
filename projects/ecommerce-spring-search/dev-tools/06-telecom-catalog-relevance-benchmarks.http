@@ -1,0 +1,272 @@
+# İzole katalog: log araştırmasının exact filtrelerinden farklı olarak sıralama ölçülür.
+# @assert {"acknowledged": true}
+PUT telecom-relevance-demo
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0,
+    "analysis": {
+      "filter": {
+        "catalog_synonyms": {
+          "type": "synonym_graph",
+          "synonyms": [
+            "mobile, phone"
+          ]
+        },
+        "catalog_shingle": {
+          "type": "shingle",
+          "min_shingle_size": 2,
+          "max_shingle_size": 2
+        }
+      },
+      "tokenizer": {
+        "catalog_ngram": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 12,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      },
+      "analyzer": {
+        "catalog_search": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "catalog_synonyms"
+          ]
+        },
+        "catalog_prefix": {
+          "type": "custom",
+          "tokenizer": "catalog_ngram",
+          "filter": [
+            "lowercase"
+          ]
+        },
+        "catalog_phrase": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "catalog_shingle"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "name": {
+        "type": "text",
+        "analyzer": "standard",
+        "search_analyzer": "catalog_search",
+        "fields": {
+          "prefix": {
+            "type": "text",
+            "analyzer": "catalog_prefix",
+            "search_analyzer": "standard"
+          },
+          "phrase": {
+            "type": "text",
+            "analyzer": "catalog_phrase"
+          }
+        }
+      },
+      "description": {
+        "type": "text",
+        "analyzer": "standard"
+      },
+      "popularity": {
+        "type": "integer"
+      },
+      "status": {
+        "type": "keyword"
+      }
+    }
+  }
+}
+
+###
+# Üç belge; sabit ID ile tekrar yükleme kopya oluşturmaz.
+# @assert {"errors":false,"items.length":3}
+POST telecom-relevance-demo/_bulk?refresh=wait_for
+{"index": {"_id": "p1"}}
+{"name": "Wireless phone", "description": "Fast mobile communication", "popularity": 10, "status": "active"}
+{"index": {"_id": "p2"}}
+{"name": "Wireless router", "description": "Phone network connection", "popularity": 90, "status": "active"}
+{"index": {"_id": "p3"}}
+{"name": "Wired headset", "description": "Audio calls", "popularity": 20, "status": "active"}
+
+###
+# BM25 _score: varsayılan benzerlik. Sonuç sayısını ve ilk belgeyi kontrol edin.
+# @assert {"hits.total.value": 1, "hits.hits.0._id": "p1"}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "match": {
+      "name": "phone"
+    }
+  }
+}
+
+###
+# Boost: ad eşleşmesine açıklamadan daha çok ağırlık.
+# @assert {"hits.total.value": 2, "hits.hits.0._id": "p1"}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "phone",
+      "fields": [
+        "name^4",
+        "description"
+      ],
+      "type": "best_fields"
+    }
+  }
+}
+
+###
+# most_fields: aynı terimin farklı metin alanlarındaki katkılarını toplar.
+# @assert {"hits.total.value": 2}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "wireless",
+      "fields": [
+        "name",
+        "description"
+      ],
+      "type": "most_fields"
+    }
+  }
+}
+
+###
+# cross_fields: aynı analyzer kullanan iki alan tek arama alanı gibi.
+# @assert {"hits.total.value": 1, "hits.hits.0._id": "p3"}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "multi_match": {
+      "query": "wired audio",
+      "fields": [
+        "name",
+        "description"
+      ],
+      "type": "cross_fields",
+      "analyzer": "standard",
+      "operator": "and"
+    }
+  }
+}
+
+###
+# Fuzziness: phnoe transpozisyonu; trace/kimlik alanlarında kullanmayın.
+# @assert {"hits.total.value": 1, "hits.hits.0._id": "p1"}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "match": {
+      "name": {
+        "query": "phnoe",
+        "fuzziness": "AUTO",
+        "analyzer": "standard"
+      }
+    }
+  }
+}
+
+###
+# function_score: filtreli popülerlik katkısı, log hata skorundan ayrıdır.
+# @assert {"hits.total.value": 2, "hits.hits.0._id": "p2"}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "function_score": {
+      "query": {
+        "bool": {
+          "must": {
+            "match": {
+              "name": "wireless"
+            }
+          },
+          "filter": {
+            "term": {
+              "status": "active"
+            }
+          }
+        }
+      },
+      "field_value_factor": {
+        "field": "popularity",
+        "modifier": "log1p",
+        "factor": 1,
+        "missing": 1
+      },
+      "boost_mode": "multiply"
+    }
+  }
+}
+
+###
+# Synonym graph yalnız search analyzer: mobile araması phone belgesini bulur.
+# @assert {"hits.total.value": 1, "hits.hits.0._id": "p1"}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "match": {
+      "name": "mobile"
+    }
+  }
+}
+
+###
+# Edge n-gram: autocomplete prefix; fazladan token/index maliyeti vardır.
+# @assert {"hits.total.value": 3}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "match": {
+      "name.prefix": "wir"
+    }
+  }
+}
+
+###
+# Shingle: wireless phone bigram tokenını görün.
+# @assert {"tokens.1.token": "wireless phone"}
+POST telecom-relevance-demo/_analyze
+{
+  "analyzer": "catalog_phrase",
+  "text": "Wireless phone"
+}
+
+###
+# Shingle alanında phrase: sözcük sırası korunur.
+# @assert {"hits.total.value": 1, "hits.hits.0._id": "p1"}
+GET telecom-relevance-demo/_search
+{
+  "query": {
+    "match_phrase": {
+      "name.phrase": "wireless phone"
+    }
+  }
+}
+
+###
+# Explain tek belge için skorun bileşenlerini gösterir.
+# @assert {"matched": true}
+GET telecom-relevance-demo/_explain/p1
+{
+  "query": {
+    "match": {
+      "name": "phone"
+    }
+  }
+}

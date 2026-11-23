@@ -1,0 +1,19 @@
+# Filebeat 9.x: eski `type: log` girdisi calisma aninda reddedilir
+# ("Log input is deprecated. Use Filestream input instead"); filestream kullanilir.
+filebeat.inputs:
+  - type: filestream
+    id: nginx-access-json
+    paths:
+      - /var/log/nginx/access.json      # nginx_logs volume'u (docker-compose.yml)
+    parsers:
+      - ndjson:
+          target: ""                     # JSON alanlari kok seviyeye
+          add_error_key: true
+
+output.logstash:
+  hosts: ["logstash:5044"]
+  ssl.enabled: true
+  ssl.certificate_authorities: ["/etc/certs/ca/ca.crt"]
+  # mTLS: Logstash bu istemci sertifikasini ayni CA'ya karsi dogrular
+  ssl.certificate: "/etc/certs/beats/beats.crt"
+  ssl.key: "/etc/certs/beats/beats.key"

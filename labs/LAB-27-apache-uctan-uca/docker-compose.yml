@@ -1,0 +1,125 @@
+name: apache-web-observability
+
+services:
+  elastic-setup:
+    image: python:3.12-alpine
+    command: ["python", "/lab/scripts/setup_elasticsearch.py"]
+    environment:
+      ELASTIC_URL: ${ELASTIC_URL:-http://elasticsearch-lab00:9200}
+      ELASTIC_USER: ${ELASTIC_USER:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - .:/lab:ro
+    networks: [elastic]
+    restart: "no"
+
+  apache:
+    build: ./apache
+    ports:
+      - "${APACHE_BIND_ADDR:-0.0.0.0}:${APACHE_PORT:-8088}:80"
+    volumes:
+      - apache-logs:/usr/local/apache2/logs
+    networks: [web]
+    restart: unless-stopped
+
+  traffic-generator:
+    image: python:3.12-alpine
+    command: ["python", "-u", "/app/traffic.py", "--url", "http://apache", "--interval", "${TRAFFIC_INTERVAL:-1.0}"]
+    volumes:
+      - ./generator:/app:ro
+      - traffic-logs:/var/log/traffic
+    networks: [web]
+    depends_on: [apache]
+    restart: unless-stopped
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION:-9.5.5}
+    command: ["-f", "/usr/share/logstash/pipeline/apache.conf"]
+    environment:
+      XPACK_MONITORING_ENABLED: "false"
+      LS_JAVA_OPTS: -Xms256m -Xmx512m
+      ELASTICSEARCH_HOSTS: ${ELASTIC_URL:-http://elasticsearch-lab00:9200}
+      ELASTIC_USER: ${ELASTIC_USER:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./logstash/pipeline/apache.conf:/usr/share/logstash/pipeline/apache.conf:ro
+    networks: [web, elastic]
+    depends_on:
+      elastic-setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:${ELASTIC_VERSION:-9.5.5}
+    user: root
+    command: ["-e", "--strict.perms=false", "-c", "/usr/share/filebeat/filebeat.yml"]
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - apache-logs:/var/log/apache:ro
+      - traffic-logs:/var/log/traffic:ro
+      - filebeat-data:/usr/share/filebeat/data
+    networks: [web]
+    depends_on: [apache, logstash, traffic-generator]
+    restart: unless-stopped
+
+  metricbeat-setup:
+    image: docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION:-9.5.5}
+    user: root
+    command: ["setup", "--index-management", "-e", "--strict.perms=false", "-c", "/usr/share/metricbeat/metricbeat.yml"]
+    environment:
+      ELASTIC_URL: ${ELASTIC_URL:-http://elasticsearch-lab00:9200}
+      KIBANA_URL: ${KIBANA_URL:-http://kibana-lab00:5601}
+      ELASTIC_USER: ${ELASTIC_USER:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - metricbeat-data:/usr/share/metricbeat/data
+    networks: [elastic]
+    depends_on:
+      elastic-setup:
+        condition: service_completed_successfully
+    restart: "no"
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:${ELASTIC_VERSION:-9.5.5}
+    user: root
+    command: ["-e", "--strict.perms=false", "-c", "/usr/share/metricbeat/metricbeat.yml"]
+    environment:
+      ELASTIC_URL: ${ELASTIC_URL:-http://elasticsearch-lab00:9200}
+      KIBANA_URL: ${KIBANA_URL:-http://kibana-lab00:5601}
+      ELASTIC_USER: ${ELASTIC_USER:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - metricbeat-data:/usr/share/metricbeat/data
+      - ${DOCKER_SOCK:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    networks: [web, elastic]
+    depends_on:
+      apache:
+        condition: service_started
+      metricbeat-setup:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Yerel e-posta sunucusu: Kibana'nin gonderdigi alarm ve rapor e-postalarini yakalar, gercek hesap gerektirmez.
+  # Arayuz yalniz sunucudan (127.0.0.1:8025); SMTP 1025 yalniz Docker aginda (Kibana: mailpit-apache-lab:1025).
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    container_name: mailpit-apache-lab
+    ports:
+      - "127.0.0.1:8025:8025"
+    networks: [elastic]
+    restart: unless-stopped
+
+volumes:
+  apache-logs:
+  traffic-logs:
+  filebeat-data:
+  metricbeat-data:
+
+networks:
+  web:
+    driver: bridge
+  elastic:
+    external: true
+    name: ${ELASTIC_NETWORK:-elastic-lab00_default}

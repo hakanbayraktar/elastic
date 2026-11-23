@@ -1,0 +1,29 @@
+{
+  "type": "data_table",
+  "title": "API | Kaynak IP dağılımı",
+  "query": {
+    "language": "kql",
+    "expression": "event.dataset: \"telecom.day2\" AND service.name: \"edge-proxy\""
+  },
+  "data_source": {
+    "type": "data_view_reference",
+    "ref_id": "telecom-events-lab"
+  },
+  "rows": [
+    {
+      "operation": "terms",
+      "fields": [
+        "client.ip"
+      ],
+      "limit": 10,
+      "label": "Kaynak IP"
+    }
+  ],
+  "metrics": [
+    {
+      "operation": "count",
+      "label": "İstek sayısı"
+    }
+  ],
+  "description": "40 proxy isteği; uygulama logları aynı isteği ikinci kez saymaz. Zaman aralığı dashboard tarafından uygulanır."
+}

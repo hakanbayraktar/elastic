@@ -1,0 +1,6 @@
+# Tek seferlik işler için ayrı ayarlar: ana servisin data dizinini kilitlemez.
+api.enabled: false
+path.data: /tmp/logstash-tools
+queue.type: memory
+dead_letter_queue.enable: false
+pipeline.workers: 2

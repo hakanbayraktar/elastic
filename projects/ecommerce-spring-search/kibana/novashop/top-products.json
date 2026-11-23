@@ -1,0 +1,12 @@
+{
+  "type": "xy",
+  "title": "NovaShop | En Çok Ciro Getiren 10 Ürün",
+  "query": {"language": "kql", "expression": ""},
+  "layers": [{
+    "type": "bar_horizontal",
+    "data_source": {"type": "data_view_reference", "ref_id": "novashop-orders"},
+    "x": {"operation": "terms", "fields": ["products.product_name.keyword"], "limit": 10, "label": "Ürün Adı"},
+    "y": [{"operation": "sum", "field": "taxful_total_price", "label": "Toplam Gelir ($)"}]
+  }],
+  "description": "En yüksek ciroya sahip çok satan ürünlerin sıralaması."
+}

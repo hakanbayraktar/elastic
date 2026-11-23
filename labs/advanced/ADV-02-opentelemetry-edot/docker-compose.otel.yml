@@ -1,0 +1,27 @@
+name: otel-edot-lab
+services:
+  otel-collector:
+    image: ${EDOT_IMAGE:-docker.elastic.co/elastic-agent/elastic-agent:9.5.5}
+    container_name: edot-collector
+    restart: unless-stopped
+    command: ["--config", "/etc/otelcol-contrib/config.yaml"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - ELASTIC_AGENT_OTEL=true
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL:-http://elasticsearch-lab00:9200}
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME:-elastic}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+    volumes:
+      - ./config/edot-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"  # OTLP gRPC: yalniz sunucudaki uygulamalar
+      - "127.0.0.1:4318:4318"  # OTLP HTTP
+    networks:
+      - default
+
+networks:
+  default:
+    name: elastic-lab00_default
+    external: true
+

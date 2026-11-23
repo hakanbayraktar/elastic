@@ -1,0 +1,12 @@
+{
+  "type": "metric",
+  "title": "NovaShop | Toplam Sipariş Sayısı",
+  "query": {"language": "kql", "expression": ""},
+  "data_source": {"type": "data_view_reference", "ref_id": "novashop-orders"},
+  "metrics": [{
+    "type": "primary",
+    "operation": "count",
+    "label": "Sipariş Sayısı"
+  }],
+  "description": "Verilen toplam sipariş hacmi."
+}

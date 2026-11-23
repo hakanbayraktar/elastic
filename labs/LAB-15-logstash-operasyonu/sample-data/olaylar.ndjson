@@ -1,0 +1,8 @@
+{"service":"auth-service","level":"info","response_time_ms":42,"message":"giris basarili"}
+{"service":"catalog-api","level":"info","response_time_ms":37,"message":"urun listelendi"}
+{"service":"payment-gateway","level":"error","response_time_ms":30000,"message":"odeme zaman asimi"}
+{"service":"catalog-api","level":"warn","response_time_ms":1500,"message":"onbellek kacirildi"}
+{"service":"auth-service","level":"info","response_time_ms":51,"message":"token yenilendi"}
+{"service":"notification-svc","level":"info","response_time_ms":118,"message":"sms gonderildi"}
+{"service":"payment-gateway","level":"info","response_time_ms":420,"message":"odeme onaylandi"}
+{"service":"database-proxy","level":"error","response_time_ms":9500,"message":"baglanti havuzu dolu"}

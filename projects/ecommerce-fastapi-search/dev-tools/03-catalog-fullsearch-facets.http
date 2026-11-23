@@ -1,0 +1,85 @@
+# ==============================================================================
+# NovaCommerce: Ürün Listeleme, Filtreler (Facets), Sıralama ve Sayfalama
+# ==============================================================================
+
+###
+# ÖRNEK 1: Tam Katalog Araması + Dinamik Filtreler (Facets)
+# Kullanıcı "shoes" aradı; kategori ve marka dağılımı ile fiyat histogramı istiyoruz:
+GET /ecommerce_search_products/_search
+{
+  "from": 0,
+  "size": 10,
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "multi_match": {
+            "query": "shoes",
+            "fields": [
+              "product_name^3",
+              "brand^2",
+              "category"
+            ],
+            "fuzziness": "AUTO",
+            "operator": "and"
+          }
+        }
+      ],
+      "filter": [
+        {
+          "range": {
+            "price": {
+              "gte": 20,
+              "lte": 200
+            }
+          }
+        }
+      ]
+    }
+  },
+  "aggs": {
+    "category_facets": {
+      "terms": {
+        "field": "category.keyword",
+        "size": 10
+      }
+    },
+    "brand_facets": {
+      "terms": {
+        "field": "brand.keyword",
+        "size": 10
+      }
+    },
+    "price_ranges": {
+      "range": {
+        "field": "price",
+        "ranges": [
+          { "to": 50.0, "key": "Ekonomik (< 50 $)" },
+          { "from": 50.0, "to": 100.0, "key": "Orta (50 - 100 $)" },
+          { "from": 100.0, "key": "Premium (> 100 $)" }
+        ]
+      }
+    }
+  },
+  "highlight": {
+    "fields": {
+      "product_name": {},
+      "brand": {}
+    }
+  }
+}
+
+###
+# ÖRNEK 2: Fiyata Göre Sıralama (Sort) ve Sayfalama (Pagination)
+GET /ecommerce_search_products/_search
+{
+  "from": 10,
+  "size": 10,
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    { "price": { "order": "asc" } },
+    { "_score": { "order": "desc" } }
+  ]
+}

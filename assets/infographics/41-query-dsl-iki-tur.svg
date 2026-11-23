@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="740" viewBox="0 0 1600 740" role="img" aria-labelledby="title desc">
+  <title id="title">İki tür sorgu: full-text ve term-level</title>
+  <desc id="desc">Aranan değere ne olur?</desc>
+  <rect width="1600" height="740" fill="#f7fafc"/>
+<defs><marker id="ok" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0b6e99"/></marker></defs>
+  <rect x="20" y="10" rx="14" width="770" height="520" fill="#ffffff" stroke="#005571" stroke-width="3"/>
+  <text x="46" y="58" style="font:700 30px Arial,sans-serif;fill:#005571">Full-text: match</text>
+  <rect x="46" y="84" width="718" height="64" rx="10" fill="#0f2742"/>
+  <text x="66" y="126" xml:space="preserve" style="font:700 26px 'Courier New',monospace;fill:#7ee2a8">"leather jacket"</text>
+  <line x1="405" y1="156" x2="405" y2="198" stroke="#0b6e99" stroke-width="5" marker-end="url(#ok)"/>
+  <rect x="220" y="204" rx="14" width="370" height="66" fill="#e8f4f8" stroke="#005571" stroke-width="2"/>
+  <text x="250" y="246" style="font:700 25px Arial,sans-serif;fill:#005571">analyzer: küçült, böl</text>
+  <line x1="405" y1="276" x2="405" y2="318" stroke="#0b6e99" stroke-width="5" marker-end="url(#ok)"/>
+  <rect x="140" y="324" rx="14" width="250" height="66" fill="#ffffff" stroke="#005571" stroke-width="2"/>
+  <text x="170" y="366" xml:space="preserve" style="font:700 26px 'Courier New',monospace;fill:#172b4d">leather</text>
+  <rect x="420" y="324" rx="14" width="250" height="66" fill="#ffffff" stroke="#005571" stroke-width="2"/>
+  <text x="450" y="366" xml:space="preserve" style="font:700 26px 'Courier New',monospace;fill:#172b4d">jacket</text>
+  <text x="46" y="444" style="font:700 26px Arial,sans-serif;fill:#172b4d">Kelimelerden biri geçen document: 386</text>
+  <text x="46" y="494" style="font:400 24px Arial,sans-serif;fill:#172b4d">Metin field'larında arama: ürün adı, açıklama</text>
+  <rect x="810" y="10" rx="14" width="770" height="520" fill="#ffffff" stroke="#6b5b95" stroke-width="3"/>
+  <text x="836" y="58" style="font:700 30px Arial,sans-serif;fill:#6b5b95">Term-level: term, terms, range</text>
+  <rect x="836" y="84" width="718" height="64" rx="10" fill="#0f2742"/>
+  <text x="856" y="126" xml:space="preserve" style="font:700 26px 'Courier New',monospace;fill:#7ee2a8">"Women's Shoes"</text>
+  <line x1="1195" y1="156" x2="1195" y2="318" stroke="#6b5b95" stroke-width="5" marker-end="url(#ok)"/>
+  <text x="1215" y="246" style="font:700 25px Arial,sans-serif;fill:#6b5b95">olduğu gibi</text>
+  <rect x="1030" y="324" rx="14" width="330" height="66" fill="#ffffff" stroke="#6b5b95" stroke-width="2"/>
+  <text x="1050" y="366" xml:space="preserve" style="font:700 26px 'Courier New',monospace;fill:#172b4d">Women's Shoes</text>
+  <text x="836" y="444" style="font:700 26px Arial,sans-serif;fill:#172b4d">Birebir aynı değer: 1136</text>
+  <text x="836" y="494" style="font:400 24px Arial,sans-serif;fill:#172b4d">keyword, sayı, tarih: kategori, durum, fiyat</text>
+  <rect x="20" y="556" rx="14" width="1560" height="170" fill="#fff8e1" stroke="#f5a700" stroke-width="2"/>
+  <text x="50" y="616" style="font:700 28px Arial,sans-serif;fill:#172b4d">Kural: text field → match · keyword, sayı, tarih → term, terms, range</text>
+  <text x="50" y="670" style="font:400 25px Arial,sans-serif;fill:#172b4d">Text field'da term çoğu zaman hiç sonuç vermez: değer bölünüp küçültülerek saklanmıştır.</text>
+</svg>

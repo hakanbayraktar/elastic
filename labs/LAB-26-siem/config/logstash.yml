@@ -1,0 +1,9 @@
+api.http.host: "0.0.0.0"
+api.http.port: 9600
+
+# Guvenlik olaylari kaybolmamali: girdi tamponu diskte tutulur.
+queue.type: persisted
+queue.max_bytes: 512mb
+
+pipeline.workers: 2
+pipeline.batch.size: 500

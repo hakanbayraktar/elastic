@@ -1,0 +1,202 @@
+[
+  {
+    "id": "KB-101",
+    "title": "Kubernetes OOMKilled Pod Crash Exit Code 137",
+    "category": "KUBERNETES",
+    "severity": "CRITICAL",
+    "tags": ["k8s", "cgroup", "memory", "oom", "limits"],
+    "summary": "Container exceeding configured memory limits causing Linux kernel cgroup OOM killer to terminate the process with SIGKILL.",
+    "root_cause": "Container memory limit is lower than JVM heap or application memory leaks under peak load.",
+    "remediation": "Increase resources.limits.memory in the deployment manifest and inspect heap dumps for memory leaks."
+  },
+  {
+    "id": "KB-102",
+    "title": "PostgreSQL Connection Pool Starvation and Max Connections Reached",
+    "category": "DATABASE",
+    "severity": "CRITICAL",
+    "tags": ["postgresql", "pgbouncer", "connections", "database"],
+    "summary": "Backend microservices receiving FATAL remaining connection slots are reserved for non-replication superuser connections.",
+    "root_cause": "Unclosed database connections in application thread pools or lack of connection pooling proxy (PgBouncer).",
+    "remediation": "Deploy PgBouncer in transaction mode and tune max_connections and idle connection timeouts in postgresql.conf."
+  },
+  {
+    "id": "KB-103",
+    "title": "Elasticsearch Unassigned Shards and Disk Flood Stage Watermark",
+    "category": "ELASTICSEARCH",
+    "severity": "CRITICAL",
+    "tags": ["elasticsearch", "disk", "watermark", "shards", "unassigned"],
+    "summary": "Elasticsearch cluster state turns RED due to unassigned primary shards caused by disk usage exceeding 95 percent flood stage.",
+    "root_cause": "Disk utilization passed cluster.routing.allocation.disk.watermark.flood_stage locking indices into read_only_allow_delete.",
+    "remediation": "Free disk space or add storage, then clear read-only block using index.blocks.read_only_allow_delete: null."
+  },
+  {
+    "id": "KB-104",
+    "title": "CoreDNS Query Timeout and Resolution Failure in Pods",
+    "category": "NETWORKING",
+    "severity": "HIGH",
+    "tags": ["dns", "coredns", "networking", "ndots", "timeout"],
+    "summary": "Applications encountering intermittent dial tcp lookup i/o timeout when resolving internal or external service hostnames.",
+    "root_cause": "CoreDNS upstream saturation or default ndots:5 causing excessive search domain suffix lookup queries.",
+    "remediation": "Configure NodeLocal DNSCache DaemonSet and optimize pod dnsConfig ndots setting."
+  },
+  {
+    "id": "KB-105",
+    "title": "TLS SSL Certificate Expiration and Handshake Failure",
+    "category": "SECURITY",
+    "severity": "CRITICAL",
+    "tags": ["tls", "ssl", "certificate", "x509", "handshake"],
+    "summary": "External clients and ingress gateways reporting certificate expired x509 err and aborting TLS handshakes.",
+    "root_cause": "Automated cert-manager ACME Let's Encrypt renewal failed due to DNS challenge webhook failure.",
+    "remediation": "Renew certificate via manual secret update, fix cert-manager Issuer credentials, and set up Prometheus alert at 30 days before expiry."
+  },
+  {
+    "id": "KB-106",
+    "title": "Kafka Consumer Group Lag Rebalancing Storm",
+    "category": "CLOUD_INFRA",
+    "severity": "HIGH",
+    "tags": ["kafka", "consumer-lag", "rebalance", "partitions"],
+    "summary": "Kafka consumers in consumer group repeatedly disconnecting and triggering stop-the-world partition rebalances.",
+    "root_cause": "Single message processing time exceeds max.poll.interval.ms causing coordinator to assume consumer is dead.",
+    "remediation": "Increase max.poll.interval.ms or decrease max.poll.records to ensure poll loop is called within timeout."
+  },
+  {
+    "id": "KB-107",
+    "title": "Redis Memory Fragmentation Ratio Spike and Latency",
+    "category": "DATABASE",
+    "severity": "MEDIUM",
+    "tags": ["redis", "cache", "memory", "fragmentation", "latency"],
+    "summary": "Redis memory fragmentation ratio exceeds 2.5 causing high OS swap activity and command latency spikes.",
+    "root_cause": "Frequent allocation and deallocation of varied size keys with jemalloc memory allocator fragmentation.",
+    "remediation": "Enable activedefrag yes in redis.conf or restart replica node and failover cleanly."
+  },
+  {
+    "id": "KB-108",
+    "title": "Linux Kernel File Descriptor Exhaustion Too Many Open Files",
+    "category": "CLOUD_INFRA",
+    "severity": "HIGH",
+    "tags": ["linux", "ulimit", "nofile", "sockets", "kernel"],
+    "summary": "High-throughput web servers logging socket accept error: too many open files in system.",
+    "root_cause": "Process nofile ulimit setting is default 1024 or fs.file-max kernel limit is saturated.",
+    "remediation": "Increase ulimit -n 65535 in systemd service unit and tune fs.file-max in /etc/sysctl.conf."
+  },
+  {
+    "id": "KB-109",
+    "title": "Elasticsearch High JVM Garbage Collection Stop-The-World Pauses",
+    "category": "ELASTICSEARCH",
+    "severity": "HIGH",
+    "tags": ["elasticsearch", "jvm", "garbage-collection", "g1gc", "heap"],
+    "summary": "Elasticsearch nodes dropping out of cluster intermittently with master not discovered or ping timeout.",
+    "root_cause": "Expensive wildcard queries or massive bucket aggregations triggering JVM G1GC old generation pauses exceeding 15 seconds.",
+    "remediation": "Tune max JVM heap to 50 percent of RAM (max 31GB for compressed oops) and enable search slow logs to kill heavy aggregations."
+  },
+  {
+    "id": "KB-110",
+    "title": "AWS S3 503 SlowDown Rate Limit and Request Throttling",
+    "category": "CLOUD_INFRA",
+    "severity": "MEDIUM",
+    "tags": ["aws", "s3", "throttling", "rate-limit", "storage"],
+    "summary": "Applications encountering HTTP 503 SlowDown errors when uploading or downloading objects at high concurrency.",
+    "root_cause": "Exceeding Amazon S3 prefix request rate limits (3500 PUT/POST/DELETE or 5500 GET requests per second per prefix).",
+    "remediation": "Partition S3 object keys across multiple hash prefixes and implement exponential backoff with jitter in SDK client."
+  },
+  {
+    "id": "KB-111",
+    "title": "Nginx Ingress 502 Bad Gateway Upstream Connection Refused",
+    "category": "NETWORKING",
+    "severity": "HIGH",
+    "tags": ["nginx", "ingress", "502-bad-gateway", "upstream", "k8s"],
+    "summary": "Ingress controller returning HTTP 502 Bad Gateway to incoming internet web users.",
+    "root_cause": "Target backend pod terminated or readinessProbe failed while ingress endpoint controller still routes traffic to it.",
+    "remediation": "Configure preStop sleep hook (sleep 5) in pod container lifecycle to allow ingress routing table propagation before shutdown."
+  },
+  {
+    "id": "KB-112",
+    "title": "ArgoCD Application OutOfSync and GitOps Sync Failure",
+    "category": "CLOUD_INFRA",
+    "severity": "MEDIUM",
+    "tags": ["argocd", "gitops", "k8s", "sync", "helm"],
+    "summary": "ArgoCD continuous delivery controller dashboard marks application OutOfSync and automated sync fails.",
+    "root_cause": "Immutable field modification attempt (e.g., StatefulSet spec.volumeClaimTemplates) or mutating webhook drift.",
+    "remediation": "Review git commit diff, add ignoreDifferences for mutating fields or delete and re-create resource with proper cascade flags."
+  },
+  {
+    "id": "KB-113",
+    "title": "MySQL Deadlock Encountered When Trying To Get Lock",
+    "category": "DATABASE",
+    "severity": "HIGH",
+    "tags": ["mysql", "innodb", "deadlock", "locks", "transaction"],
+    "summary": "Application database layer throws Deadlock found when trying to get lock; try restarting transaction.",
+    "root_cause": "Concurrent transactions updating multiple tables or rows in differing non-deterministic order with Row-Level locks.",
+    "remediation": "Ensure all application transactions acquire locks in identical sequential order and implement retry logic with exponential backoff."
+  },
+  {
+    "id": "KB-114",
+    "title": "BGP Route Flapping and Intermittent Packet Loss",
+    "category": "NETWORKING",
+    "severity": "CRITICAL",
+    "tags": ["bgp", "networking", "routing", "packet-loss", "datacenter"],
+    "summary": "Border gateway routers continuously advertising and withdrawing network prefixes causing latency and packet drops.",
+    "root_cause": "Flapping physical link or hold timer expiration between autonomous system peer routers.",
+    "remediation": "Enable BGP route flap dampening, replace faulty optical transceiver or SFP module, and adjust keepalive timers."
+  },
+  {
+    "id": "KB-115",
+    "title": "Prometheus Scrape Interval Timeout and TSDB Compaction Failure",
+    "category": "MONITORING",
+    "severity": "MEDIUM",
+    "tags": ["prometheus", "metrics", "tsdb", "compaction", "monitoring"],
+    "summary": "Prometheus server reporting context deadline exceeded when scraping endpoints and TSDB WAL corruption.",
+    "root_cause": "High cardinality metric labels (e.g. user_id or IP in label names) causing time series database block compaction OOM.",
+    "remediation": "Drop high cardinality labels via metric_relabel_configs and increase Prometheus TSDB block retention limits."
+  },
+  {
+    "id": "KB-116",
+    "title": "Kubernetes CrashLoopBackOff Pod Restarting Infinitely",
+    "category": "KUBERNETES",
+    "severity": "HIGH",
+    "tags": ["k8s", "crashloopbackoff", "pod", "containers", "exit-code"],
+    "summary": "Pod fails immediately upon startup and enters an exponential backoff restart delay cycle.",
+    "root_cause": "Missing environment variable, invalid configuration file path, or database dependency unavailable during application boot.",
+    "remediation": "Check kubectl logs --previous <pod> and describe pod to identify startup exception and missing ConfigMap keys."
+  },
+  {
+    "id": "KB-117",
+    "title": "Elasticsearch Mapping Explosion Out of Memory",
+    "category": "ELASTICSEARCH",
+    "severity": "HIGH",
+    "tags": ["elasticsearch", "mapping", "cluster-state", "flattened"],
+    "summary": "Cluster state size grows rapidly to hundreds of megabytes causing master node timeouts and memory exhaustion.",
+    "root_cause": "Dynamic mapping enabled on an index receiving unstructured JSON objects with arbitrary dynamic keys (e.g. UUID keys).",
+    "remediation": "Use flattened field type for dynamic user-defined payloads or enforce dynamic: strict on root index mapping."
+  },
+  {
+    "id": "KB-118",
+    "title": "Spring Boot JVM Heap OutOfMemoryError Java Heap Space",
+    "category": "APPLICATION",
+    "severity": "CRITICAL",
+    "tags": ["java", "jvm", "spring-boot", "heap", "memory"],
+    "summary": "Spring Boot microservice throwing java.lang.OutOfMemoryError: Java heap space and failing health checks.",
+    "root_cause": "Large unpaged SQL result sets loaded into memory or static collection memory leak retaining object references.",
+    "remediation": "Enforce pagination (LIMIT / OFFSET or keyset) on repository queries and capture heap dump with -XX:+HeapDumpOnOutOfMemoryError."
+  },
+  {
+    "id": "KB-119",
+    "title": "Docker Daemon Socket Permission Denied Dial Unix",
+    "category": "CLOUD_INFRA",
+    "severity": "MEDIUM",
+    "tags": ["docker", "socket", "permissions", "ci-cd", "runner"],
+    "summary": "CI/CD pipeline jobs failing with Got permission denied while trying to connect to the Docker daemon socket.",
+    "root_cause": "Pipeline runner user is not a member of the docker group on the host machine.",
+    "remediation": "Run sudo usermod -aG docker <runner-user> and reload group permissions or restart runner service."
+  },
+  {
+    "id": "KB-120",
+    "title": "Elasticsearch CircuitBreakerException Parent Data Too Large",
+    "category": "ELASTICSEARCH",
+    "severity": "HIGH",
+    "tags": ["elasticsearch", "circuit-breaker", "memory", "parent-breaker"],
+    "summary": "Elasticsearch search and index queries failing with [parent] Data too large, data for [<transport_request>] would be larger than limit.",
+    "root_cause": "Cluster-wide memory consumption exceeded indices.breaker.total.use_real_memory threshold (default 95% of heap).",
+    "remediation": "Reduce aggregation query concurrency, optimize shard sizes to 10-50GB, and clear cache via POST /_cache/clear."
+  }
+]

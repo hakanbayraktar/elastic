@@ -1,0 +1,25 @@
+name: ecommerce-search-service
+
+services:
+  search-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ecommerce-search-service:latest
+    container_name: ecommerce-search-service
+    environment:
+      - SERVER_ADDRESS=0.0.0.0
+      - SERVER_PORT=8080
+      - ELASTICSEARCH_URL=http://elasticsearch-lab00:9200
+      - ELASTICSEARCH_API_KEY=${ELASTICSEARCH_API_KEY:-}
+      - PRODUCT_INDEX=ecommerce-products-v1
+    ports:
+      - "${NOVASHOP_BIND_ADDR:-0.0.0.0}:8080:8080"
+    networks:
+      - default
+    restart: unless-stopped
+
+networks:
+  default:
+    name: elastic-lab00_default
+    external: true

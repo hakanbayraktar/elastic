@@ -1,0 +1,50 @@
+name: logstash-grok-lab
+
+services:
+  # Kalici Logstash servisi: TCP girdisini dinler, pipeline'i calistirir.
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.5.5
+    container_name: logstash-grok-lab
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5000:5000"   # ham log girdisi (TCP)
+      - "127.0.0.1:9600:9600"   # Logstash monitoring API (pipeline sayaclari)
+    environment:
+      # Pipeline icinde ${ES_HOST} gibi kullanilan degiskenler buradan gelir.
+      ES_HOST: ${ES_HOST:-http://elasticsearch-lab00:9200}
+      ES_USER: ${ES_USER:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-DevOps2026!}
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      # Logstash veri dizini (pipeline durumu); konteyner silinse de kalir.
+      - logstash-data:/usr/share/logstash/data
+    networks:
+      - elastic_net
+
+  # Tek seferlik isler (benchmark gecisleri). Ayri path.data kullandigi icin
+  # kalici servisin veri dizinini kilitlemez; "profiles" sayesinde
+  # "docker compose up" ile birlikte baslamaz.
+  logstash-tools:
+    image: docker.elastic.co/logstash/logstash:9.5.5
+    profiles: ["tools"]
+    environment:
+      ES_HOST: ${ES_HOST:-http://elasticsearch-lab00:9200}
+      ES_USER: ${ES_USER:-elastic}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD:-DevOps2026!}
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - ./config/logstash-tools.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./pipeline:/usr/share/logstash/pipeline:ro
+    networks:
+      - elastic_net
+
+volumes:
+  logstash-data:
+
+networks:
+  # LAB-01 ana cluster agina katilir; Elasticsearch'e konteyner adiyla erisilir.
+  elastic_net:
+    external: true
+    name: ${ELASTIC_NETWORK:-elastic-lab00_default}

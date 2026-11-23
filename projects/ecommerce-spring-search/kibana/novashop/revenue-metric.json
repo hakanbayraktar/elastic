@@ -1,0 +1,13 @@
+{
+  "type": "metric",
+  "title": "NovaShop | Toplam Satış Cirosu ($)",
+  "query": {"language": "kql", "expression": ""},
+  "data_source": {"type": "data_view_reference", "ref_id": "novashop-orders"},
+  "metrics": [{
+    "type": "primary",
+    "operation": "sum",
+    "field": "taxful_total_price",
+    "label": "Toplam Ciro ($)"
+  }],
+  "description": "E-ticaret siparişlerinden elde edilen toplam brüt satış tutarı."
+}

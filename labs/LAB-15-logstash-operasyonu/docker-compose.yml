@@ -1,0 +1,32 @@
+name: logstash-ops-lab
+
+services:
+  # Tek Logstash, iki pipeline (config/pipelines.yml): ingest + dlq-onarim.
+  logstash:
+    image: docker.elastic.co/logstash/logstash:9.5.5
+    container_name: logstash-ops-lab
+    ports:
+      - "127.0.0.1:5001:5000"   # olay girdisi (TCP, satir basina bir JSON)
+      - "127.0.0.1:9601:9600"   # Logstash API: pipeline, kuyruk ve DLQ sayaclari
+    environment:
+      ES_HOST: http://elasticsearch-lab00:9200
+      ES_USER: elastic
+      ELASTIC_PASSWORD: DevOps2026!
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - ./config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./config/pipelines.yml:/usr/share/logstash/config/pipelines.yml:ro
+      - ./pipeline:/usr/share/logstash/pipeline:ro
+      # Persistent queue, DLQ ve DLQ okuma konumu burada; container silinse de kalir.
+      - logstash-data:/usr/share/logstash/data
+    networks:
+      - default       # port yayini bu agdan; ana cluster agindan ayrilsa da girdi acik kalir
+      - elastic_net   # Elasticsearch'e erisim
+
+volumes:
+  logstash-data:
+
+networks:
+  elastic_net:
+    external: true
+    name: elastic-lab00_default

@@ -1,0 +1,6 @@
+{"index": {"_id": "u1"}}
+{"urun": "Akıllı Saat", "ozellikler": {"renk": "siyah", "kordon": "silikon", "garanti_ay": "24"}}
+{"index": {"_id": "u2"}}
+{"urun": "Kulaklık", "ozellikler": {"renk": "beyaz", "baglanti": "bluetooth", "garanti_ay": "12"}}
+{"index": {"_id": "u3"}}
+{"urun": "Ofis Sandalyesi", "ozellikler": {"renk": "siyah", "malzeme": "file", "garanti_ay": "9"}}

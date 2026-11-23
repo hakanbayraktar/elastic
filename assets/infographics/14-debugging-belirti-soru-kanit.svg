@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">LAB-10 Debugging akışı: belirti, soru, cevap, düzeltme, kanıt</title>
+  <desc id="desc">İki şeritli Türkçe diyagram. Üst şerit: RED cluster belirtisi, allocation explain ile sorulan soru, filter decider cevabı, allocation filtresinin null ile kaldırılması ve shard'ın STARTED olmasıyla kanıt. Alt şerit: cluster yeşilken yavaş sorgu belirtisi, profile true ile sorulan soru, must ve filter score sürelerinin karşılaştırması, koşulun filter context'e taşınması ve slow log satırıyla kanıt.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .lane { fill:#ffffff; stroke:#b3bac5; stroke-width:2 }
+    .lanehead { font:700 24px Arial,sans-serif; fill:#172b4d }
+    .card { fill:#ffffff; stroke-width:3 }
+    .chead { font:700 20px Arial,sans-serif; fill:#ffffff }
+    .body { font:400 19px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .note { font:400 18px Arial,sans-serif; fill:#42526e }
+    .arrow { stroke:#0b6e99; stroke-width:5; fill:none; marker-end:url(#ah) }
+  </style>
+  <defs>
+    <marker id="ah" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="16" refX="13" refY="8" orient="auto">
+      <path d="M0,0 L16,8 L0,16 z" fill="#0b6e99"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1600" height="1000"/>
+  <text class="title" x="60" y="70">Tahmin etme, gerekçeyi sor</text>
+  <text class="sub" x="60" y="108">Her iki arızada da aynı sıra: belirti → Elasticsearch'e soru → cevap → gerekçeye göre düzeltme → kanıt</text>
+
+  <!-- Serit 1: RED cluster -->
+  <rect class="lane" x="40" y="140" width="1520" height="370" rx="14"/>
+  <text class="lanehead" x="64" y="180">Bölüm 1 — Cluster RED: primary shard atanamıyor</text>
+
+  <rect class="card" x="64" y="205" width="270" height="280" rx="10" stroke="#bd271e"/>
+  <rect x="64" y="205" width="270" height="44" rx="10" fill="#bd271e"/>
+  <text class="chead" x="82" y="235">1. Belirti</text>
+  <text class="mono" x="82" y="285">status: red</text>
+  <text class="mono" x="82" y="313">unassigned_primary</text>
+  <text class="mono" x="82" y="337">  _shards: 1</text>
+  <text class="body" x="82" y="385">_cat/shards sebebi:</text>
+  <text class="mono" x="82" y="413">INDEX_CREATED</text>
+  <text class="note" x="82" y="455">kök nedeni söylemez</text>
+
+  <rect class="card" x="364" y="205" width="270" height="280" rx="10" stroke="#005571"/>
+  <rect x="364" y="205" width="270" height="44" rx="10" fill="#005571"/>
+  <text class="chead" x="382" y="235">2. Soru</text>
+  <text class="mono" x="382" y="285">POST _cluster/</text>
+  <text class="mono" x="382" y="309">allocation/explain</text>
+  <text class="body" x="382" y="357">"Bu shard neden</text>
+  <text class="body" x="382" y="383">hiçbir node'a</text>
+  <text class="body" x="382" y="409">konamıyor?"</text>
+
+  <rect class="card" x="664" y="205" width="270" height="280" rx="10" stroke="#6b5b95"/>
+  <rect x="664" y="205" width="270" height="44" rx="10" fill="#6b5b95"/>
+  <text class="chead" x="682" y="235">3. Cevap</text>
+  <text class="mono" x="682" y="285">can_allocate: no</text>
+  <text class="mono" x="682" y="313">decider: filter</text>
+  <text class="body" x="682" y="361">node, index'teki</text>
+  <text class="body" x="682" y="387">include._name</text>
+  <text class="body" x="682" y="413">kuralına uymuyor</text>
+
+  <rect class="card" x="964" y="205" width="270" height="280" rx="10" stroke="#f5a700"/>
+  <rect x="964" y="205" width="270" height="44" rx="10" fill="#f5a700"/>
+  <text class="chead" x="982" y="235">4. Düzeltme</text>
+  <text class="body" x="982" y="285">Gerekçeye göre:</text>
+  <text class="body" x="982" y="311">filtreyi kaldır</text>
+  <text class="mono" x="982" y="359">routing.allocation</text>
+  <text class="mono" x="982" y="383">.include._name:</text>
+  <text class="mono" x="982" y="407">  null</text>
+
+  <rect class="card" x="1264" y="205" width="270" height="280" rx="10" stroke="#5aa454"/>
+  <rect x="1264" y="205" width="270" height="44" rx="10" fill="#5aa454"/>
+  <text class="chead" x="1282" y="235">5. Kanıt</text>
+  <text class="mono" x="1282" y="285">state: STARTED</text>
+  <text class="mono" x="1282" y="313">index status: green</text>
+  <text class="body" x="1282" y="361">yazılan kayıt</text>
+  <text class="body" x="1282" y="387">okunuyor:</text>
+  <text class="mono" x="1282" y="415">count: 1</text>
+
+  <path class="arrow" d="M336,345 L360,345"/>
+  <path class="arrow" d="M636,345 L660,345"/>
+  <path class="arrow" d="M936,345 L960,345"/>
+  <path class="arrow" d="M1236,345 L1260,345"/>
+
+  <!-- Serit 2: yavas sorgu -->
+  <rect class="lane" x="40" y="540" width="1520" height="370" rx="14"/>
+  <text class="lanehead" x="64" y="580">Bölüm 2 — Cluster yeşil ama sorgu yavaş</text>
+
+  <rect class="card" x="64" y="605" width="270" height="280" rx="10" stroke="#bd271e"/>
+  <rect x="64" y="605" width="270" height="44" rx="10" fill="#bd271e"/>
+  <text class="chead" x="82" y="635">1. Belirti</text>
+  <text class="mono" x="82" y="685">status: green</text>
+  <text class="body" x="82" y="733">ama arama servisi</text>
+  <text class="body" x="82" y="759">"bazen yavaş"</text>
+  <text class="note" x="82" y="807">sağlık API'si</text>
+  <text class="note" x="82" y="831">sorun göstermez</text>
+
+  <rect class="card" x="364" y="605" width="270" height="280" rx="10" stroke="#005571"/>
+  <rect x="364" y="605" width="270" height="44" rx="10" fill="#005571"/>
+  <text class="chead" x="382" y="635">2. Soru</text>
+  <text class="mono" x="382" y="685">"profile": true</text>
+  <text class="body" x="382" y="733">"Süre Lucene'in</text>
+  <text class="body" x="382" y="759">hangi aşamasında</text>
+  <text class="body" x="382" y="785">geçiyor?"</text>
+
+  <rect class="card" x="664" y="605" width="270" height="280" rx="10" stroke="#6b5b95"/>
+  <rect x="664" y="605" width="270" height="44" rx="10" fill="#6b5b95"/>
+  <text class="chead" x="682" y="635">3. Cevap</text>
+  <text class="body" x="682" y="685">score aşaması</text>
+  <text class="body" x="682" y="711">(2971 belge):</text>
+  <text class="mono" x="682" y="755">must   ~0.99 ms</text>
+  <text class="mono" x="682" y="783">filter ~0.16 ms</text>
+  <text class="note" x="682" y="831">süreler değişir,</text>
+  <text class="note" x="682" y="855">fark kalır</text>
+
+  <rect class="card" x="964" y="605" width="270" height="280" rx="10" stroke="#f5a700"/>
+  <rect x="964" y="605" width="270" height="44" rx="10" fill="#f5a700"/>
+  <text class="chead" x="982" y="635">4. Düzeltme</text>
+  <text class="body" x="982" y="685">Puan gerekmiyorsa</text>
+  <text class="body" x="982" y="711">koşulu taşı:</text>
+  <text class="mono" x="982" y="759">bool.must</text>
+  <text class="mono" x="982" y="787">  → bool.filter</text>
+  <text class="note" x="982" y="835">sonuç aynı: 2971</text>
+
+  <rect class="card" x="1264" y="605" width="270" height="280" rx="10" stroke="#5aa454"/>
+  <rect x="1264" y="605" width="270" height="44" rx="10" fill="#5aa454"/>
+  <text class="chead" x="1282" y="635">5. Kanıt / izleme</text>
+  <text class="body" x="1282" y="685">slow log eşikleri</text>
+  <text class="body" x="1282" y="711">yavaşları kaydeder:</text>
+  <text class="mono" x="1282" y="759">docker logs</text>
+  <text class="mono" x="1282" y="783"> | grep index_</text>
+  <text class="mono" x="1282" y="807">  search_slowlog</text>
+  <text class="note" x="1282" y="855">sonra eşikleri sil</text>
+
+  <path class="arrow" d="M336,745 L360,745"/>
+  <path class="arrow" d="M636,745 L660,745"/>
+  <path class="arrow" d="M936,745 L960,745"/>
+  <path class="arrow" d="M1236,745 L1260,745"/>
+
+  <text class="note" x="60" y="955">Kutulardaki değerler bu labın sunucuda ölçülen çıktılarıdır. Farklı arızada 3. kutuda disk_threshold veya same_shard görebilirsiniz; yöntem aynıdır.</text>
+</svg>

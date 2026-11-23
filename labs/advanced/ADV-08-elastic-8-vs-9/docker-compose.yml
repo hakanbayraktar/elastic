@@ -1,0 +1,60 @@
+name: es-v8-lab
+
+services:
+  elasticsearch8:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.25
+    container_name: elasticsearch-v8-lab
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.license.self_generated.type=basic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-DevOps2026!}
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "${ELASTIC8_PORT:-9208}:9200"
+    volumes:
+      - es8_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -u elastic:${ELASTIC_PASSWORD:-DevOps2026!} http://localhost:9200/_cluster/health?wait_for_status=yellow >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  setup8:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.25
+    container_name: setup-v8-lab
+    restart: "no"
+    depends_on:
+      elasticsearch8:
+        condition: service_healthy
+    command: >
+      bash -c '
+        echo "Elasticsearch 8.19 hazır, kibana_system şifresi ayarlanıyor...";
+        curl -s -X POST -u elastic:${ELASTIC_PASSWORD:-DevOps2026!} -H "Content-Type: application/json" \
+          http://elasticsearch8:9200/_security/user/kibana_system/_password \
+          -d "{\"password\":\"${KIBANA_PASSWORD:-${ELASTIC_PASSWORD:-DevOps2026!}}\"}";
+        echo "kibana_system şifresi başarıyla ayarlandı.";
+      '
+
+  kibana8:
+    image: docker.elastic.co/kibana/kibana:8.19.25
+    container_name: kibana-v8-lab
+    depends_on:
+      setup8:
+        condition: service_completed_successfully
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch8:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD:-${ELASTIC_PASSWORD:-DevOps2026!}}
+      - XPACK_SECURITY_ENCRYPTIONKEY=devops-lab-encryption-key-32chars!!
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=devops-lab-encryption-key-32chars!!
+      - XPACK_REPORTING_ENCRYPTIONKEY=devops-lab-encryption-key-32chars!!
+    ports:
+      - "${KIBANA8_PORT:-5608}:5601"
+    volumes:
+      - kibana8_data:/usr/share/kibana/data
+
+volumes:
+  es8_data:
+  kibana8_data:

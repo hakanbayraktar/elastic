@@ -1,0 +1,12 @@
+{"index": {"_id": "S-1"}}
+{"siparis_id": "S-1", "durum": "kargoda", "tutar": 12294.5, "musteri": {"id": 1, "ad": "Ağaoğlu Yapı", "il": "İstanbul"}, "kalemler": [{"urun": "Kulaklık", "adet": 1}, {"urun": "Akıllı Saat", "adet": 5}]}
+{"index": {"_id": "S-2"}}
+{"siparis_id": "S-2", "durum": "hazırlanıyor", "tutar": 6497.5, "musteri": {"id": 3, "ad": "Öztürk Gıda", "il": "İzmir"}, "kalemler": [{"urun": "Kulaklık", "adet": 5}]}
+{"index": {"_id": "S-3"}}
+{"siparis_id": "S-3", "durum": "teslim edildi", "tutar": 698.0, "musteri": {"id": 3, "ad": "Öztürk Gıda", "il": "İzmir"}, "kalemler": [{"urun": "Termos", "adet": 2}]}
+{"index": {"_id": "S-4"}}
+{"siparis_id": "S-4", "durum": "kargoda", "tutar": 3998.8, "musteri": {"id": 2, "ad": "Şimşek Lojistik", "il": "Ankara"}, "kalemler": [{"urun": "Akıllı Saat", "adet": 1}, {"urun": "Hoparlör", "adet": 2}]}
+{"index": {"_id": "S-5"}}
+{"siparis_id": "S-5", "durum": "teslim edildi", "tutar": 28499.9, "musteri": {"id": 5, "ad": "Güneş Enerji", "il": "Antalya"}, "kalemler": [{"urun": "Dizüstü Bilgisayar", "adet": 1}]}
+{"index": {"_id": "S-6"}}
+{"siparis_id": "S-6", "durum": "kargoda", "tutar": 4344.0, "musteri": {"id": 3, "ad": "Öztürk Gıda", "il": "İzmir"}, "kalemler": [{"urun": "Kulaklık", "adet": 2}, {"urun": "Termos", "adet": 5}]}

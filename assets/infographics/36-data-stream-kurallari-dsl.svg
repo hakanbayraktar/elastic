@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Data stream kuralları ve Data Stream Lifecycle</title>
+  <desc id="desc">Data stream adı arkadaki backing index'lere yazar; yalnız yeni belge kabul eder. Tek belge güncelleme ve silme 400 döner, sorgu tabanlı güncelleme ve silme çalışır. Data Stream Lifecycle saklama süresi dolan eski backing index'i siler; ILM'li bir stream prefer_ilm false ve rollover ile DSL'e geçer, eski index ILM'de kalır.</desc>
+  <style>
+    .bg { fill:#f7fafc }
+    .title { font:700 40px Arial,sans-serif; fill:#172b4d }
+    .sub { font:400 21px Arial,sans-serif; fill:#42526e }
+    .card { fill:#fff; stroke:#b3bac5; stroke-width:2 }
+    .head { font:700 22px Arial,sans-serif; fill:#fff }
+    .body { font:400 18px Arial,sans-serif; fill:#172b4d }
+    .bold { font:700 18px Arial,sans-serif; fill:#172b4d }
+    .mono { font:400 17px "Courier New",monospace; fill:#172b4d }
+    .small { font:400 17px Arial,sans-serif; fill:#42526e }
+    .ok { font:700 18px Arial,sans-serif; fill:#2e7d32 }
+    .bad { font:700 18px Arial,sans-serif; fill:#bd271e }
+    .idx { fill:#e6f1f6; stroke:#0b6e99; stroke-width:2 }
+    .yaz { fill:#fff8e1; stroke:#f5a700; stroke-width:2 }
+    .gone { fill:#fdecea; stroke:#bd271e; stroke-width:2; stroke-dasharray:6 4 }
+    .dsl { fill:#eef7ee; stroke:#5aa454; stroke-width:2 }
+    .arrow { stroke:#42526e; stroke-width:2.5; fill:none; marker-end:url(#ok) }
+  </style>
+  <defs><marker id="ok" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#42526e"/></marker></defs>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="78" class="title">Data stream: yalnız ekleme, sorguyla silme, süreyle saklama</text>
+  <text x="60" y="116" class="sub">Olay verisi bir kez yazılır. Kişisel veri sorguyla kaldırılır; eski veriyi saklama süresi siler.</text>
+
+  <!-- 1 yapi ve kurallar -->
+  <rect x="60" y="150" rx="14" width="720" height="390" class="card"/>
+  <rect x="60" y="150" rx="14" width="720" height="50" fill="#0b6e99"/><rect x="60" y="182" width="720" height="18" fill="#0b6e99"/>
+  <text x="80" y="183" class="head">1 · Hangi yazma kabul edilir?</text>
+  <text x="85" y="238" class="mono">dsk-olaylar  →  .ds-dsk-olaylar-…-000001  (yazma index'i)</text>
+  <text x="85" y="290" class="mono">POST _doc (id yok)</text><text x="520" y="290" class="ok">201 created</text>
+  <text x="85" y="322" class="mono">PUT _create/k1</text><text x="520" y="322" class="ok">201 created</text>
+  <text x="85" y="354" class="mono">PUT _doc/k1</text><text x="520" y="354" class="bad">400</text>
+  <text x="85" y="386" class="mono">POST _update/k1</text><text x="520" y="386" class="bad">400</text>
+  <text x="85" y="418" class="mono">DELETE _doc/k1</text><text x="520" y="418" class="bad">400</text>
+  <text x="85" y="470" class="small">400: only write ops with an op_type of create</text>
+  <text x="85" y="496" class="small">are allowed in data streams</text>
+
+  <!-- 2 kvkk -->
+  <rect x="820" y="150" rx="14" width="720" height="390" class="card"/>
+  <rect x="820" y="150" rx="14" width="720" height="50" fill="#6b5b95"/><rect x="820" y="182" width="720" height="18" fill="#6b5b95"/>
+  <text x="840" y="183" class="head">2 · KVKK: sorgu tabanlı API'ler çalışır</text>
+  <text x="845" y="240" class="bold">Önce</text>
+  <text x="845" y="270" class="mono">ayse   ayse@ornek.com    giris</text>
+  <text x="845" y="298" class="mono">mehmet mehmet@ornek.com  giris</text>
+  <text x="845" y="326" class="mono">ayse   ayse@ornek.com    cikis</text>
+  <text x="845" y="372" class="mono">_update_by_query  eposta = '***'</text><text x="1340" y="372" class="ok">updated 2</text>
+  <text x="845" y="402" class="mono">_delete_by_query  mehmet</text><text x="1340" y="402" class="ok">deleted 1</text>
+  <text x="845" y="446" class="bold">Sonra</text>
+  <text x="845" y="476" class="mono">ayse   ***               giris</text>
+  <text x="845" y="504" class="mono">ayse   ***               cikis</text>
+
+  <!-- 3 dsl -->
+  <rect x="60" y="580" rx="14" width="720" height="370" class="card"/>
+  <rect x="60" y="580" rx="14" width="720" height="50" fill="#5aa454"/><rect x="60" y="612" width="720" height="18" fill="#5aa454"/>
+  <text x="80" y="613" class="head">3 · Data Stream Lifecycle: saklama süresi</text>
+  <text x="85" y="668" class="mono">PUT _data_stream/dsk-olaylar/_lifecycle  {"data_retention": "1m"}</text>
+  <rect x="85" y="700" rx="10" width="290" height="70" class="gone"/>
+  <text x="105" y="730" class="mono">…-000001</text><text x="105" y="756" class="bad">süre doldu, silindi</text>
+  <path d="M380,735 L440,735" class="arrow"/>
+  <rect x="445" y="700" rx="10" width="290" height="70" class="yaz"/>
+  <text x="465" y="730" class="mono">…-000002</text><text x="465" y="756" class="small">yazma index'i kalır</text>
+  <text x="85" y="820" class="body">Süre, rollover anından itibaren sayılır. Kontrol aralığı</text>
+  <text x="85" y="848" class="body">varsayılan 5 dk; labda 10 sn, sonra null.</text>
+  <text x="85" y="896" class="small">Ölçülen: rollover'dan ~70 sn sonra eski index silindi, _count 0.</text>
+
+  <!-- 4 gecis -->
+  <rect x="820" y="580" rx="14" width="720" height="370" class="card"/>
+  <rect x="820" y="580" rx="14" width="720" height="50" fill="#005571"/><rect x="820" y="612" width="720" height="18" fill="#005571"/>
+  <text x="840" y="613" class="head">4 · ILM'den DSL'e geçiş</text>
+  <text x="845" y="668" class="mono">index.lifecycle.prefer_ilm: false  + lifecycle + rollover</text>
+  <rect x="845" y="700" rx="10" width="320" height="70" class="idx"/>
+  <text x="865" y="730" class="mono">…-000001</text><text x="865" y="756" class="small">Index Lifecycle Management</text>
+  <path d="M1170,735 L1210,735" class="arrow"/>
+  <rect x="1215" y="700" rx="10" width="300" height="70" class="dsl"/>
+  <text x="1235" y="730" class="mono">…-000002</text><text x="1235" y="756" class="small">Data stream lifecycle</text>
+  <text x="845" y="820" class="body">Var olan index ILM'de kalır, yeni index'i DSL yönetir.</text>
+  <text x="845" y="848" class="body">prefer_ilm true kalsaydı ILM öncelikli olurdu.</text>
+  <text x="845" y="896" class="small">DSL: yalnız saklama · ILM: warm/cold, shrink, force merge</text>
+</svg>

@@ -1,0 +1,8 @@
+server:
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  port: ${SERVER_PORT:8080}
+app:
+  elasticsearch:
+    url: ${ELASTICSEARCH_URL:http://localhost:9200}
+    api-key: ${ELASTICSEARCH_API_KEY:}
+    product-index: ${PRODUCT_INDEX:ecommerce-products-v1}

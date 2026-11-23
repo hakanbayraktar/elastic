@@ -1,0 +1,11 @@
+# Senaryo logunu okur ve ayristirmasi icin Logstash'e gonderir (ayristirma Logstash'te).
+filebeat.inputs:
+  - type: filestream
+    id: siem-senaryo
+    paths:
+      - /data/attack-scenario.log
+
+output.logstash:
+  hosts: ["logstash-siem-lab:5044"]   # Docker agi uzerinden; host'a port acilmaz
+
+logging.level: warning
