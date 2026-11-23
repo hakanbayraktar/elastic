@@ -411,6 +411,47 @@ GET grok-ingest/_search?filter_path=hits.hits._source
 
 `ts` ve `rest_msg` gitti; ham `message` ise ileride yeniden işlemek için kaldı.
 
+**Pipeline'ı index'e bağlamak: `index.default_pipeline`.** `?pipeline=` her istekte yazılmalıdır ve unutmak
+kolaydır. Aynı index'e başka araçlar da (Filebeat, bir uygulama) yazabilir. Pipeline index ayarına bağlanırsa
+istekte adı geçmese de her document ondan geçer:
+
+```http
+PUT grok-varsayilan
+{ "settings": { "number_of_shards": 1, "number_of_replicas": 0, "index.default_pipeline": "grok-ayristir" } }
+```
+
+```json
+{"acknowledged":true,"shards_acknowledged":true,"index":"grok-varsayilan"}
+```
+
+Bu kez terminalden ve `?pipeline=` vermeden yazın:
+
+```bash
+curl -s -u elastic:'DevOps2026!' -X POST 'http://127.0.0.1:9200/grok-varsayilan/_doc?refresh=true&filter_path=result' \
+  -H 'Content-Type: application/json' \
+  -d '{"message": "2026-11-02 10:15:02 [WARN] auth-service: token expires soon"}'; echo
+```
+
+Beklenen çıktı:
+
+```text
+{"result":"created"}
+```
+
+```http
+GET grok-varsayilan/_search?filter_path=hits.hits._source&_source=@timestamp,log.level,service
+```
+
+```json
+{"hits":{"hits":[{"_source":{"@timestamp":"2026-11-02T10:15:02.000Z","log":{"level":"warn"},"service":"auth-service"}}]}}
+```
+
+Satır, pipeline adı verilmeden ayrıştırıldı.
+
+- **İstek `?pipeline=` verirse** default pipeline yerine o çalışır; `?pipeline=_none` default pipeline'ı atlar.
+- **`index.final_pipeline`:** istek ne derse desin en son çalışır. Kişisel veriyi silmek gibi atlanmaması gereken işler için.
+- Ayar index şablonuna da yazılabilir; desene uyan her yeni index pipeline'la açılır.
+
 | | Logstash | Ingest pipeline |
 |---|---|---|
 | Nerede çalışır | Ayrı servis (container, JVM) | Elasticsearch'in içinde |
@@ -486,6 +527,43 @@ sayfasıdır. Burada `grok-ayristir-arayuz` adıyla, adlar çakışmasın diye a
 Pipeline'ı kaydetmek için **Create pipeline**'a basın. Pipeline adı `grok-ayristir-arayuz`'dur; `./teardown.sh`
 onu da siler. **Show request** düğmesi, arayüzün Elasticsearch'e göndereceği `PUT _ingest/pipeline` isteğini
 gösterir: yukarıdaki Dev Tools adımının aynısıdır.
+
+**Pipeline'ı arayüzden index'e bağlamak.** `grok-varsayilan`'ı Dev Tools'ta `index.default_pipeline: grok-ayristir`
+ayarıyla açmıştınız. Bu ayar arayüzden de değişir. Index'i az önce kurduğunuz `grok-ayristir-arayuz`'a bağlayın:
+
+1. **Stack Management › Index Management**'ı açın. Arama kutusuna (1) `grok-varsayilan` yazın, index adına (2)
+   tıklayın:
+
+![Index Management: 1 arama, 2 index adı](../../assets/screenshots/LAB-14/23-index-listesi.png)
+
+2. **Settings** sekmesi (1) index'in ayarlarını JSON olarak gösterir. **Edit mode** (2) anahtarını açın:
+   değiştirilebilen ayarlar düzenlenebilir hâle gelir.
+3. `"index.default_pipeline"` satırında (3) değeri `"grok-ayristir-arayuz"` yapın ve **Save changes**'e (4) basın:
+
+![Index ayarı: 1 Settings, 2 Edit mode, 3 default_pipeline, 4 Save changes](../../assets/screenshots/LAB-14/24-index-ayar-pipeline.png)
+
+**Save changes**, Dev Tools'taki `PUT grok-varsayilan/_settings` isteğiyle aynı işi yapar. Dev Tools'ta
+pipeline adı vermeden bir satır yazın:
+
+```http
+PUT grok-varsayilan/_doc/arayuz-1?refresh=true&filter_path=result
+{ "message": "2026-11-02 10:16:40 [ERROR] auth-service: login failed" }
+```
+
+```json
+{"result":"created"}
+```
+
+```http
+GET grok-varsayilan/_source/arayuz-1?_source_includes=loglevel,log,service
+```
+
+```json
+{"loglevel":"error","service":"auth-service"}
+```
+
+`loglevel` küçük harfe çevrildi ama `log.level`'e taşınmadı: satırı Dev Tools'taki `grok-ayristir` değil,
+arayüzde kurduğunuz `grok-ayristir-arayuz` işledi.
 
 </details>
 

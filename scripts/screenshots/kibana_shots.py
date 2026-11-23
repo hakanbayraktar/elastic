@@ -986,6 +986,36 @@ def lab14_ingest_arayuz(page):
     print("kaydedildi:", page.url.replace(BASE, "")[:90])
 
 
+def lab14_default_pipeline(page):
+    """LAB-14 Adim 7 (details, ingest arayuzu sonrasi): grok-varsayilan index'inin default_pipeline ayarini
+    Index Management > Settings > Edit mode ile grok-ayristir-arayuz yapmak. On kosul: lab14_ingest_arayuz."""
+    lab = "LAB-14"
+    IDX = "grok-varsayilan"
+    page.goto(BASE + "/app/management/data/index_management/indices", wait_until="domcontentloaded"); settle(page, 6)
+    ara = page.locator('[data-test-subj="indicesSearch"]').first
+    ara.fill(IDX); ara.press("Enter"); settle(page, 3)
+    ad = f'[data-test-subj="indexTableIndexNameLink"]:text-is("{IDX}")'
+    shoot(page, lab, "23-index-listesi", [(("testsubj", "indicesSearch"), 1, "left"), (("css", ad), 2, "left")])
+    page.locator(ad).first.click(); settle(page, 5)
+    page.locator('[data-test-subj="indexDetailsTab-settings"]').first.click(); settle(page, 3)
+    page.locator('[data-test-subj="indexDetailsSettingsEditModeSwitch"]').first.click(); time.sleep(2)
+    satir = page.locator('.monaco-editor .view-line', has_text='"index.default_pipeline"').first
+    satir.click(); time.sleep(0.5); page.keyboard.press("End")
+    # satir sonu: "grok-ayristir", ya da "grok-ayristir" -> imleci kapanis tirnaginin onune al
+    geri = 2 if satir.inner_text().replace("\xa0", " ").rstrip().endswith('",') else 1
+    for _ in range(geri):
+        page.keyboard.press("ArrowLeft")
+    page.keyboard.type("-arayuz"); time.sleep(1)
+    print("SATIR:", satir.inner_text().replace("\xa0", " ").strip())
+    shoot(page, lab, "24-index-ayar-pipeline", [
+        (("testsubj", "indexDetailsTab-settings"), 1, "up"),
+        (("testsubj", "indexDetailsSettingsEditModeSwitch"), 2, "left"),
+        (("css", '.monaco-editor .view-line:has-text("index.default_pipeline")'), 3, "left"),
+        (("testsubj", "indexDetailsSettingsSave"), 4, "left")])
+    page.locator('[data-test-subj="indexDetailsSettingsSave"]').first.click(); settle(page, 4)
+    print("BILDIRIM:", [t.inner_text().replace("\n", " ")[:120] for t in page.locator(".euiToast").all()])
+
+
 def lab16_kaydet(page):
     """LAB-16 Adim 7: panoyu kaydetmek (zaman kaydi), paylasmak (Share), disa aktarmak (Export). On kosul: Adim 1-6 (pano "Apache atolye").
     Isaretli goruntuler LAB-16 klasorune, isaretsiz kopyalar assets/screenshots/sunum/lab16-*.png olarak yazilir."""
@@ -1395,7 +1425,7 @@ def lab07ek(page):
     shoot(page, lab, "11-pano-dort-panel", [(("css", '[data-test-subj="dashboardPanel"]'), 1, "right")])
 
 FLOWS = {"sunum": sunum, "lab01": lab01, "lab02": lab02, "lab04": lab04, "lab07": lab07, "lab07canli": lab07canli, "lab07runtime": lab07runtime, "lab07ek": lab07ek, "lab21": lab21,
-         "lab14": lab14, "lab10": lab10, "lab12_upload": lab12_upload, "lab16": lab16, "lab16_2": lambda page: lab16(page, "2"), "lab16_pano": lab16_pano, "lab16_kaydet": lab16_kaydet, "lab24_izleme": lab24_izleme, "lab14_ingest_arayuz": lab14_ingest_arayuz, "lab18_harita": lab18_harita, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "lab18_kural": lab18_kural, "lab18_aktif": lab18_aktif, "lab18_rapor": lab18_rapor, "lab18_pdf": lab18_pdf, "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
+         "lab14": lab14, "lab10": lab10, "lab12_upload": lab12_upload, "lab16": lab16, "lab16_2": lambda page: lab16(page, "2"), "lab16_pano": lab16_pano, "lab16_kaydet": lab16_kaydet, "lab24_izleme": lab24_izleme, "lab14_ingest_arayuz": lab14_ingest_arayuz, "lab14_default_pipeline": lab14_default_pipeline, "lab18_harita": lab18_harita, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "lab18_kural": lab18_kural, "lab18_aktif": lab18_aktif, "lab18_rapor": lab18_rapor, "lab18_pdf": lab18_pdf, "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
          "eski_3node": eski_3node}
 
 if __name__ == "__main__":
