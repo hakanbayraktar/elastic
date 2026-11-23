@@ -8,18 +8,18 @@
 
 ## Bu lab ne öğretiyor?
 
-Bir uygulamanın arama kutusundan beklenenler: yazarken öneri gelsin, "klavey" yazan da klavyeyi
-bulsun, "headset" arayan kulaklığı görsün, ürün adındaki eşleşme açıklamadakinden önde olsun ve
-eşleşen kelime vurgulansın. Bu labda bunları küçük bir ürün kataloğunda kuruyoruz. Son adımda
-joker karakterli aramanın neden beklenmedik sonuç verdiğini görüyoruz.
+- Yazarken öneri: otomatik tamamlama
+- Yazım hatası toleransı: "klavey" yazan da klavyeyi bulsun
+- Eş anlamlılar: "headset" arayan kulaklığı görsün
+- Ad eşleşmesini öne çıkarmak, eşleşen kelimeyi vurgulamak
+- Joker karakterli aramanın tuzağı
 
 ---
 
 ## Ön Koşullar
 
 - LAB-01 ana cluster'ı çalışıyor.
-- Önceki labları atladıysanız da lab çalışır: index, analyzer'lar ve veri bu labda kurulur. Analyzer, metni
-  aranabilir token'lara çeviren zincirdir (kelimelere bölme, küçük harf, kök bulma).
+- Önceki labları atladıysanız da lab çalışır: index, analyzer'lar ve veri bu labda kurulur.
 
 ```bash
 cd ~/elastic/labs/LAB-06-arama-deneyimi
@@ -27,11 +27,13 @@ cd ~/elastic/labs/LAB-06-arama-deneyimi
 
 ---
 
-## Kavramlar: yazarken ve ararken farklı analyzer
+## Kavramlar
 
-Bir field'ın iki analyzer'ı olabilir: `analyzer` document yazılırken, `search_analyzer` sorgu
-çalışırken kullanılır. Eş anlamlıları yalnız arama tarafında genişletmek iki şey kazandırır:
-index küçük kalır ve eş anlamlı listesi değişince document'leri yeniden yazmak gerekmez.
+- **analyzer:** metni aranabilir token'lara çeviren zincir (kelimelere bölme, küçük harf, kök bulma)
+- **`analyzer` / `search_analyzer`:** biri document yazılırken, öteki sorgu çalışırken kullanılır
+- **eş anlamlılar arama tarafında:** index küçük kalır; liste değişince document'leri yeniden yazmak gerekmez
+- **`search_as_you_type`:** otomatik tamamlama için kelime başlarını hazır tutan field tipi
+- **`fuzziness`:** yazım hatasına kelime uzunluğuna göre izin verir
 
 ---
 
@@ -41,7 +43,9 @@ Bu labda `http` bloklarını Kibana › Dev Tools'a, `bash` bloklarını termina
 
 ### 1. Eş anlamlı seti, index ve veri
 
-Eş anlamlıları index'ten ayrı, adı olan bir sette tutuyoruz (Synonyms API):
+**Soru: Arama kutusunun beklentilerini karşılayacak index nasıl kurulur?** Önce eş anlamlı seti, sonra index, sonra veri.
+
+**Eş anlamlı setini açın.** Eş anlamlılar index'ten ayrı, adı olan bir sette durur (Synonyms API):
 
 ```http
 PUT /_synonyms/deneyim-esanlam?filter_path=result
@@ -57,16 +61,15 @@ PUT /_synonyms/deneyim-esanlam?filter_path=result
 {"result": "created"}
 ```
 
-Her kural bir `id` (kuralın adı, sonra tek tek güncellemek için) ve virgülle ayrılmış, birbirinin yerine geçen
-kelimelerden oluşur. "cep telefonu" gibi iki kelimelik ifadeler de bir kelimeyle eşleşebilir.
+- **`id`:** kuralın adı; sonra tek tek güncellemek için
+- **kural:** virgülle ayrılmış, birbirinin yerine geçen kelimeler; "cep telefonu" gibi iki kelimelik ifade de olur
 
-Index iki analyzer ve bir öneri field'ıyla açılır. Analyzer, `standard` tokenizer metni kelimelere böldükten sonra
-filtreleri sırayla uygular:
+**Index'i açın.** İki analyzer ve bir öneri field'ı var; `standard` tokenizer metni böler, filtreler sırayla uygulanır:
 
-- `apostrophe`: kesme işaretinden sonrasını atar ("Kulaklık'ı" → "Kulaklık").
-- `tr_kucuk`: Türkçe kurallarla küçük harf (I → ı, İ → i).
-- `tr_kok`: kelimeyi köküne indirir ("kulaklıklar" → "kulaklık").
-- `tr_esanlam`: setteki eş anlamlıları ekler; `synonym_graph` çok kelimeli ifadeleri doğru eşler.
+- **`apostrophe`:** kesme işaretinden sonrasını atar ("Kulaklık'ı" → "Kulaklık").
+- **`tr_kucuk`:** Türkçe kurallarla küçük harf (I → ı, İ → i).
+- **`tr_kok`:** kelimeyi köküne indirir ("kulaklıklar" → "kulaklık").
+- **`tr_esanlam`:** setteki eş anlamlıları ekler; `synonym_graph` çok kelimeli ifadeleri doğru eşler.
 
 ```http
 PUT /deneyim-urunler
@@ -103,15 +106,13 @@ PUT /deneyim-urunler
 {"acknowledged": true, "shards_acknowledged": true, "index": "deneyim-urunler"}
 ```
 
-- `tr_index`: yazarken Türkçe küçük harf ve kök.
-- `tr_arama`: ararken aynısı, artı eş anlamlılar. `updateable: true` setin güncellenince yeniden
+- **`tr_index`:** yazarken Türkçe küçük harf ve kök.
+- **`tr_arama`:** ararken aynısı, artı eş anlamlılar. `updateable: true` setin güncellenince yeniden
   yüklenmesini sağlar; yalnız arama analyzer'ında kullanılabilir.
-- `tr_oneri`: yalnız küçük harf; kök bulmaz, çünkü öneride kullanıcının yazdığı harflerle eşleşmek gerekir.
-- `ad.oneri`: `search_as_you_type` field'ı, otomatik tamamlama için kelime başlarını hazır tutar.
+- **`tr_oneri`:** yalnız küçük harf; kök bulmaz, çünkü öneride kullanıcının yazdığı harflerle eşleşmek gerekir.
+- **`ad.oneri`:** `search_as_you_type` field'ı, otomatik tamamlama için kelime başlarını hazır tutar.
 
-Yedi ürünü `_bulk` ile yükleyin (her ürün iki satır: eylem satırı ve ürünün kendisi):
-
-Önce örnek veri dosyasını oluşturun: `sample-data/urunler.ndjson`
+**Örnek veriyi oluşturun:** yedi ürün, her biri eylem satırı + document satırı (`sample-data/urunler.ndjson`):
 
 ```bash
 mkdir -p sample-data
@@ -133,7 +134,7 @@ cat > sample-data/urunler.ndjson << 'EOF'
 EOF
 ```
 
-Dosyayı `_bulk` ile yükleyin:
+**Dosyayı `_bulk` ile yükleyin:**
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -X POST 'http://127.0.0.1:9200/_bulk?refresh=true&filter_path=errors' \
@@ -148,8 +149,12 @@ Beklenen çıktı:
 
 ### 2. Otomatik tamamlama
 
-Kullanıcı "kab" yazdı. `multi_match` aynı metni birden çok field'da arar. Burada `ad.oneri` ve onun ürettiği iki
-alt field'da arıyoruz; `type: bool_prefix` son kelimeyi yarım yazılmış sayar:
+**Soru: Kullanıcı yazarken öneriyi nasıl veririz?**
+
+- **`multi_match`:** aynı metni birden çok field'da arar (`ad.oneri` ve iki alt field'ı)
+- **`type: bool_prefix`:** son kelimeyi yarım yazılmış sayar
+
+**Kullanıcı "kab" yazdı:**
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.hits._source.ad
@@ -164,7 +169,7 @@ GET /deneyim-urunler/_search?filter_path=hits.hits._source.ad
 }
 ```
 
-Yazmaya devam etti: "kablosuz ku".
+**Yazmaya devam etti: "kablosuz ku":**
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.hits._source.ad
@@ -184,9 +189,9 @@ GET /deneyim-urunler/_search?filter_path=hits.hits._source.ad
 | `kab` | Kablosuz Kulaklık · Kablolu Kulaklık · Kablosuz Klavye · Şarj Kablosu |
 | `kablosuz ku` | Kablosuz Kulaklık · Kablosuz Klavye · Kablolu Kulaklık · Oyuncu Kulaklığı |
 
-`bool_prefix` son kelimeyi ön ek ("ku…"), öncekileri tam kelime sayar. İki kelimesi de tutan
-"Kablosuz Kulaklık" en üstte gelir; `_2gram` ve `_3gram` alt field'ları kelime çiftlerini tuttuğu
-için yan yana geçen kelimeler daha yüksek skor alır.
+- **Sıra neden böyle?** `bool_prefix` son kelimeyi ön ek ("ku…"), öncekileri tam kelime sayar; iki kelimesi de tutan
+  "Kablosuz Kulaklık" üstte.
+- **`_2gram`, `_3gram`:** kelime çiftlerini tutar; yan yana geçen kelimeler daha yüksek skor alır.
 
 <details><summary><strong>Arka planda: search_as_you_type'ın edge n-gram'ları</strong></summary>
 
@@ -214,14 +219,14 @@ eşleşecek token zaten hazırdır, sorgu anında ön ek araması yapılmaz. Bed
 
 ### 3. Yazım hatası toleransı
 
-"klavey" yazıldı:
+**Soru: Yazım hatası yapan kullanıcı ürünü bulabilir mi?** "klavey" yazıldı:
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 { "query": { "match": { "ad": "klavey" } } }
 ```
 
-Aynı arama, yazım hatasına izin vererek (`fuzziness`):
+**Aynı arama, yazım hatasına izin vererek (`fuzziness`):**
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
@@ -233,29 +238,30 @@ GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 | `match` "klavey" | 0 |
 | `match` "klavey", `fuzziness: AUTO` | 1: Kablosuz Klavye |
 
-`fuzziness: AUTO` harf farkına (silme, ekleme, değiştirme, yer değiştirme) kelimenin uzunluğuna
-göre izin verir: 1-2 harflik kelimede hiç, 3-5 harfte bir, daha uzun kelimede iki fark. Kısa
-kelimede kapalı olması, iki harflik bir aramanın yüzlerce kelimeyle eşleşmesini önler.
+- **`fuzziness: AUTO`:** harf farkına (silme, ekleme, değiştirme, yer değiştirme) kelime uzunluğuna göre izin verir.
+- **Ne kadar?** 1-2 harfte hiç, 3-5 harfte bir, daha uzun kelimede iki fark.
+- **Neden kısa kelimede kapalı?** İki harflik bir arama yüzlerce kelimeyle eşleşirdi.
 
 ### 4. Eş anlamlılar
 
-Ürün adlarında geçmeyen "headset" kelimesini arayın:
+**Soru: Kullanıcı ürün adında geçmeyen bir kelime yazarsa?** Ürün adlarında geçmeyen "headset" kelimesini arayın:
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 { "query": { "match": { "ad": "headset" } } }
 ```
 
-Sonuç 3: Kablosuz Kulaklık, Kablolu Kulaklık, Oyuncu Kulaklığı. Ürün adlarında "headset" geçmiyor;
-arama analyzer'ı onu "kulaklık"a genişletti. "kulaklik" (ı'sız) da aynı kuralla bulunur. Şimdi
-listede olmayan bir kelime (sonuç 0):
+- **Sonuç 3:** Kablosuz Kulaklık, Kablolu Kulaklık, Oyuncu Kulaklığı. Arama analyzer'ı "headset"i "kulaklık"a genişletti.
+- **"kulaklik"** (ı'sız) da aynı kuralla bulunur.
+
+**Listede olmayan bir kelime** (sonuç 0):
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.total.value
 { "query": { "match": { "ad": "headphone" } } }
 ```
 
-Kuralı güncelleyin. Index kapatılmaz, document'ler yeniden yazılmaz:
+**Kuralı güncelleyin.** Index kapatılmaz, document'ler yeniden yazılmaz:
 
 ```http
 PUT /_synonyms/deneyim-esanlam/kulaklik?filter_path=result,reload_analyzers_details.reload_details.reloaded_analyzers
@@ -266,22 +272,21 @@ PUT /_synonyms/deneyim-esanlam/kulaklik?filter_path=result,reload_analyzers_deta
 {"result": "updated", "reload_analyzers_details": {"reload_details": [{"reloaded_analyzers": ["tr_arama"]}]}}
 ```
 
-`reloaded_analyzers` setin değişmesiyle yeniden yüklenen analyzer'ları listeler: yalnız arama analyzer'ı
-`tr_arama`.
+**`reloaded_analyzers`:** setin değişmesiyle yeniden yüklenen analyzer'lar; yalnız arama analyzer'ı `tr_arama`.
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.total.value,hits.hits._source.ad
 { "query": { "match": { "ad": "headphone" } } }
 ```
 
-Sonuç artık 3 kulaklık. Set güncellenince Elasticsearch onu kullanan arama analyzer'larını yeniden
-yükler. Bu, eş anlamlıların yalnız arama tarafında olmasının kazancıdır: yazma tarafında olsaydı
-document'ler index'lenirken üretilmiş eski token'larla kalır ve yeni kuralın geçmesi için `_reindex` gerekirdi. Kural listesini Kibana'da **Elasticsearch ›
-Synonyms** sayfasından da yönetebilirsiniz.
+- **Sonuç artık 3 kulaklık:** set güncellenince onu kullanan arama analyzer'ları yeniden yüklenir.
+- **Neden arama tarafında?** Yazma tarafında olsaydı eski token'lar kalır, yeni kural için `_reindex` gerekirdi.
+- **Arayüzden:** kural listesi Kibana'da **Elasticsearch › Synonyms** sayfasından da yönetilir.
 
 ### 5. Önemli field'ı öne çıkarmak ve vurgulamak
 
-Ad ve açıklamada birlikte arayın; addaki eşleşme üç kat değerli olsun, eşleşen kelime işaretlensin:
+**Soru: Ürün adındaki eşleşme açıklamadakinden önde olsun, kelime de vurgulansın: nasıl?** Ad ve açıklamada
+birlikte arayın; addaki eşleşme üç kat değerli, eşleşen kelime işaretli:
 
 ```http
 GET /deneyim-urunler/_search?filter_path=hits.hits._score,hits.hits._source.ad,hits.hits.highlight
@@ -344,10 +349,9 @@ GET /deneyim-urunler/_search?filter_path=hits.hits._score,hits.hits._source.ad,h
 }
 ```
 
-- `ad^3`: ad field'ının skoru 3 ile çarpılır. "Şarj Kablosu"nun yalnız açıklamasında "kulaklık"
-  geçtiği için en altta kalır, ama listeden düşmez.
-- `highlight`: eşleşen kelimeyi `<em>` ile sarar; uygulama bunu kalın gösterir. "Kulaklığı" da
-  işaretlenir, çünkü kök bulma sayesinde aynı terimdir.
+- **`ad^3`:** ad field'ının skoru 3 ile çarpılır; "Şarj Kablosu"nun yalnız açıklamasında "kulaklık" geçer, en altta kalır
+  ama listeden düşmez.
+- **`highlight`:** eşleşen kelimeyi `<em>` ile sarar; "Kulaklığı" da işaretlenir (kök bulma sayesinde aynı terim).
 
 <details>
 <summary><strong>Bir sonucu silmeden geri plana itmek: <code>boosting</code></strong></summary>
@@ -378,21 +382,23 @@ stokta olmayan ürünü gizlemeden geri plana almak için kullanılır.
 
 ### 6. Joker karakter tuzağı
 
-Kullanıcı "kulaklıklar" yazdı, bir de sonuna yıldız koydu:
+**Soru: Yıldızlı arama neden bazen hiçbir şey bulmaz?** Kullanıcı "kulaklıklar" yazdı, bir de sonuna yıldız koydu.
+
+**`match`:**
 
 ```http
 GET /deneyim-urunler/_count?filter_path=count
 { "query": { "match": { "ad": "kulaklıklar" } } }
 ```
 
-Aynı kelime, sonuna yıldız koyarak (`wildcard`):
+**Aynı kelime, sonuna yıldız koyarak (`wildcard`):**
 
 ```http
 GET /deneyim-urunler/_count?filter_path=count
 { "query": { "wildcard": { "ad": { "value": "kulaklıklar*" } } } }
 ```
 
-Daha kısa bir başlangıçla (`kulak*`):
+**Daha kısa bir başlangıçla (`kulak*`):**
 
 ```http
 GET /deneyim-urunler/_count?filter_path=count
@@ -405,24 +411,21 @@ GET /deneyim-urunler/_count?filter_path=count
 | `wildcard` "kulaklıklar*" | 0 |
 | `wildcard` "kulak*" | 3 |
 
-- `match` aramayı analyzer'dan geçirir: "kulaklıklar" → `kulaklık`, index'teki terimle aynı: 3.
-- `wildcard` analyzer'dan **geçmez**; deseni index'teki terimlerle karşılaştırır. Index'te
-  `kulaklık` var, "kulaklıklar" ile başlayan terim yok: 0.
-- `kulak*`, `kulaklık` terimini yakalar: 3.
+- **`match`:** analyzer'dan geçirir: "kulaklıklar" → `kulaklık`, index'teki terimle aynı: 3.
+- **`wildcard`:** analyzer'dan **geçmez**; index'te "kulaklıklar" ile başlayan terim yok: 0.
+- **`kulak*`:** `kulaklık` terimini yakalar: 3.
 
-Analyzer doğru terimi üretse bile sorgu türü o terime ulaşamayabilir. `query_string` sorguyu tek bir metin olarak
-alır ve `AND`, `OR`, `*` gibi işaretleri kendisi çözer (Kibana'da sorgu dili KQL yerine Lucene seçildiğinde kullanılan sözdizimi).
-`analyze_wildcard: true` sondaki yıldızlı kelimeyi de analyzer'dan geçirir (sonuç 3):
+**Çözüm: `query_string` + `analyze_wildcard`.** `query_string` sorguyu tek metin olarak alır, `AND`, `OR`, `*` işaretlerini
+kendisi çözer (Kibana'da Lucene sözdizimi). `analyze_wildcard: true` yıldızlı kelimeyi de analyzer'dan geçirir (sonuç 3):
 
 ```http
 GET /deneyim-urunler/_count?filter_path=count
 { "query": { "query_string": { "query": "kulaklıklar*", "fields": ["ad"], "analyze_wildcard": true } } }
 ```
 
-Yıldızın yeri maliyeti belirler: `kulak*` (sonda) terimlerin başından arar, hızlıdır; `*lak`
-(başta) bütün terimleri tarar, büyük index'te yavaştır. Yazarken arama için wildcard yerine
-Adım 2'deki `search_as_you_type` kullanılır. Pahalı sorguları cluster genelinde kapatmak için
-`search.allow_expensive_queries: false` ayarı vardır.
+- **Yıldızın yeri:** `kulak*` (sonda) hızlıdır; `*lak` (başta) bütün terimleri tarar, büyük index'te yavaştır.
+- **Yazarken arama için** wildcard yerine Adım 2'deki `search_as_you_type`.
+- **Pahalı sorguları kapatmak:** cluster ayarı `search.allow_expensive_queries: false`.
 
 ---
 
