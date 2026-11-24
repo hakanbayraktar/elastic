@@ -12,8 +12,13 @@ Bir mağaza veritabanında sipariş, müşteri ve ürün ayrı tablolardadır. "
 kulaklık siparişleri" sorusu için üç tablo birleştirilmelidir. Elasticsearch'te JOIN yoktur; bu yüzden
 birleştirme veri aktarılırken yapılır ve her sipariş müşterisi ve ürünüyle birlikte tek document olur.
 
-Bu labda Logstash'in `jdbc` input'u JOIN'li tek bir SQL'i düzenli aralıklarla çalıştıracak, yalnız
-değişen satırları alacak ve aynı siparişi tekrar yazdığında kopya açmayacak.
+Bu labda Logstash'in `jdbc` input'u:
+
+- JOIN'li tek bir SQL'i düzenli aralıklarla çalıştıracak.
+- Yalnız değişen satırları alacak, aynı siparişi tekrar yazdığında kopya açmayacak.
+
+Sonra aktarılan veride arama yapıp Kibana'da kısa bir rapor kuracağız. Kibana'daki her tıklama kırmızı kutu ve
+numarayla gösterilir.
 
 ![MySQL'den Elasticsearch'e: JOIN'li SQL, Logstash JDBC ve artımlı aktarım](../../assets/infographics/17-logstash-mysql-jdbc.png)
 
@@ -108,6 +113,8 @@ labın kendi Docker ağı üzerinden `mysql-magaza-lab:3306` adıyla bağlanır.
 
 ### 1. MySQL'i başlatın ve tablolara bakın
 
+**Soru: Kaynak veritabanında veri nasıl dağılmış?**
+
 ```bash
 docker compose up -d mysql
 ```
@@ -152,6 +159,8 @@ ERROR 1142 (42000) at line 1: UPDATE command denied to user 'logstash_okuyucu'@'
 ```
 
 ### 2. Elasticsearch tarafı: kullanıcı ve şablon
+
+**Soru: Logstash hangi yetkiyle yazacak, field tipleri ne olacak?**
 
 Logstash Elasticsearch'e yalnız `mysql-*` index'lerine yazabilen bir kullanıcıyla bağlanır. Kibana
 adresini sunucuda hesaplayın:
@@ -208,6 +217,8 @@ Yanıtlar sırasıyla `{"role":{"created":true}}`, `{"created":true}` ve `{"ackn
 
 ### 3. Sürücüyü indirin ve Logstash'i başlatın
 
+**Soru: Logstash MySQL'e nasıl bağlanır?**
+
 Logstash MySQL'e Java sürücüsüyle bağlanır. Sürücüyü Maven Central'dan indirip özetini doğrulayın:
 
 ```bash
@@ -243,6 +254,8 @@ Beklenen çıktı:
 
 ### 4. Önce ve sonra: üç tablo, tek document
 
+**Soru: Üç tablodaki satırlar tek document'te nasıl birleşti?**
+
 Adım 1'de üç tabloya dağılmış olan 103 numaralı sipariş Elasticsearch'te:
 
 ```bash
@@ -261,6 +274,8 @@ Document sorulacak her şeyi içinde taşır; aramak için JOIN gerekmez. Bedeli
 müşterinin bütün siparişleri yeniden yazılmalıdır.
 
 ### 5. Artımlı aktarım: eklenen ve güncellenen satır
+
+**Soru: Yeni ve değişen satırlar bir sonraki turda gelir mi, kopya oluşur mu?**
 
 Logstash'in sakladığı son değer, ilk turda okunan en yeni siparişin zamanıdır:
 
@@ -319,6 +334,8 @@ Silmeleri taşımak için tabloda "silindi" bayrağı tutulur ya da değişiklik
 kullanılır.
 
 ### 6. Aktarılan veride arama, aggregation ve ES|QL
+
+**Soru: JOIN olmayan Elasticsearch'te bu siparişler nasıl sorulur?**
 
 Lab başındaki soru: Antalya'daki müşterilerin kulaklık siparişleri. `urun` bir `text` field'ı olduğu için
 "kulaklık" kelimesi "Kablosuz Kulaklık"ı bulur; `il` ise tam değerle filtrelenir:
