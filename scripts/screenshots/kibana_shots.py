@@ -665,22 +665,6 @@ def lab07runtime(page):
     ])
 
 
-def lab21(page):
-    lab = "LAB-21"
-    page.goto(BASE + "/app/management/data/index_management/indices", wait_until="domcontentloaded"); settle(page, 6)
-    # README: arama kutusuna index adi yazilir (sunucuda cok index olunca satir ilk sayfada olmaz)
-    arama = page.locator('[data-test-subj="indicesSearch"]').first
-    arama.fill("saglik-arizali"); page.keyboard.press("Enter"); time.sleep(2)
-    for _ in range(10):
-        if page.locator('tr:has-text("saglik-arizali")').count():
-            break
-        page.get_by_role("button", name="Reload indices").first.click(); time.sleep(3)
-    shoot(page, lab, "01-index-management-red", [
-        (("testsubj", "indicesSearch"), 1, "down"),
-        (("css", 'tr:has-text("saglik-arizali")'), 2, "left"),
-    ])
-
-
 def lab14(page):
     """On kosul: LAB-14 adim 1-3 ve 6 calismis (grok-* verisi son 30 dk icinde, pano kurulu)."""
     lab = "LAB-14"
@@ -1023,7 +1007,7 @@ def lab07ek(page):
     print("panel sayisi:", n)
     shoot(page, lab, "11-pano-dort-panel", [(("css", '[data-test-subj="dashboardPanel"]'), 1, "right")])
 
-FLOWS = {"sunum": sunum, "lab01": lab01, "lab02": lab02, "lab04": lab04, "lab07": lab07, "lab07canli": lab07canli, "lab07runtime": lab07runtime, "lab07ek": lab07ek, "lab21": lab21,
+FLOWS = {"sunum": sunum, "lab01": lab01, "lab02": lab02, "lab04": lab04, "lab07": lab07, "lab07canli": lab07canli, "lab07runtime": lab07runtime, "lab07ek": lab07ek,
          "lab14": lab14, "lab10": lab10, "lab12_upload": lab12_upload, "lab24_izleme": lab24_izleme, "lab14_ingest_arayuz": lab14_ingest_arayuz, "lab14_default_pipeline": lab14_default_pipeline, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
          "eski_3node": eski_3node}
 

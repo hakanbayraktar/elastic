@@ -8,11 +8,13 @@
 
 ## Bu lab ne öğretiyor?
 
-Cluster sağlığı üç renkle özetlenir, ama renk nedeni söylemez. "Yellow" bir replica'nın yerleşemediğini,
-"red" bir primary shard'ın yerleşemediğini, yani bir index'in verisine erişilemediğini gösterir. Bu
-labda önce mevcut yellow'un, sonra bilerek ürettiğimiz bir red'in nedenini Elasticsearch'e soracak,
-ikisini düzeltecek, disk dolduğunda index'in nasıl kilitlendiğini görecek ve "green ama sağlıklı
-mı?" sorusu için kısa bir kontrol listesi çıkaracağız. Son adımda 3-node cluster'ı kesintisiz yeniden başlatacağız.
+Cluster sağlığı üç renkle özetlenir, ama renk nedeni söylemez. "Yellow" bir replica'nın, "red" bir primary shard'ın
+yerleşemediğini gösterir; red'de bir index'in verisine erişilemez. Bu labda:
+
+- Mevcut yellow'un ve bilerek ürettiğimiz bir red'in nedenini Elasticsearch'e sorup ikisini düzelteceğiz.
+- Disk dolduğunda index'in nasıl kilitlendiğini göreceğiz.
+- "Green ama sağlıklı mı?" sorusu için kısa bir kontrol listesi çıkaracağız.
+- 3-node cluster'ı kesintisiz yeniden başlatacağız (rolling restart).
 
 ---
 
@@ -45,14 +47,11 @@ Beklenen çıktı:
 
 ## Kavramlar: üç renk
 
-| Renk | Anlamı | Veri |
-|---|---|---|
-| `green` | Bütün primary ve replica shard'lar bir node'a yerleşmiş | Erişilir, yedekli |
-| `yellow` | Primary'ler yerleşmiş, en az bir replica yerleşememiş | Erişilir, yedeksiz |
-| `red` | En az bir primary yerleşememiş | O index'in (bir kısmının) verisine erişilemez |
-
-Bir shard'ın neden yerleşmediğini **allocation explain** API'si söyler. Elasticsearch her node için
-bir dizi kuralı (decider) denetler; yanıt hangi kuralın engellediğini yazar.
+- **green:** bütün primary ve replica shard'lar bir node'a yerleşmiş; veri erişilir ve yedekli.
+- **yellow:** primary'ler yerleşmiş, en az bir replica yerleşememiş; veri erişilir ama yedeksiz.
+- **red:** en az bir primary yerleşememiş; o index'in (bir kısmının) verisine erişilemez.
+- **Allocation explain:** bir shard'ın neden yerleşmediğini söyleyen API. Elasticsearch her node için bir dizi kuralı
+  (decider) denetler; yanıt hangi kuralın engellediğini yazar.
 
 ---
 
@@ -61,6 +60,8 @@ bir dizi kuralı (decider) denetler; yanıt hangi kuralın engellediğini yazar.
 Bu labda `http` bloklarını Kibana › Dev Tools'a, `bash` bloklarını terminale yapıştırın.
 
 ### 1. Cluster'a ilk bakış
+
+**Soru: Cluster şu an ne durumda?**
 
 ```http
 GET /_cluster/health?filter_path=status,number_of_nodes,active_shards,unassigned_shards
@@ -117,6 +118,8 @@ kaldığını söyler: `INDEX_CREATED` (index açılırken), `REPLICA_ADDED` (re
 `CLUSTER_RECOVERED` (cluster yeniden başlayınca). Nedenini söylemez; sizde bu üçünden biri görünür.
 
 ### 2. Yellow'un nedeni ve düzeltmesi
+
+**Soru: Replica neden yerleşmiyor?**
 
 Elasticsearch'e bu replica'yı neden yerleştiremediğini sorun:
 
@@ -176,6 +179,8 @@ dolduğunu gösterir. Replica sayısı her zaman değiştirilebilir, primary say
 
 ### 3. Red üretmek: yerleşemeyen primary
 
+**Soru: Bir primary hiçbir node'a sığmazsa ne olur?**
+
 Index'e "shard'ını yalnız `olmayan-node` adlı node'a koy" kuralı veriyoruz. Böyle bir node yok; gerçek
 hayatta aynı durumu yanlış yazılmış bir yerleşim kuralı ya da kaybolmuş bir node üretir:
 
@@ -203,13 +208,21 @@ GET /_cluster/health/saglik-arizali?filter_path=status,unassigned_primary_shards
 ```
 
 Index açıldı (`acknowledged: true`) ama `shards_acknowledged: false`: shard yerleşmedi.
-Kibana'da **Stack Management › Index Management** listesinde arama kutusuna (1) `saglik-arizali` yazın;
-bu index'in satırında (2) sağlık ve document sayısı sütunları boş kalır: shard hiçbir node'da olmadığı için
-Elasticsearch bu index'in istatistiğini veremez. Listede sağlığı boş görünen bir index, red'in ilk işaretidir:
+Kibana'da aynı durumu görmek için:
 
-![Index Management: 1 arama kutusu, 2 saglik-arizali satırı; sağlık ve document sayısı boş](../../assets/screenshots/LAB-21/01-index-management-red.png)
+1. Menü, **Stack Management**, soldaki listede **Data** altında **Index Management** (1):
+
+![Stack Management: 1 Index Management](../../assets/screenshots/LAB-21/03a-index-management-menu.png)
+
+2. Arama kutusuna (1) `saglik-arizali` yazıp Enter'a basın. Index'in satırında (2) sağlık ve document sayısı sütunları
+   boş kalır: shard hiçbir node'da olmadığı için Elasticsearch bu index'in istatistiğini veremez. Listede sağlığı boş
+   görünen bir index, red'in ilk işaretidir:
+
+![Index Management: 1 arama kutusu, 2 saglik-arizali satırı](../../assets/screenshots/LAB-21/03b-index-management-red.png)
 
 ### 4. Red'in nedenini sormak ve düzeltmek
+
+**Soru: Red'in sebebini Elasticsearch'e nasıl sorarız?**
 
 ```http
 GET /_cluster/allocation/explain?filter_path=current_state,node_allocation_decisions.deciders
@@ -270,6 +283,8 @@ kimlikleri sizde farklıdır.
 
 ### 5. Disk dolunca: index kilitlenir
 
+**Soru: Disk dolarsa yazma neden durur?**
+
 Elasticsearch node diskini üç eşikle izler. Varsayılanlar:
 
 ```bash
@@ -324,6 +339,8 @@ inince Elasticsearch bloğu kendisi kaldırır; elle kaldırmak yalnız disk aç
 
 ### 6. Green ama sağlıklı mı?
 
+**Soru: Green bir cluster'da da neye bakmak gerekir?**
+
 Green yalnız shard'ların yerleştiğini söyler. Disk, bellek ve shard sayısı ayrıca izlenir:
 
 ```bash
@@ -357,6 +374,8 @@ Sayılar sunucunuza ve yüklediğiniz verilere göre farklıdır; önemli olan s
 | Büyük index'ler | `_cat/indices` → `store.size` | Tek shard onlarca GB'ı geçerse |
 
 ### 7. Bakım: cluster'ı kesintisiz yeniden başlatmak (rolling restart)
+
+**Soru: Bir node'u veri taşımadan nasıl yeniden başlatırız?**
 
 Bir node'u güncellemek ya da yeniden başlatmak için durdurduğunuzda cluster, node'un taşıdığı replica'ları kalan
 node'larda yeniden kurmaya kalkar; bu ağ ve disk yükü demektir ve node bir dakikada dönecekse boşunadır. Kısa bakımda
