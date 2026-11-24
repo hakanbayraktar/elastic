@@ -12,9 +12,12 @@ Dev Tools ve `curl` denemek için yeterlidir; gerçek uygulama ise Elasticsearch
 Orada dört soru çıkar: kod hangi kimlikle bağlanır, binlerce document nasıl yazılır, bir document reddedilince ne
 olur, 10.000'den fazla sonuç nasıl okunur.
 
-Bu labda Python client ile yalnız kendi index'ine yetkili bir API key kullanacak, `bulk` yardımcısıyla
-yazacak, hataları türüne göre yakalayacak, sonuçları `search_after` ile sayfalayacak, hangi hatanın
-tekrar denendiğini görecek ve tek document'i `index`, `get` ve `match` ile yazıp okuyacağız.
+Bu labda Python client ile:
+
+- Yalnız kendi index'ine yetkili bir API key kullanacağız.
+- `bulk` yardımcısıyla yazıp hataları türüne göre yakalayacağız.
+- Sonuçları `search_after` ile sayfalayacak, hangi hatanın tekrar denendiğini göreceğiz.
+- Tek document'i `index`, `get` ve `match` ile yazıp okuyacağız.
 
 ![Uygulamadan Elasticsearch: Python client, kısıtlı API key, bulk, search_after ve yeniden deneme](../../assets/infographics/30-python-client.png)
 
@@ -71,6 +74,8 @@ aynı olmalıdır (9.x ile 9.x).
 
 ### 1. Sanal ortam ve client
 
+**Soru: Client hangi sürümle, nereye kurulur?**
+
 Paketler sistem Python'una değil labın kendi sanal ortamına (`.venv`) kurulur:
 
 ```bash
@@ -86,6 +91,8 @@ Beklenen çıktı:
 ```
 
 ### 2. Kısıtlı API key ile bağlanın
+
+**Soru: Uygulama hangi kimlikle bağlanmalı?**
 
 API key'i `elastic` kullanıcısıyla bir kez üretip ortam değişkenine alıyoruz. Anahtar yalnız `py-*`
 index'lerinde index açıp yazabilir ve okuyabilir; bir gün sonra geçersiz olur:
@@ -128,6 +135,8 @@ sızsa bile yalnız `py-*` index'leri etkilenir.
 
 ### 3. Bulk ile 1000 ürün yazın
 
+**Soru: Binlerce document tek tek mi yazılır?**
+
 `app/yaz.py` index'i açar ve 1000 ürünü `helpers.bulk` ile 250'lik parçalar hâlinde gönderir. Document'ler bir
 üreteçten (generator) gelir; hepsi aynı anda bellekte tutulmaz:
 
@@ -146,6 +155,8 @@ Tek tek `index` çağrısı 1000 HTTP isteği demektir; bulk 4 istekle biter. `r
 aramada görünmesini bekler, sayım bu yüzden hemen 1000'dir.
 
 ### 4. Hata yönetimi: reddedilen document ve olmayan document
+
+**Soru: Bir document reddedilince ya da bulunamayınca uygulama ne görür?**
 
 `app/hatalar.py` 5 document gönderir; ikisinin fiyatı sayı değildir. `raise_on_error=False` ile bulk istisna
 atmaz, reddedilenleri ayrı bir liste olarak döndürür:
@@ -168,6 +179,8 @@ bulunamadi: 404 U9999
 `NotFoundError` (404) verir; bu bir program hatası değil, beklenen bir durumdur ve `try/except` ile karşılanır.
 
 ### 5. Sıralama ve search_after ile sayfalama
+
+**Soru: 10.000'den fazla sonuç nasıl okunur?**
 
 Ürünleri fiyata göre sıralayıp 300'lük sayfalarla okuyoruz. Her sayfanın son document'inin `sort` değeri bir
 sonraki isteğe `search_after` olarak verilir. Son sıralama field'ı (`urun_id`) benzersizdir; aynı fiyatlı
@@ -193,6 +206,8 @@ from+size: 400 Result window is too large, from + size must be less than or
 
 ### 6. Zaman aşımı ve yeniden deneme
 
+**Soru: Hangi hata tekrar denenir, hangisi denenmez?**
+
 `app/zaman_asimi.py` üç durumu dener ve istemcinin kaç kez tekrar denediğini sayar:
 
 ```bash
@@ -215,6 +230,8 @@ kapali port : ConnectionError, tekrar deneme = 2
   (varsayılanı `False`) tekrar denenir.
 
 ### 7. Tek document: yaz, oku, ara
+
+**Soru: Tek bir document nasıl yazılır, id ile okunur ve aranır?**
 
 Bulk binlerce document içindir; uygulamanın çoğu işi tek document'tir (bir sipariş açmak, bir ürünü kaydetmek).
 `app/tek.py` üç ürünü `es.index` ile tek tek yazar, birini `es.get` ile id'siyle okur ve `match` sorgusuyla arar.
