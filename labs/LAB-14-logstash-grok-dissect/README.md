@@ -258,7 +258,9 @@ Beklenen çıktı:
     dissect - referans    : +4.73 s  ->  olay basina +15.8 us ek CPU
 ```
 
-Sayılar sunucuya ve koşuya göre değişir; anlamlı olan sıralamadır. Üç ayrı ölçümde grok olay başına
+Sayılar sunucuya ve koşuya göre değişir; anlamlı olan sıralamadır. Ölçüm CPU'ya duyarlıdır: başka Logstash ya da
+Beats container'ları çalışıyorsa sıralama ters çıkabilir. Önce onları durdurun (`docker compose stop`), sonuç yine
+tersse betiği bir kez daha çalıştırın. Üç ayrı ölçümde grok olay başına
 dissect'ten 12 µs ile 66 µs arası fazla CPU harcadı. Saniyede birkaç yüz satırda bu fark hissedilmez;
 saniyede on binlerce satırda kaç worker gerektiğini belirler.
 
@@ -586,7 +588,7 @@ Beklenen çıktı:
  Volume logstash-grok-lab_logstash-data Removed
 [2/4] grok-* index'leri siliniyor
 {"acknowledged":true}
-  -> grok-error-2026.11.21,grok-app-2026.11.21,grok-unparsed-2026.11.21,grok-ingest
+  -> grok-varsayilan,grok-unparsed-2026.11.24,grok-error-2026.11.24,grok-app-2026.11.24,grok-ingest
 [3/4] Index sablonu siliniyor
 {"acknowledged":true}
   -> pipeline grok-ayristir
@@ -597,7 +599,7 @@ Beklenen çıktı:
 [+] Temizlik tamam.
 ```
 
-Index adlarındaki tarih sizde farklıdır.
+Index adlarındaki tarih ve sırası sizde farklıdır.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.

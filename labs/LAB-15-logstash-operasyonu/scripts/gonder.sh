@@ -10,11 +10,14 @@ N=$(grep -c . "${FILE}")
 out() { curl -s "${API}/_node/stats/pipelines/ingest" | jq -r '.pipelines.ingest.events.out // 0'; }
 BEFORE=$(out)
 
-# TCP girdisi pipeline ile birlikte acilir; acilana dek en fazla 60 sn dene.
+# TCP girdisi pipeline'dan birkac saniye sonra acilir. Host portu (5001) Docker'da hep baglanti
+# kabul eder; girdi henuz dinlemiyorsa veri sessizce kaybolur. Bu yuzden container icindeki 5000
+# portunu yokluyoruz (en fazla 60 sn).
 for _ in $(seq 1 30); do
-  if exec 3<>/dev/tcp/127.0.0.1/5001; then break; fi 2>/dev/null
+  docker exec logstash-ops-lab bash -c ': > /dev/tcp/127.0.0.1/5000' 2>/dev/null && break
   sleep 2
 done
+exec 3<>/dev/tcp/127.0.0.1/5001
 cat "${FILE}" >&3
 exec 3>&-
 echo "[+] ${N} olay gonderildi (${FILE##*/})"

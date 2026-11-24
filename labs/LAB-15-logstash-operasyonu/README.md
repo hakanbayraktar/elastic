@@ -168,11 +168,14 @@ N=$(grep -c . "${FILE}")
 out() { curl -s "${API}/_node/stats/pipelines/ingest" | jq -r '.pipelines.ingest.events.out // 0'; }
 BEFORE=$(out)
 
-# TCP girdisi pipeline ile birlikte acilir; acilana dek en fazla 60 sn dene.
+# TCP girdisi pipeline'dan birkac saniye sonra acilir. Host portu (5001) Docker'da hep baglanti
+# kabul eder; girdi henuz dinlemiyorsa veri sessizce kaybolur. Bu yuzden container icindeki 5000
+# portunu yokluyoruz (en fazla 60 sn).
 for _ in $(seq 1 30); do
-  if exec 3<>/dev/tcp/127.0.0.1/5001; then break; fi 2>/dev/null
+  docker exec logstash-ops-lab bash -c ': > /dev/tcp/127.0.0.1/5000' 2>/dev/null && break
   sleep 2
 done
+exec 3<>/dev/tcp/127.0.0.1/5001
 cat "${FILE}" >&3
 exec 3>&-
 echo "[+] ${N} olay gonderildi (${FILE##*/})"
@@ -239,35 +242,38 @@ EOF
 ```bash
 docker network disconnect elastic-lab00_default logstash-ops-lab
 ./scripts/gonder.sh sample-data/kesinti.ndjson --beklemeden
-timeout 60 bash -c 'until [ "$(curl -s 127.0.0.1:9601/_node/stats/pipelines/ingest | jq .pipelines.ingest.events.in)" -ge 13 ]; do printf .; sleep 2; done'; echo
-curl -s 127.0.0.1:9601/_node/stats/pipelines/ingest | jq -c '.pipelines.ingest | {in: .events.in, out: .events.out}'
-```
-
-Beklenen çıktı:
-
-```text
-[+] 5 olay gonderildi (kesinti.ndjson)
-
-{"in":13,"out":8}
-```
-
-5 olay alındı (`in` 13) ama yazılamadı (`out` 8). Persistent queue'da, yani diskte bekliyorlar. Şimdi Logstash'i çökertin (`kill`,
-düzgün kapanmaya izin vermez) ve yeniden başlatın:
-
-```bash
-docker kill logstash-ops-lab >/dev/null && docker start logstash-ops-lab >/dev/null
-timeout 180 bash -c 'until curl -s 127.0.0.1:9601/_node/pipelines | jq -e ".pipelines | length == 2" >/dev/null 2>&1; do printf .; sleep 3; done'; echo
+timeout 60 bash -c 'until curl -s 127.0.0.1:9601/_node/stats/pipelines/ingest | jq -e ".pipelines.ingest | .events.in >= 13 and .queue.queue_size_in_bytes > 1" >/dev/null; do printf .; sleep 2; done'; echo
 curl -s 127.0.0.1:9601/_node/stats/pipelines/ingest | jq -c '.pipelines.ingest | {in: .events.in, out: .events.out, kuyrukta_veri: (.queue.queue_size_in_bytes > 1)}'
 ```
 
 Beklenen çıktı:
 
 ```text
-.........
-{"in":0,"out":0,"kuyrukta_veri":true}
+[+] 5 olay gonderildi (kesinti.ndjson)
+...
+{"in":13,"out":8,"kuyrukta_veri":true}
 ```
 
-Sayaçlar yeniden başlatmayla sıfırlandı ama kuyrukta hâlâ veri var: 5 olay diskten geri geldi. Bağlantıyı geri verin; bekleyen
+Kuyruk boyutu istatistiği olay gelince birkaç saniye geç güncellenir; döngü onu da bekler.
+
+5 olay alındı (`in` 13) ama yazılamadı (`out` 8). Persistent queue'da, yani diskte bekliyorlar (`kuyrukta_veri: true`). Şimdi Logstash'i çökertin (`kill`,
+düzgün kapanmaya izin vermez) ve yeniden başlatın:
+
+```bash
+docker kill logstash-ops-lab >/dev/null && docker start logstash-ops-lab >/dev/null
+timeout 180 bash -c 'until curl -s 127.0.0.1:9601/_node/pipelines | jq -e ".pipelines | length == 2" >/dev/null 2>&1; do printf .; sleep 3; done'; echo
+curl -s 127.0.0.1:9601/_node/stats/pipelines/ingest | jq -c '.pipelines.ingest | {in: .events.in, out: .events.out}'
+```
+
+Beklenen çıktı:
+
+```text
+.........
+{"in":0,"out":0}
+```
+
+Sayaçlar yeniden başlatmayla sıfırlandı; 5 olay diskteki kuyrukta bekliyor. Çökmeden hemen sonra kuyruk boyutu
+istatistiği bir süre eksik görünebilir; olayların kaybolmadığının kanıtı aşağıdaki sayıdır. Bağlantıyı geri verin; bekleyen
 olaylar kendiliğinden yazılır:
 
 ```bash

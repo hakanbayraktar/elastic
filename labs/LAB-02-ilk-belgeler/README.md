@@ -78,6 +78,117 @@ PUT /belge-urunler
 {"acknowledged": true, "shards_acknowledged": true, "index": "belge-urunler"}
 ```
 
+<details>
+<summary><strong>Shard boyutunu sınırlamak: 1 GB dolunca yeni index</strong></summary>
+
+Index açarken shard boyutu verilmez; shard veri geldikçe büyür. Byte sınırı yoktur, tek sert sınır shard başına
+2.147.483.519 document'tir. Önerilen boyut shard başına 10-50 GB'tır: çok büyük shard node'lar arasında yavaş
+taşınır, arızadan sonra yavaş kurtarılır. Boyutu sınırlamanın yolu **rollover**'dır: primary shard 1 GB'a ulaşınca
+yazma kendiliğinden yeni bir index'e geçer. Üç parça gerekir: politika, şablon, ilk index.
+
+Kibana › Dev Tools'a yapıştırın. **Politika:** primary shard 1 GB olunca rollover yap:
+
+```http
+PUT _ilm/policy/belge-shard-1gb
+{
+  "policy": {
+    "phases": {
+      "hot": { "actions": { "rollover": { "max_primary_shard_size": "1gb" } } }
+    }
+  }
+}
+```
+
+```json
+{"acknowledged": true}
+```
+
+**Şablon:** `belge-loglar-*` adıyla açılan her index 1 shard alır ve bu politikaya bağlanır:
+
+```http
+PUT _index_template/belge-loglar
+{
+  "index_patterns": ["belge-loglar-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index.lifecycle.name": "belge-shard-1gb",
+      "index.lifecycle.rollover_alias": "belge-loglar"
+    }
+  }
+}
+```
+
+```json
+{"acknowledged": true}
+```
+
+**İlk index ve yazma adı:** uygulama hep `belge-loglar` adına (alias) yazar; alias yazmayı o anki index'e yönlendirir:
+
+```http
+PUT /belge-loglar-000001
+{
+  "aliases": { "belge-loglar": { "is_write_index": true } }
+}
+```
+
+```json
+{"acknowledged": true, "shards_acknowledged": true, "index": "belge-loglar-000001"}
+```
+
+Bir log yazın; alias onu `belge-loglar-000001`'e koyar:
+
+```http
+POST /belge-loglar/_doc?refresh=true&filter_path=_index,result
+{ "mesaj": "ilk log" }
+```
+
+```json
+{"_index": "belge-loglar-000001", "result": "created"}
+```
+
+**Kural şu an ne diyor?** `dry_run` koşulu hesaplar ama uygulamaz:
+
+```http
+POST /belge-loglar/_rollover?dry_run=true&filter_path=rolled_over,conditions
+{ "conditions": { "max_primary_shard_size": "1gb" } }
+```
+
+```json
+{"rolled_over": false, "conditions": {"[max_primary_shard_size: 1gb]": false}}
+```
+
+Shard 1 GB'ın altında, rollover yok. ILM bu kontrolü yaklaşık 10 dakikada bir kendisi yapar; sınır aşılınca yeni
+index'i açar.
+
+**Rollover'ı görün:** sınırı yalnız deneme için 1 KB'a indirin:
+
+```http
+POST /belge-loglar/_rollover?filter_path=old_index,new_index,rolled_over,conditions
+{ "conditions": { "max_primary_shard_size": "1kb" } }
+```
+
+```json
+{"old_index": "belge-loglar-000001", "new_index": "belge-loglar-000002", "rolled_over": true, "conditions": {"[max_primary_shard_size: 1kb]": true}}
+```
+
+```http
+GET _cat/shards/belge-loglar-*?v&h=index,shard,prirep,docs,store&s=index
+```
+
+```text
+index               shard prirep docs store
+belge-loglar-000001 0     p         1 5.7kb
+belge-loglar-000002 0     p         0  227b
+```
+
+- **`000001`:** sınırı (1 KB) aştı, artık yazılmaz; verisi yerinde kalır.
+- **`000002`:** yeni yazma index'i; `belge-loglar` adına yazılan her şey buraya gider. `store` sizde biraz farklı olabilir.
+- **Arama:** `belge-loglar-*` iki index'i birden arar.
+
+</details>
+
 **Dev Tools ile document ekleme.**
 
 - **`PUT`:** `_id`'yi siz verirsiniz
@@ -937,11 +1048,16 @@ index belge-urunler -> 200
 index belge-talepler -> 200
 index belge-stok -> 200
 index belge-surum -> 200
+index belge-loglar-000001 -> 200
+index belge-loglar-000002 -> 200
+sablon belge-loglar -> 200
+politika belge-shard-1gb -> 200
 data view 45812d4a-33f2-4a3d-a07b-db3924da030b -> 200
 data view c10ba3c2-1831-4139-85e1-c5566465963a -> 200
 ```
 
-Data view id'leri arayüzde rastgele üretildiği için sizde farklıdır.
+Data view id'leri arayüzde rastgele üretildiği için sizde farklıdır. Shard boyutu kutusunu yapmadıysanız
+`belge-loglar` index satırları çıkmaz, şablon ve politika `404` verir.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.

@@ -149,6 +149,9 @@ Beklenen çıktı:
 . servisler hazır
 ```
 
+İlk çalıştırmada bunun önünde image indirme (`Pulling`, `Pulled`) ve container oluşturma (`Created`, `Started`) satırları
+da görünür; image'lar bir kez indirilir.
+
 **Trafik üretin:** betik servislere sabit sayıda istek atar ve host'un `auth.log`'una 5 deneme satırı yazar.
 `RUN` bu koşunun etiketidir; Adım 4'te satırları onunla bulacağız:
 

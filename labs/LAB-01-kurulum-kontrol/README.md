@@ -491,7 +491,7 @@ persistent setting [cluster.name], not dynamically updateable
 satırlar:
 
 ```bash
-docker logs elasticsearch-lab00 2>&1 | grep -m2 -E '"message":"(version\[|started \{)' | jq -r '."log.level" + "  " + .message[0:45]'
+docker logs elasticsearch-lab00 2>&1 | grep -E '"message":"(version\[|started \{)' | jq -r '."log.level" + "  " + .message[0:45]'
 ```
 
 Beklenen çıktı:
