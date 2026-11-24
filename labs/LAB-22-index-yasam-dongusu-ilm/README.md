@@ -9,11 +9,12 @@
 ## Bu lab ne öğretiyor?
 
 Log her gün büyür. Tek bir index'e yazılırsa shard'ı büyür, eski veri silinemez (document document silmek pahalıdır)
-ve disk dolar. Çözüm, veriyi zamanla yeni index'lere bölmek ve eski index'i bütün olarak silmektir; bunu
-elle yapmak yerine Elasticsearch'e bir politika olarak verilir.
+ve disk dolar. Çözüm, veriyi zamanla yeni index'lere bölmek ve eski index'i bütün olarak silmektir. Bu labda:
 
-Bu labda şablonla bir data stream kuracak, ILM politikasıyla rollover, warm ve delete fazlarını tetikleyecek
-ve eski verinin kendiliğinden silinişini son duruma kadar izleyeceğiz.
+- Şablonlarla bir data stream kuracağız.
+- ILM politikasıyla rollover, warm ve delete fazlarını dakikalar içinde tetikleyeceğiz.
+- Eski verinin kendiliğinden silinişini son duruma kadar izleyeceğiz.
+- Politikayı ve data stream'i Kibana arayüzünde de göreceğiz.
 
 ![Template, data stream ve ILM: hot, warm, delete](../../assets/infographics/31-ilm-yasam-dongusu.png)
 
@@ -46,12 +47,10 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ## Kavramlar: dört parça
 
-| Parça | Ne yapar | Bu labda |
-|---|---|---|
-| Component template | Tekrar kullanılan ayar ya da mapping parçası | `ilm-ayarlar`, `ilm-mappings` |
-| Index template | Hangi ada hangi parçaların uygulanacağı; data stream olup olmadığı | `ilm-uygulama*` |
-| Data stream | Tek bir yazma adı; arkasında zamanla çoğalan gizli index'ler (`.ds-…`) | `ilm-uygulama` |
-| ILM politikası | Index'in yaşına ya da boyutuna göre ne yapılacağı | `ilm-politika` |
+- **Component template:** tekrar kullanılan ayar ya da mapping parçası; burada `ilm-ayarlar` ve `ilm-mappings`.
+- **Index template:** hangi ada hangi parçaların uygulanacağı ve data stream olup olmadığı; burada `ilm-uygulama*`.
+- **Data stream:** tek bir yazma adı; arkasında zamanla çoğalan gizli index'ler (`.ds-…`) vardır; burada `ilm-uygulama`.
+- **ILM politikası:** index'in yaşına ya da boyutuna göre ne yapılacağı; burada `ilm-politika`.
 
 Data stream'e yalnız document eklenir (`create`). Yazma hep en yeni arka plan index'ine gider; eski index'ler
 okunur ve sonunda silinir.
@@ -63,6 +62,8 @@ okunur ve sonunda silinir.
 Bu labdaki `http` blokları **Kibana › Dev Tools**'a, `bash` blokları terminale yapıştırılır.
 
 ### 1. Şablonları kurun
+
+**Soru: Yeni açılan her index'e aynı ayar nasıl verilir?**
 
 Ayarlar ve mapping iki ayrı component template'tir; başka şablonlar da aynı parçaları kullanabilir:
 
@@ -101,6 +102,8 @@ POST /_index_template/_simulate_index/ilm-uygulama?filter_path=template.settings
 
 ### 2. ILM politikası
 
+**Soru: Bir index ne zaman bölünsün, ne zaman silinsin?**
+
 ```http
 PUT /_ilm/policy/ilm-politika
 {
@@ -128,6 +131,8 @@ PUT /_cluster/settings
 
 ### 3. Data stream'e yazın
 
+**Soru: Uygulama hangi ada yazar, veri nereye gider?**
+
 150 olay gönderiyoruz. Data stream ilk document'le kendiliğinden açılır; işlem türü `create`'tir:
 
 ```bash
@@ -152,10 +157,13 @@ GET /_data_stream/ilm-uygulama?filter_path=data_streams.name,data_streams.genera
 {"data_streams":[{"name":"ilm-uygulama","indices":[{"index_name":".ds-ilm-uygulama-2026.11.21-000001"}],"generation":1,"ilm_policy":"ilm-politika"}]}
 ```
 
-Document'ler `ilm-uygulama` adına yazıldı ama gerçekte `.ds-ilm-uygulama-<tarih>-000001` index'inde duruyor.
+Document'ler `ilm-uygulama` adına yazıldı ama gerçekte `.ds-ilm-uygulama-<tarih>-000001` index'inde duruyor. Addaki
+tarih index'in açıldığı gündür; sizde labı yaptığınız gün görünür.
 Tarih sizde labı yaptığınız gündür.
 
 ### 4. Rollover: yeni arka plan index'i
+
+**Soru: Index dolunca yazma nereye geçer?**
 
 İlk index'te 150 document var, eşik 100. ILM bir sonraki kontrolde (en çok birkaç kez 10 saniye) rollover yapar:
 
@@ -175,7 +183,38 @@ Beklenen çıktı:
 Yeni gelen document'ler artık `000002`'ye yazılır; `000001` kapandı. Rollover'dan sonra index'in yaşı sayılmaya
 başlar, warm ve delete fazlarının `min_age`'i bu andan itibaren işler.
 
+<details>
+<summary><strong>Politika ve data stream Kibana'da nerede?</strong></summary>
+
+Politikayı Dev Tools'la kurduk; Kibana'da aynı politika ve data stream şöyle görünür (değiştirmeden bakın):
+
+1. Menü, **Stack Management**, soldaki listede **Data** altında **Index Lifecycle Policies** (1):
+
+![Stack Management: 1 Index Lifecycle Policies](../../assets/screenshots/LAB-22/04a-ilm-menu.png)
+
+2. Tablonun arama kutusuna (1) `ilm-politika` yazın, politikanın adına (2) tıklayın:
+
+![ILM listesi: 1 arama, 2 ilm-politika](../../assets/screenshots/LAB-22/04b-ilm-listesi.png)
+
+3. Sağdaki panelde fazlar soldan sağa sıralıdır: **Hot phase** (1) rollover'ı (Maximum documents 100), **Warm phase**
+   (2) `1m` sonra salt okunur ve öncelik 50'yi, çöp kutusu simgesi (3) **Delete phase**'i gösterir. **Close** ile kapatın:
+
+![ILM fazları: 1 hot, 2 warm, 3 delete](../../assets/screenshots/LAB-22/04c-ilm-fazlar.png)
+
+4. Soldaki listede **Index Management** (1):
+
+![Stack Management: 1 Index Management](../../assets/screenshots/LAB-22/04e-index-management.png)
+
+5. **Data Streams** sekmesi (1), arama kutusuna (2) `ilm-uygulama`. Satırda (3) data stream'in sağlığı, arka plan index
+   sayısı (**Indices**) ve bağlı politika `ilm-politika` görünür; sayı ILM'in o anki adımına göre 1 ya da 2'dir:
+
+![Data Streams: 1 sekme, 2 arama, 3 ilm-uygulama satırı](../../assets/screenshots/LAB-22/04f-data-stream.png)
+
+</details>
+
 ### 5. warm: eski index salt okunur olur
+
+**Soru: Eski index'e hâlâ yazılabilir mi?**
 
 Eski index'in warm fazını bitirmesini bekleyin (rollover'dan yaklaşık 1–2 dakika sonra) ve ayarlarına bakın:
 
@@ -197,6 +236,8 @@ Beklenen çıktı:
 önce yüksek öncelikli (hot) index'ler kurtarılır.
 
 ### 6. delete: eski veri kendiliğinden silinir
+
+**Soru: Saklama süresi dolan veri nasıl gider?**
 
 Rollover'dan yaklaşık 3–4 dakika sonra eski index silinir. Data stream'de tek index kalana kadar bekleyin:
 
