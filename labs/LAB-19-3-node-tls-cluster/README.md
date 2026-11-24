@@ -59,12 +59,15 @@ free -g | sed -n 2p
       xpack.security.http.ssl.certificate_authorities: certs/ca/ca.crt
 ```
 
+- `node.roles`: es-a ve es-b bu satırla açılır; es-c'ye ayrıca `ingest` rolü verildi. Ingest pipeline'lar yalnız
+  ingest rolündeki node'da çalışır.
 - `discovery.seed_hosts`: node açılınca cluster'ı bulmak için hangi adreslere soracağı.
 - `cluster.initial_master_nodes`: yalnız ilk açılışta, hangi node'ların ilk master seçimine katılacağı. Cluster
   kurulduktan sonra kullanılmaz. Üretimde ilk kurulumdan sonra bu satır config'ten kaldırılır: verisi silinmiş bir
   node bu ayarla yeniden açılırsa ayrı, ikinci bir cluster kurabilir. Labda compose dosyası tek seferlik kurulum
   için olduğundan satır yerinde kalır.
-- `transport.ssl` (9300) node'lar arası, `http.ssl` (9200) istemci trafiğini şifreler. Sertifikalar `setup`
+- `transport.ssl` (9300) node'lar arası, `http.ssl` (9200) istemci trafiğini şifreler. `verification_mode: certificate`
+  karşı node'un sertifikasının lab CA'sıyla imzalandığını doğrular, adına bakmaz; `full` ikisine de bakar. Sertifikalar `setup`
   servisinin `elasticsearch-certutil` ile ürettiği lab CA'sıyla imzalıdır.
 
 `starter/instances.yml` her node sertifikasının hangi adlara (`es-a`, `localhost`, `127.0.0.1`) geçerli olduğunu
@@ -220,7 +223,7 @@ curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" -X PUT 'https://12
 ```
 
 2 replica ile her shard'ın üç kopyası üç ayrı node'dadır (3 × 3 = 9 aktif shard). Primary sayısını değiştirmek
-için yeni bir index açılıp `_reindex` yapılır. Adım 5 için replica sayısı 1'e geri alındı.
+için yeni bir index açılıp `_reindex` yapılır; `_split` katlarına, `_shrink` bölenlerine indirip çıkarabilir. Adım 5 için replica sayısı 1'e geri alındı.
 
 ### 5. Gerçek node kaybı
 
