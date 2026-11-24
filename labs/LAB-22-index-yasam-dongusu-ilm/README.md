@@ -159,7 +159,6 @@ GET /_data_stream/ilm-uygulama?filter_path=data_streams.name,data_streams.genera
 
 Document'ler `ilm-uygulama` adına yazıldı ama gerçekte `.ds-ilm-uygulama-<tarih>-000001` index'inde duruyor. Addaki
 tarih index'in açıldığı gündür; sizde labı yaptığınız gün görünür.
-Tarih sizde labı yaptığınız gündür.
 
 ### 4. Rollover: yeni arka plan index'i
 
