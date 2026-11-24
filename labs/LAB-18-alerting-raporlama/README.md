@@ -162,7 +162,8 @@ Arayüzde aynı yer **Stack Management › Connectors › Create connector › I
 
 **Soru: Kibana "çok fazla hata var" kararını nasıl verir?**
 
-Kuralı Kibana › Dev Tools'tan kurun:
+Kuralı Kibana › Dev Tools'tan kuruyoruz: tek istek her seferinde aynı kuralı kurar ve alanları tek bakışta gösterir.
+Arayüzdeki **Create rule** formu aynı alanları doldurur; formun nerede olduğu bu adımın sonundaki açılır kutudadır:
 
 ```http
 POST kbn:/api/alerting/rule/alarm-5xx
