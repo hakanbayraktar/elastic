@@ -9,11 +9,12 @@
 ## Bu lab ne öğretiyor?
 
 Replica, node kaybına karşı korur ama yanlışlıkla silinen document'e karşı korumaz: silme işlemi replica'lara da
-aynen gider. Geri dönüş için cluster dışında, belirli bir ana ait bir kopya gerekir: snapshot.
+aynen gider. Geri dönüş için cluster dışında, belirli bir ana ait bir kopya gerekir: snapshot. Bu labda:
 
-Bu labda bir snapshot repository kuracak, elle snapshot alacak, bir document'i "kazayla" silip snapshot'tan farklı
-adla geri yükleyecek, snapshot'ları SLM ile zamanlayıp saklama kuralıyla eskilerini sildirecek ve bakım öncesi bir
-node'u shard'lardan boşaltacağız.
+- Bir snapshot repository kurup elle snapshot alacağız.
+- Bir document'i "kazayla" silip snapshot'tan farklı adla geri yükleyeceğiz.
+- Snapshot'ları SLM ile zamanlayıp saklama kuralıyla eskilerini sildireceğiz.
+- Bakım öncesi bir node'u shard'lardan boşaltacağız.
 
 ![Snapshot, SLM ve geri yükleme akışı](../../assets/infographics/35-cluster-snapshot-slm.png)
 
@@ -43,12 +44,10 @@ Beklenen çıktı:
 
 ## Kavramlar: snapshot ve SLM
 
-| Kavram | Ne | Karar kuralı |
-|---|---|---|
-| Repository | Snapshot'ların yazıldığı yer: paylaşılan dizin (`fs`), S3, GCS, Azure | Her node aynı yere yazabilmeli; yoksa doğrulama başarısız olur |
-| Snapshot | Seçilen index'lerin o anki segment dosyaları | Artımlıdır: önceki snapshot'ta olan segment tekrar kopyalanmaz |
-| Restore | Snapshot'tan index'i geri açmak | Açık bir index'in üstüne yazılmaz; farklı adla açıp gerekeni taşıyın |
-| SLM | Snapshot'ı zamanlayan ve eskilerini silen politika | Snapshot'ı elle almak unutulur; zamanlama ve saklama tek yerde durur |
+- **Repository:** snapshot'ların yazıldığı yer (paylaşılan dizin `fs`, S3, GCS, Azure); her node aynı yere yazabilmeli, yoksa doğrulama başarısız olur.
+- **Snapshot:** seçilen index'lerin o anki segment dosyaları; artımlıdır, önceki snapshot'ta olan segment tekrar kopyalanmaz.
+- **Restore:** snapshot'tan index'i geri açmak; açık bir index'in üstüne yazılmaz, farklı adla açıp gerekeni taşıyın.
+- **SLM:** snapshot'ı zamanlayan ve eskilerini silen politika; zamanlama ve saklama tek yerde durur.
 
 ---
 
@@ -73,6 +72,8 @@ Beklenen çıktı:
 
 ### 1. Snapshot repository
 
+**Soru: Snapshot'lar nereye yazılacak?**
+
 ```bash
 curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" -X PUT 'https://127.0.0.1:19208/_snapshot/cluster-yedek' \
   -H 'Content-Type: application/json' -d '{"type": "fs", "settings": {"location": "cluster-yedek"}}'; echo
@@ -89,6 +90,8 @@ listede üç node da var, yani her node kendi shard'ını yedekleyebilir.
 
 ### 2. Elle snapshot
 
+**Soru: Şu anki durumun kopyası nasıl alınır?**
+
 ```bash
 curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" -X PUT 'https://127.0.0.1:19208/_snapshot/cluster-yedek/elle-1?wait_for_completion=true' \
   -H 'Content-Type: application/json' -d '{"indices": "cluster-urunler", "include_global_state": false}' | jq -c '.snapshot | {snapshot, state, indices, shards}'
@@ -104,6 +107,8 @@ curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" -X PUT 'https://12
 - Üç shard'ın üçü de başarılı: her primary, bulunduğu node tarafından yazıldı.
 
 ### 3. Kaza ve farklı adla geri yükleme
+
+**Soru: Silinen bir document nasıl geri gelir?**
 
 Bir document'i "kazayla" silin:
 
@@ -152,6 +157,8 @@ gerekeni taşımak bu yüzden daha güvenlidir.
 
 ### 4. SLM: zamanlanmış snapshot ve saklama
 
+**Soru: Snapshot'ı her gece kendiliğinden nasıl alırız?**
+
 Her gece 01:30'da `cluster-*` index'lerinin snapshot'ını alan bir politika kurun. Saklama kuralı: 30 günden eskiler
 silinir, ama her zaman en az 1, en çok 2 snapshot kalır (laboratuvarda farkı görmek için küçük tutuldu):
 
@@ -170,7 +177,8 @@ curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" -X PUT 'https://12
 {"acknowledged":true}
 ```
 
-- `schedule` bir cron ifadesidir: saniye, dakika, saat, gün, ay, haftanın günü.
+- `schedule` bir cron ifadesidir: saniye, dakika, saat, gün, ay, haftanın günü. Saat UTC'dir: `0 30 1` Türkiye saatiyle
+  04:30'da çalışır.
 - `name` içindeki `{now/d}` günün tarihidir; SLM sonuna benzersiz bir ek koyar, aynı gün birden çok çalışma
   çakışmaz.
 
@@ -214,7 +222,35 @@ gunluk-2026.11.21-qmtc148at2ayhvz0wgebgg SUCCESS
 SLM'nin en eski snapshot'ı silindi, `max_count: 2` sağlandı. `elle-1` yerinde: saklama kuralı yalnız bu
 politikanın aldığı snapshot'lara dokunur.
 
+<details>
+<summary><strong>Snapshot'lar Kibana'da nerede? (LAB-19'un isteğe bağlı Kibana'sı)</strong></summary>
+
+LAB-19'daki "Bu cluster'a Kibana bağlamak" kutusunu yaptıysanız aynı bilgiler o Kibana'da görünür
+(`https://<host>-kibana3.devopsatolyesi.com`, `elastic` / `DevOps2026!`); değiştirmeden bakın:
+
+1. Menü, **Stack Management**, soldaki listede **Data** altında **Snapshot and Restore** (1):
+
+![Stack Management: 1 Snapshot and Restore](../../assets/screenshots/LAB-23/04a-snapshot-menu.png)
+
+2. **Snapshots** sekmesi (1): `elle-1` (2) ve SLM'nin aldığı `gunluk-…` snapshot'ları, durumları (**Complete**) ve
+   shard sayılarıyla listelenir:
+
+![Snapshots: 1 sekme, 2 elle-1](../../assets/screenshots/LAB-23/04b-snapshots.png)
+
+3. **Repositories** sekmesi (1): `cluster-yedek` (2), türü **Shared file system** (`fs`):
+
+![Repositories: 1 sekme, 2 cluster-yedek](../../assets/screenshots/LAB-23/04c-repositories.png)
+
+4. **Policies** sekmesi (1): `cluster-gunluk` (2); snapshot adı, repository, cron ifadesi ve bir sonraki çalışma
+   zamanı (Türkiye saatiyle 04:30) görünür:
+
+![Policies: 1 sekme, 2 cluster-gunluk](../../assets/screenshots/LAB-23/04d-slm-politika.png)
+
+</details>
+
 ### 5. Bakım öncesi node boşaltma
+
+**Soru: Bir node'u kapatmadan önce shard'larını nasıl taşırız?**
 
 Bir node'u yeniden başlatmadan ya da değiştirmeden önce shard'larını öteki node'lara taşıyın. Shard sayısı, sistem
 index'leriyle birlikte node başına:
