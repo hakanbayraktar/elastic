@@ -120,9 +120,10 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ![Space seçici: 1 seçici, 2 Satış ekibi](../../assets/screenshots/LAB-17/02e-space-sec.png)
 
-6. Menüyü açın: Space simgesi artık **SE** (1); menü sadeleşti (2). Observability (APM, Logs, SLOs…), Security
-   (Detections, Timelines…), Machine Learning, Alerts ve Cases yoktur; Discover, Dashboards, Maps ve Stack
-   Management yerindedir:
+6. Menüyü açın: Space simgesi artık **SE** (1); menü kısaldı (2). Observability (APM, Logs, SLOs…), Security
+   (Detections, Timelines…), Machine Learning, Alerts ve Cases yoktur; Analytics altında Discover, Dashboards ve
+   Maps yerindedir. **Elasticsearch** ve **Management** bölümleri kalır; istenirse onlar da Adım 2'nin 1. maddesindeki
+   listeden kapatılır (Stack Management menünün en altındadır):
 
 ![Satış ekibi menüsü: 1 SE, 2 sadeleşmiş menü](../../assets/screenshots/LAB-17/02f-menu-satis.png)
 
@@ -298,7 +299,9 @@ Beklenen çıktı:
 ```
 
 Dosyayı Pazarlama'ya içe aktarın (`overwrite=true`: aynı kimlikte olanın üzerine yazar) ve Default'tan
-Satış ekibi'ne doğrudan kopyalayın:
+Satış ekibi'ne doğrudan kopyalayın. Adım 3'te arayüzle kopyaladıysanız Satış ekibi'nde aynı adlı ikinci bir pano
+oluşur: arayüz yeni kimlikle kopyaladı, bu istek özgün kimlikle (`"createNewCopies": false`) kopyalar. Temizlik
+ikisini de siler:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -H 'kbn-xsrf: true' -X POST 'http://127.0.0.1:5601/s/pazarlama/api/saved_objects/_import?overwrite=true' \
