@@ -39,4 +39,12 @@ for id in $(curl -s -u "$A" "$KB/api/saved_objects/_find?type=dashboard&search_f
   curl -s -o /dev/null -u "$A" -H "$H" -X DELETE "$KB/api/saved_objects/dashboard/$id"; N=$((N + 1))
 done
 echo "pano (Sunucu CPU (Fleet)) -> $N"
+# Labin kurdugu integration paketleri: hazir panolari, index sablonlari ve ingest pipeline'lari paketle gider.
+# Politikalar yukarida silindigi icin paketleri kullanan kalmaz; bir sonraki kurulum onlari yeniden yukler.
+N=0
+for p in nginx system fleet_server elastic_agent; do
+  V=$(curl -s -u "$A" "$KB/api/fleet/epm/packages/$p" | jq -r '.item.installationInfo.version // empty')
+  [ -n "$V" ] && [ "$(curl -s -o /dev/null -w '%{http_code}' -u "$A" -H "$H" -X DELETE "$KB/api/fleet/epm/packages/$p/$V")" = 200 ] && N=$((N + 1))
+done
+echo "integration paketi -> $N kaldirildi"
 rm -f .env .env.fleet
