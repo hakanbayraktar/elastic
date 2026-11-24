@@ -12,9 +12,14 @@
 başarılı giriş, `sudo` ve yeni bir kullanıcı bir saldırı hikâyesidir. SIEM, satırları güvenlik olaylarına
 çevirir, onları kurallarla ilişkilendirir ve sonuçta alarm üretir; alarmı okuyup karar veren ise insandır.
 
-Bu labda kontrollü bir saldırı senaryosunu Filebeat ve Logstash ile normalleştirecek, tehdit istihbaratıyla
-zenginleştirecek, beş tespit kuralıyla alarm üretecek, bir alarmı triyaj edecek, yanlış pozitifi ayarlayacak ve
-bir yapılandırma dosyasındaki değişikliği Auditbeat ile yakalayacağız.
+Bu labda:
+
+- Kontrollü bir saldırı senaryosunu Filebeat ve Logstash ile normalleştirip tehdit istihbaratıyla zenginleştireceğiz.
+- Beş tespit kuralıyla alarm üretip bir alarmı Kibana'da triyaj edeceğiz.
+- Yanlış pozitifi kuralı kapatmadan ayarlayacağız.
+- Bir yapılandırma dosyasındaki değişikliği Auditbeat ile yakalayacağız.
+
+Kibana'daki her tıklama kırmızı kutu ve numarayla gösterilir.
 
 ![SIEM hattı: senaryo logu, Logstash, zenginleştirme, tespit kuralları, alarm](../../assets/infographics/33-siem-tespit-hatti.png)
 
@@ -95,6 +100,8 @@ Bu labdaki `http` blokları **Kibana › Dev Tools**'a, `bash` blokları termina
 
 ### 1. SIEM veri katmanını kurun
 
+**Soru: Güvenlik olayları hangi şablonlarla ve hangi index'lere yazılacak?**
+
 ```bash
 ./scripts/setup-indices.sh
 ```
@@ -122,6 +129,8 @@ beslemeden (MISP, AbuseIPDB…) düzenli olarak güncellenir.
 
 ### 2. Toplama hattını başlatın
 
+**Soru: Senaryo logu ve izlenen dizin Elasticsearch'e nasıl gelir?**
+
 Logstash, senaryo logunu okuyan Filebeat ve `izlenen/` dizinini izleyen Auditbeat:
 
 ```bash
@@ -138,6 +147,8 @@ Beklenen çıktı:
 Filebeat ve Auditbeat Logstash'e ve Elasticsearch'e Docker ağı üzerinden bağlanır; host'a port açılmaz.
 
 ### 3. Saldırı senaryosu: önce ve sonra
+
+**Soru: Ham log satırı nasıl bir güvenlik olayına dönüşür?**
 
 Senaryo `data/attack-scenario.log` dosyasına 48 satır ekler. Saldırgan 18 kez dener, girer, yetki yükseltir ve
 arka kapı hesap açar. Aynı anda parolası değişmiş bir yedekleme sunucusu 25 kez hatalı giriş dener:
@@ -191,6 +202,8 @@ Beklenen çıktı:
 de başarısız sayılır.
 
 ### 4. Tespit kurallarını kurun
+
+**Soru: Hangi davranış hangi kuralla alarma dönüşür?**
 
 Beş kural kurulur, her biri dakikada bir çalışır:
 
@@ -253,11 +266,31 @@ Beklenen çıktı:
 
 ### 5. Alarmı okuyun ve triyaj edin
 
-**Security › Alerts**'ı açın. **Severity levels** (1) alarmları şiddete göre, **Alerts by name** (2) kurala göre
-sayar; `critical` olan tek alarm ihlal alarmıdır (3). Aşağıdaki listede bir alarmı açınca kuralın triyaj notu ve
-olayın field'ları görünür:
+**Soru: Alarmlar arasında önce hangisine bakılır, incelendiği nasıl işaretlenir?**
 
-![Security › Alerts: 1 şiddet dağılımı, 2 kurala göre alarm sayısı, 3 ihlal alarmı](../../assets/screenshots/LAB-26/01-security-alerts.png)
+1. Sol üstteki menü düğmesine (1) tıklayın, **Security** altında **Detections**'ı (2) seçin (alarm sayfası; Observability
+   altındaki **Alerts** başka bir sayfadır):
+
+   ![Menü: 1 menü düğmesi, 2 Detections](../../assets/screenshots/LAB-26/05a-menu-alerts.png)
+
+   **Detections** sayfasında **Alerts** (1) kartına tıklayın:
+
+   ![Detections: 1 Alerts](../../assets/screenshots/LAB-26/05a2-detections-alerts.png)
+
+2. **Severity levels** (1) alarmları şiddete göre, **Alerts by name** (2) kurala göre sayar; `critical` olan tek
+   alarm ihlal alarmıdır (3):
+
+   ![Alerts: 1 şiddet dağılımı, 2 kurala göre alarm sayısı, 3 ihlal alarmı](../../assets/screenshots/LAB-26/05b-security-alerts.png)
+
+3. Liste en yeni alarmla başlar; ihlal alarmını bulmak için sorgu çubuğuna (1) `kibana.alert.severity : "critical"`
+   yazıp Enter'a basın. Kalan tek satırın büyütme düğmesine (2) tıklayın:
+
+   ![Alarm listesi: 1 sorgu, 2 ayrıntıyı aç](../../assets/screenshots/LAB-26/05c-alarm-ac.png)
+
+4. Sağda alarmın ayrıntısı açılır: kuralın açıklaması ve alarmın sebebi (kaynak IP, kullanıcı) üsttedir; **Show
+   investigation guide** (1) kuralın triyaj notunu açar, **Table** sekmesi olayın bütün field'larını gösterir:
+
+   ![Alarm ayrıntısı: 1 Show investigation guide](../../assets/screenshots/LAB-26/05d-alarm-ayrinti.png)
 
 Kibana, Alerts sayfası ilk açıldığında istisna listeleri için `.lists-default` ve `.items-default` data
 stream'lerini 1 replica ile kurar. Tek node'lu ana cluster'da replica'nın konacağı ikinci node yoktur, cluster
@@ -296,10 +329,31 @@ Beklenen çıktı:
 
 Sekans alarmı ve yapı taşları birlikte (7) `acknowledged` oldu; geri kalan 22 alarm hâlâ `open`.
 
-Arayüzde aynı işlem alarm satırındaki **⋯ › Mark as acknowledged** ile yapılır; inceleme bitince
-**Mark as closed**. Olayı yazıya dökmek için [olay raporu şablonu](docs/OLAY-RAPORU-SABLONU.md) kullanılabilir.
+<details>
+<summary><strong>Dev Tools yerine arayüzden işaretlemek isterseniz</strong></summary>
+
+**İkisinden birini yapın:** yukarıdaki `POST kbn:/api/detection_engine/signals/status` isteğini çalıştırdıysanız
+alarm zaten `acknowledged`'dır, bu kutuyu atlayın. Arayüzde yalnız sekans alarmı işaretlenir (yapı taşları gizli
+olduğu için); sayaç `{"open":28,"acknowledged":1}` olur.
+
+1. **Security › Detections › Alerts** sayfasında sorgu çubuğuna `kibana.alert.severity : "critical"` yazıp Enter'a basın; kalan satırın
+   **⋯** (1) düğmesine tıklayın:
+
+   ![Alarm satırı: 1 ⋯ menüsü](../../assets/screenshots/LAB-26/05e-alarm-menu.png)
+
+2. **Mark as acknowledged** (1):
+
+   ![Alarm menüsü: 1 Mark as acknowledged](../../assets/screenshots/LAB-26/05f-acknowledged.png)
+
+İnceleme bitince aynı menüden **Mark as closed**.
+
+</details>
+
+Olayı yazıya dökmek için [olay raporu şablonu](docs/OLAY-RAPORU-SABLONU.md) kullanılabilir.
 
 ### 6. Yanlış pozitifi ayarlayın
+
+**Soru: Zararsız bir kaynak kuralı kapatmadan nasıl susturulur?**
 
 Yedekleme sunucusu `198.51.100.20` zararsızdır ama parolası düzeltilene kadar her turda brute force alarmı
 üretecektir. Kuralı kapatmak yerine o kaynağı kural düzeyinde istisnaya alın:
@@ -342,6 +396,8 @@ Kural istisnadan sonra çalıştı ve yeni 25 deneme alarm üretmedi. Olaylar si
 görünmeye devam eder. İstisna, kuralı kapatmaktan iyidir: saldırgan aynı kuralla yakalanmaya devam eder.
 
 ### 7. Dosya bütünlüğü: yapılandırma değişikliğini yakalamak
+
+**Soru: Kritik bir yapılandırma dosyası değişince haberimiz olur mu?**
 
 Saldırgan girdikten sonra çoğu zaman bir yapılandırma dosyasını değiştirir; bu adım o değişikliği yakalar.
 
