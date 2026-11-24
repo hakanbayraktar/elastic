@@ -12,3 +12,7 @@ for t in beats-log beats-metric; do
   echo "sablon $t -> $(curl -s -o /dev/null -w '%{http_code}' -u "$A" -X DELETE "$ES/_index_template/$t")"
 done
 echo "data view beats-log -> $(curl -s -o /dev/null -w '%{http_code}' -u "$A" -H 'kbn-xsrf: true' -X DELETE "$KB/api/data_views/data_view/beats-log")"
+# Adim 6 kutusu: data view arayuzde kurulduysa id'si rastgeledir; adla bulunur
+for id in $(curl -s -u "$A" "$KB/api/data_views" | jq -r '.data_view[] | select(.title == "beats-log-*" and .id != "beats-log") | .id'); do
+  echo "data view $id -> $(curl -s -o /dev/null -w '%{http_code}' -u "$A" -H 'kbn-xsrf: true' -X DELETE "$KB/api/data_views/data_view/$id")"
+done

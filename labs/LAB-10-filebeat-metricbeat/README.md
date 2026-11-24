@@ -16,6 +16,8 @@ dağılmış log ve metriklerin tek yerde, field'lara ayrılmış hâlde olması
 - **Metricbeat:** host ve container CPU/bellek metrikleri
 - **Discover:** 404 üreten istekleri tek sorguyla bulmak
 
+Kibana'daki her tıklama kırmızı kutu ve numarayla gösterilir.
+
 ![Filebeat ve Metricbeat ile sunucudan log ve metrik toplama](../../assets/infographics/20-beats-log-metrik.png)
 
 ---
@@ -330,16 +332,51 @@ POST kbn:/api/data_views/data_view
 { "data_view": { "id": "beats-log", "title": "beats-log-*", "name": "Beats logları", "timeFieldName": "@timestamp" } }
 ```
 
-**Discover**'da `Beats logları` data view'ını (1) seçin, zaman aralığını **Last 1 hour** yapın ve sorgu
-çubuğuna (2) yazın:
+<details>
+<summary><strong>Dev Tools yerine arayüzden kurmak isterseniz</strong></summary>
 
-```text
-container.name : "nginx-beats-lab" and http.response.status_code >= 400
-```
+**İkisinden birini yapın:** Dev Tools isteğini çalıştırdıysanız data view zaten var, bu kutuyu atlayın.
 
-![Discover: 1 Beats logları data view'ı, 2 sorgu, 3 beş 404 isteği](../../assets/screenshots/LAB-10/01-discover-404.png)
+1. Menü düğmesine (1) tıklayın, **Management** altında **Stack Management**'ı (2) seçin:
 
-- **Beş document (3):** `trafik.sh`'nin attığı `/yok` istekleri.
+   ![Menü: 1 menü düğmesi, 2 Stack Management](../../assets/screenshots/LAB-10/06k-menu-stack-management.png)
+
+2. Soldaki listede **Data Views** (1):
+
+   ![Stack Management: 1 Data Views](../../assets/screenshots/LAB-10/06l-data-views.png)
+
+3. **Create data view** (1):
+
+   ![Data Views: 1 Create data view](../../assets/screenshots/LAB-10/06m-create-data-view.png)
+
+4. **Name** (1) `Beats logları`, **Index pattern** (2) `beats-log-*`, **Timestamp field** (3) `@timestamp`,
+   **Save data view to Kibana** (4):
+
+   ![Data view: 1 ad, 2 index pattern, 3 @timestamp, 4 kaydet](../../assets/screenshots/LAB-10/06n-data-view-form.png)
+
+</details>
+
+1. Menü düğmesine (1) tıklayın, **Analytics** altında **Discover**'ı (2) seçin:
+
+   ![Menü: 1 menü düğmesi, 2 Discover](../../assets/screenshots/LAB-10/06a-menu-discover.png)
+
+2. **Data view** düğmesine (1) tıklayın, arama kutusuna (2) `Beats` yazıp **Beats logları**'nı (3) seçin:
+
+   ![Discover: 1 Data view, 2 arama, 3 Beats logları](../../assets/screenshots/LAB-10/06b-data-view-sec.png)
+
+3. Zaman seçicisini (1) açıp **Last 1 hour**'u (2) seçin:
+
+   ![Zaman seçici: 1 açık seçici, 2 Last 1 hour](../../assets/screenshots/LAB-10/06c-last-1-hour.png)
+
+4. Sorgu çubuğuna (1) yazıp Enter'a basın:
+
+   ```text
+   container.name : "nginx-beats-lab" and http.response.status_code >= 400
+   ```
+
+   ![Discover: 1 sorgu, 2 beş 404 isteği](../../assets/screenshots/LAB-10/06d-discover-404.png)
+
+- **Beş document (2):** `trafik.sh`'nin attığı `/yok` istekleri.
 
 <details>
 <summary><strong>Filebeat'i container yerine sunucuya paketle kurmak</strong></summary>
