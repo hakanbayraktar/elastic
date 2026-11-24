@@ -341,8 +341,25 @@ Beklenen çıktı:
 Kibana (3-node): https://<host>-kibana3.devopsatolyesi.com   (sunucudan: http://127.0.0.1:15608)
 ```
 
-Kibana yaklaşık 1,5 dakikada açılır; `elastic` / `DevOps2026!` ile girin. Sertifikayı paylaşılan `certs`
-volume'ünden okur. Native (APT ve systemd) kurulum ve dedicated rollü (`master`/`data`/`ingest`) Compose dosyası:
+Kibana yaklaşık 1,5 dakikada açılır ve sertifikayı paylaşılan `certs` volume'ünden okur.
+
+1. Yazdırılan adresi açın. **Username** (1) `elastic`, **Password** (2) `DevOps2026!`, **Log in** (3). İlk girişte bir
+   karşılama ekranı gelirse **Explore on my own** deyin:
+
+   ![Giriş: 1 kullanıcı, 2 parola, 3 Log in](../../assets/screenshots/LAB-19/07a-giris.png)
+
+2. Menü düğmesine (1) tıklayın, **Management** altında **Dev Tools**'u (2) seçin:
+
+   ![Menü: 1 menü düğmesi, 2 Dev Tools](../../assets/screenshots/LAB-19/07b-menu-dev-tools.png)
+
+3. Bu Kibana 3-node cluster'a bağlıdır; Console'a yapıştırıp çalıştırın (1). Sonuçta (2) üç node ve master'ı (`*`)
+   görürsünüz:
+
+   ```http
+   GET _cat/nodes?v&h=name,ip,node.role,master
+   ```
+
+   ![Console: 1 çalıştır, 2 üç node](../../assets/screenshots/LAB-19/07c-cat-nodes.png) Native (APT ve systemd) kurulum ve dedicated rollü (`master`/`data`/`ingest`) Compose dosyası:
 [Ubuntu 24.04'te 3-node kurulum](docs/UBUNTU-24-04-3NODE-CLUSTER-SETUP.md),
 [rol tabanlı Compose](docs/DOCKER-COMPOSE-ROLES-VS-SINGLE-NODE.md).
 
