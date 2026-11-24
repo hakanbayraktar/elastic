@@ -326,22 +326,102 @@ http.response.status_class : "5xx"
 ![Reporting: 1 Alarm panosu PDF raporu](../../assets/screenshots/LAB-18/06l-reporting-pdf.png)
 
 <details>
-<summary><strong>Slack ve e-posta connector'ı</strong></summary>
+<summary><strong>Slack ve e-posta: hesap, anahtar ve connector</strong></summary>
 
-Slack için Slack'te bir **Incoming Webhook** URL'i üretilir; Kibana'da **Stack Management › Connectors ›
-Create connector › Slack** ile ad ve Webhook URL girilir:
+Alarmı Slack kanalına ya da e-postaya göndermek için iki gizli bilgi gerekir: Slack webhook adresi ve Resend API
+anahtarı. İkisi de parola gibidir; bilen herkes sizin adınıza mesaj ya da e-posta gönderir. Repoya, ekran görüntüsüne
+ve sohbete yazılmaz; yalnız Kibana'nın connector formuna yapıştırılır.
 
-![Slack connector formu](../../assets/screenshots/LAB-18/13-connector-create-slack.png)
+**Slack: kanal için Incoming Webhook**
 
-E-posta için **Email** connector'ında gönderen adres, SMTP sunucusu (ör. `smtp.resend.com`, 465), kullanıcı
-ve parola girilir:
+1. [api.slack.com/apps](https://api.slack.com/apps) adresinde **Create New App** (1). Açılan pencerede **From scratch**
+   altındaki **Pick features** (2), **Continue** (3):
 
-![E-posta connector formu](../../assets/screenshots/LAB-18/14-connector-email-resend.png)
+   ![Slack: 1 Create New App, 2 Pick features, 3 Continue](../../assets/screenshots/LAB-18/15a-slack-create-new-app.png)
+
+2. **App name** (1) `Kibana Alarm`, **Workspace** (2) mesajların gideceği çalışma alanı, **Continue** (3):
+
+   ![Slack: 1 App name, 2 Workspace, 3 Continue](../../assets/screenshots/LAB-18/15b-slack-app-adi.png)
+
+3. Scope ve event eklemeyin; webhook izni 6. adımda kendiliğinden eklenir. İki ekranda da **Continue** (1):
+
+   ![Slack: scope eklemeden Continue](../../assets/screenshots/LAB-18/15c-slack-scope-yok.png)
+
+   ![Slack: event eklemeden Continue](../../assets/screenshots/LAB-18/15d-slack-event-yok.png)
+
+4. Özet ekranında **Create** (1):
+
+   ![Slack: 1 Create](../../assets/screenshots/LAB-18/15e-slack-create.png)
+
+5. "Your app can't do anything yet" uyarısı scope olmadığı içindir; **Create Anyway** (1):
+
+   ![Slack: 1 Create Anyway](../../assets/screenshots/LAB-18/15f-slack-create-anyway.png)
+
+6. Uygulamanın sol menüsünde **Incoming Webhooks** (1), **Activate Incoming Webhooks** anahtarını (2) **On** yapın:
+
+   ![Slack: 1 Incoming Webhooks, 2 Activate](../../assets/screenshots/LAB-18/16-slack-incoming-webhooks.png)
+
+7. Sayfanın altında **Add New Webhook** (1):
+
+   ![Slack: 1 Add New Webhook](../../assets/screenshots/LAB-18/17a-slack-add-new-webhook.png)
+
+8. **Channel for webhook** (1) alanında kanalı seçin (örnek: `#devopsatolyesi`) ve **Allow** (2):
+
+   ![Slack: 1 kanal, 2 Allow](../../assets/screenshots/LAB-18/17b-slack-kanal-allow.png)
+
+9. Listeye eklenen adresin yanındaki **Copy** (1) ile adresi alın. Adres `https://hooks.slack.com/services/T…/B…/…`
+   biçimindedir:
+
+   ![Slack: 1 Copy; webhook adresi karartıldı](../../assets/screenshots/LAB-18/17c-slack-webhook-copy.png)
+
+**Resend: SMTP için API anahtarı**
+
+1. [resend.com](https://resend.com) adresinde ücretsiz hesap açın. Sol menüde **API keys** (1), **Create API key** (2):
+
+   ![Resend: 1 API keys, 2 Create API key](../../assets/screenshots/LAB-18/18-resend-api-keys.png)
+
+2. **Name** (1) `Kibana Alarm`; **Permission** listesinde **Sending access** (2). E-posta göndermek için yeterlidir;
+   Full access anahtar sızarsa hesabın tamamını açar:
+
+   ![Resend: 1 Name, 2 Sending access](../../assets/screenshots/LAB-18/19a-resend-ad-izin.png)
+
+3. İzin **Sending access** (1) görünürken **Add** (2):
+
+   ![Resend: 1 Sending access, 2 Add](../../assets/screenshots/LAB-18/19b-resend-add.png)
+
+4. Anahtar (`re_…`) yalnız bu pencerede bir kez görünür. Kopyalama düğmesiyle (1) alın, güvenli bir yere koyun, sonra
+   **Done** (2):
+
+   ![Resend: 1 kopyala, 2 Done; anahtar karartıldı](../../assets/screenshots/LAB-18/19c-resend-anahtar-kopyala.png)
+
+Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adresine gönderir ve gönderen
+`onboarding@resend.dev` olur; deneme için yeterlidir.
+
+**Kibana: iki connector**
+
+1. **Stack Management › Connectors › Create connector › Slack**, **Webhook** sekmesi: **Connector name**
+   `apache-slack-alerts`, **Webhook URL** Slack'ten kopyaladığınız adres, **Save**. **Save & test** ile açılan
+   **Test** sekmesinde bir mesaj yazıp **Run**; mesaj kanala düşer:
+
+   ![Slack connector formu](../../assets/screenshots/LAB-18/13-connector-create-slack.png)
+
+2. Yeniden **Create connector › Email**:
+
+   | Alan | Değer |
+   |---|---|
+   | Connector name | `apache-email-resend` |
+   | Sender | `onboarding@resend.dev` |
+   | Service | `Other` |
+   | Host / Port | `smtp.resend.com` / `465`, **Secure** açık |
+   | Username / Password | `resend` / Resend API anahtarı |
+
+   ![E-posta connector formu](../../assets/screenshots/LAB-18/14-connector-email-resend.png)
+
+   **Save & test**; **Test** sekmesinde **To** alanına Resend hesabınızın e-posta adresini yazıp **Run**.
 
 Kurala ikinci bir action olarak eklenir; mesajda aynı değişkenler kullanılır
 (`{{rule.name}}`, `{{context.value}}`, `{{context.link}}`). Linklerin dolu gelmesi için Kibana'da
-`server.publicBaseUrl` tanımlı olmalıdır; yoksa `{{context.link}}` boş gelir. Webhook URL'i ve SMTP
-parolası gizli bilgidir: ekran görüntüsüne, repoya ya da sohbete yapıştırılmaz.
+`server.publicBaseUrl` tanımlı olmalıdır; yoksa `{{context.link}}` boş gelir.
 
 </details>
 
