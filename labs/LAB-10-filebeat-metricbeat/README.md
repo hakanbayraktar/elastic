@@ -253,7 +253,7 @@ Beklenen çıktı:
 koşunun 5 satırı index'e düşene kadar bekleyip dosyadaki sıralarıyla (`log.offset`) gösterin:
 
 ```bash
-timeout 60 bash -c "until [ \"\$(curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/beats-log-sistem-*/_count?q=message:%22beats-lab-$RUN%22' | jq .count)\" -ge 5 ]; do printf .; sleep 2; done"; echo
+RUN="$RUN" timeout 60 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:9200/beats-log-sistem-*/_count?q=message:%22beats-lab-$RUN%22" | jq .count)" -ge 5 ]; do printf .; sleep 2; done'; echo
 curl -s -u elastic:'DevOps2026!' "http://127.0.0.1:9200/beats-log-sistem-*/_search?q=message:%22beats-lab-$RUN%22&size=5&sort=log.offset" \
   | jq -r '.hits.hits[]._source | "\(.host.name) | \(.message)"'
 ```

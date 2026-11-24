@@ -264,13 +264,19 @@ requests=60 concurrency=8 ip=195.175.39.39 elapsed_seconds=0.44 statuses={503: 6
 ```
 
 Kural dakikada bir çalıştığı için e-posta testte yaklaşık 1 dakikada geldi. Sayı sizde farklıdır: 60 arıza isteğine trafik üretecinin arada ürettiği hatalar da eklenir. Mailpit
-arayüzü yalnız sunucudan açılır. Kendi bilgisayarınızdan bir SSH tüneliyle açın, sonra tarayıcıda
-`http://127.0.0.1:8025`:
+arayüzü yalnız sunucudan açılır. Tünel komutunu sunucuda hesaplayın:
 
-<!-- runner:skip -->
 ```bash
-ssh -f -N -L 8025:127.0.0.1:8025 student@<sunucu-ip>
+IP=$(curl -s https://api.ipify.org); echo "Kendi bilgisayarınızda: ssh -f -N -L 8025:127.0.0.1:8025 $(whoami)@$IP"
 ```
+
+Beklenen çıktı:
+
+```text
+Kendi bilgisayarınızda: ssh -f -N -L 8025:127.0.0.1:8025 student@<IP>
+```
+
+Yazdırılan komutu kendi bilgisayarınızın terminalinde çalıştırın, sonra tarayıcıda `http://127.0.0.1:8025`:
 
 ![Mailpit: 1 alarm e-postası; sağda konu ve ölçülen değer](../../assets/screenshots/LAB-27/03-mailpit.png)
 
@@ -293,9 +299,11 @@ anahtarı ve Slack webhook adresi.
 - **Resend API anahtarı:** [resend.com](https://resend.com)'da ücretsiz hesap açın; **API Keys › Create
   API Key**. Hesap doğrulanmış bir alan adı olmadan yalnız kendi e-posta adresinize gönderir; test için
   yeterlidir. Gönderen adres `onboarding@resend.dev` olur.
-- **Slack webhook:** [api.slack.com/apps](https://api.slack.com/apps) › **Create New App › From scratch**
-  › **Incoming Webhooks** › **Activate** › **Add New Webhook to Workspace** › kanal seçin. Adres
-  `https://hooks.slack.com/services/T…/B…/…` biçimindedir.
+- **Slack webhook:** [api.slack.com/apps](https://api.slack.com/apps) › **Create New App** › **Pick features**
+  (scope ve event eklemeden **Continue**) › **Create** › **Incoming Webhooks** › **Activate** › **Add New Webhook**
+  › kanal seçin › **Allow** › **Copy**. Adres `https://hooks.slack.com/services/T…/B…/…` biçimindedir.
+- Her tıklamanın işaretli ekran görüntüsü LAB-18'in "Slack ve e-posta: hesap, anahtar ve connector" kutusundadır:
+  [LAB-18](../LAB-18-alerting-raporlama/README.md).
 
 </details>
 
@@ -368,9 +376,11 @@ Beklenen çıktı:
 </details>
 
 Kibana gizli bilgileri şifreli saklar; connector listesi onları bir daha göstermez. Bağlantıyı kural
-beklemeden deneyin; e-posta kutunuza ve Slack kanalınıza birer test mesajı düşer:
+beklemeden deneyin; e-posta kutunuza ve Slack kanalınıza birer test mesajı düşer. İlk satır alıcı adresini
+dosyadan okur: yeni bir terminal açtıysanız da `ALARM_TO` boş kalmaz (boş kalırsa e-posta testi `error` döner):
 
 ```bash
+ALARM_TO=$(sed -n 's/^ALARM_TO=//p' ~/.lab24-gizli)
 ./scripts/kbn.sh POST /api/actions/connector/apache-eposta/_execute "{\"params\":{\"to\":[\"$ALARM_TO\"],\"subject\":\"LAB-27 e-posta testi\",\"message\":\"Kibana connector testi\"}}" | jq -c '{status, connector_id}'
 ./scripts/kbn.sh POST /api/actions/connector/apache-slack/_execute '{"params":{"message":"LAB-27 Slack testi"}}' | jq -c '{status, connector_id}'
 ```
@@ -385,6 +395,7 @@ Beklenen çıktı:
 Kurala iki aksiyonu da ekleyin. Kural güncellemesi bütün tanımı ister; en kısa yol kuralı yeniden kurmaktır:
 
 ```bash
+ALARM_TO=$(sed -n 's/^ALARM_TO=//p' ~/.lab24-gizli)
 ./scripts/kbn.sh DELETE /api/alerting/rule/apache-5xx; echo
 jq -n --arg to "$ALARM_TO" -f scripts/kural.jq | ./scripts/kbn.sh POST /api/alerting/rule/apache-5xx @- | jq -c '{id, actions: [.actions[].id]}'
 ```

@@ -379,7 +379,7 @@ T0=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 ./scripts/generate-attack-scenario.sh yedek
 timeout 120 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:9200/siem-auth-*/_count" | jq .count)" -ge 73 ]; do printf .; sleep 3; done'
 T1=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-timeout 180 bash -c "until [ \"\$(curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/detection_engine/rules?rule_id=siem-lab-ssh-brute-force' | jq -r .execution_summary.last_execution.date)\" \> \"$T1\" ]; do printf .; sleep 5; done"; echo
+T1="$T1" timeout 180 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:5601/api/detection_engine/rules?rule_id=siem-lab-ssh-brute-force" | jq -r .execution_summary.last_execution.date)" \> "$T1" ]; do printf .; sleep 5; done'; echo
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/.alerts-security.alerts-default/_count?filter_path=count' -H 'Content-Type: application/json' \
   -d "{\"query\": {\"bool\": {\"filter\": [{\"term\": {\"kibana.alert.rule.rule_id\": \"siem-lab-ssh-brute-force\"}}, {\"range\": {\"@timestamp\": {\"gte\": \"$T0\"}}}]}}}"; echo
 ```
