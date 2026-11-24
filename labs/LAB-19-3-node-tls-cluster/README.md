@@ -9,11 +9,12 @@
 ## Bu lab ne öğretiyor?
 
 Ana cluster tek node'dur: o node durursa veri erişilmez olur, replica'nın yerleşecek yeri yoktur. Üretimde en az üç
-node kullanılır; node'lar birbirleriyle ve istemcilerle TLS üzerinden konuşur, bir node kaybolsa da veri okunmaya
-devam eder.
+node kullanılır ve node'lar birbirleriyle TLS üzerinden konuşur. Bu labda:
 
-Bu labda kendi CA'sıyla TLS'li üç node'lu bir cluster kuracak, shard ve replica'ların node'lara nasıl dağıldığını
-görecek, bir node'u gerçekten durduracak ve aramaların node'lar arasında nasıl paylaşıldığını ölçeceğiz.
+- Kendi CA'sıyla TLS'li, üç node'lu bir cluster kuracağız.
+- Shard ve replica'ların node'lara nasıl dağıldığını göreceğiz.
+- Bir node'u gerçekten durdurup verinin okunmaya devam ettiğini kanıtlayacağız.
+- Aramaların node'lar arasında nasıl paylaşıldığını ölçeceğiz.
 
 ![3-node cluster: shard dağılımı ve quorum](../../assets/infographics/10-cluster-shard-ve-quorum.png)
 
@@ -37,12 +38,10 @@ free -g | sed -n 2p
 
 ## Kavramlar: dağıtık cluster'da karar kuralları
 
-| Kavram | Kural | Neden |
-|---|---|---|
-| Master-eligible node | Tek sayıda (3) | Seçim için çoğunluk (quorum) gerekir: 3 node'da 2 |
-| Primary shard | Sayısı index açılırken belirlenir, sonra değişmez | Document'in hangi shard'a gideceği bu sayıyla hesaplanır |
-| Replica | Sayısı canlı değişir; primary ile aynı node'a konmaz | Node düşünce kopya başka node'da kalmalı |
-| TLS | Node'lar arası (transport) ve istemci (HTTP) trafiği şifreli | Ağdaki biri parolayı ve veriyi okuyamasın |
+- **Master-eligible node:** tek sayıda (3) olur; master seçimi için çoğunluk (quorum) gerekir, 3 node'da 2.
+- **Primary shard:** sayısı index açılırken belirlenir, sonra değişmez; document'in hangi shard'a gideceği bu sayıyla hesaplanır.
+- **Replica:** sayısı canlı değişir; primary ile aynı node'a konmaz, node düşünce kopya başka node'da kalsın diye.
+- **TLS:** node'lar arası (transport) ve istemci (HTTP) trafiğini şifreler; ağdaki biri parolayı ve veriyi okuyamaz.
 
 ---
 
@@ -77,6 +76,8 @@ söyler; istemci başka bir adla bağlanırsa sertifika reddedilir.
 
 ### 1. Parola dosyası ve üç node
 
+**Soru: Üç node'lu bir cluster tek komutla nasıl açılır?**
+
 Parola ve portlar `starter/.env` dosyasında durur (izni `600`, git'e girmez):
 
 ```bash
@@ -98,6 +99,8 @@ Beklenen çıktı:
 sağlıklı olana kadar bekler; yaklaşık 2 dakika sürer.
 
 ### 2. TLS'i üç denemeyle kanıtlayın
+
+**Soru: Trafiğin gerçekten şifreli olduğunu nasıl görürüz?**
 
 curl'ün cluster'ın sertifikasına güvenmesi için lab CA'sını hosta alın ve parolayı ortama yükleyin:
 
@@ -132,7 +135,7 @@ curl: (60) SSL certificate problem: unable to get local issuer certificate
 ```
 
 ```bash
-curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" 'https://127.0.0.1:19208/_cluster/health?filter_path=cluster_name,status,number_of_nodes'; echo
+curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" 'https://127.0.0.1:19208/_cluster/health?wait_for_status=green&timeout=60s&filter_path=cluster_name,status,number_of_nodes'; echo
 ```
 
 ```json
@@ -141,9 +144,12 @@ curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" 'https://127.0.0.1
 
 Node TLS dışındaki bağlantıya cevap vermez. Bağlantı şifreli olsa da curl, sertifikayı kimin imzaladığını bilmeden
 reddeder; `-k` ile bu kontrolü kapatmak "kim olduğunu bilmediğim bir sunucuya parola gönder" demektir. CA ile
-bağlantı kurulur ve üç node aynı cluster'dadır.
+bağlantı kurulur ve üç node aynı cluster'dadır. `wait_for_status=green`: node'lar açıldıktan sonra iç index'lerin
+replica'ları birkaç saniye yerleşir; istek green olana kadar (en çok 60 sn) bekler.
 
 ### 3. Node'lar, roller ve master
+
+**Soru: Hangi node ne iş yapıyor, master kim?**
 
 ```bash
 curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" 'https://127.0.0.1:19208/_cat/nodes?v&h=name,node.role,master,heap.max&s=name'
@@ -160,11 +166,13 @@ es-c himrs     -         384mb
 
 - `node.role`: `m` master-eligible, `h` hot data, `s` content data, `r` remote cluster client; `es-c`'deki `i`
   ingest pipeline çalıştırabildiğini gösterir.
-- `master` sütunundaki `*` seçilmiş master'dır. Üç master-eligible node'dan ikisi ayakta oldukça yeni master
+- `master` sütunundaki `*` seçilmiş master'dır; hangi node'un seçildiği her kurulumda değişebilir. Üç master-eligible node'dan ikisi ayakta oldukça yeni master
   seçilebilir; tek node kalırsa cluster isteklere `master_not_discovered_exception` ile cevap verir. İki ayrı
   master oluşması (split brain) böyle engellenir.
 
 ### 4. Shard ve replica dağılımı
+
+**Soru: Bir index'in kopyaları node'lara nasıl dağılır?**
 
 3 primary ve 1 replica'lı bir index açıp altı document yazın, green olunca shard'ların nerede durduğuna bakın:
 
@@ -216,6 +224,8 @@ için yeni bir index açılıp `_reindex` yapılır. Adım 5 için replica sayı
 
 ### 5. Gerçek node kaybı
 
+**Soru: Bir node düşerse veri okunmaya devam eder mi?**
+
 `es-b`'yi durdurun ve cluster'a sorun:
 
 ```bash
@@ -258,6 +268,8 @@ sürer. `setup` servisi de yeniden başlar; sertifikalar zaten olduğu için hi�
 
 ### 6. Yük dengeleme: aramalar node'lara nasıl dağılır?
 
+**Soru: Hep aynı node'a istek atınca iş yalnız ona mı kalır?**
+
 İstekleri hep aynı adrese (`es-a`'nın portuna) gönderiyoruz. 30 aramadan önce ve sonra her node'un yürüttüğü shard
 sorgusu sayısına bakın:
 
@@ -274,8 +286,8 @@ curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" "$OLCUM" | jq -c -
 
 İsteği alan node koordinatör olur: aramayı index'in üç shard'ına dağıtır ve sonuçları birleştirir. Her shard için
 primary ya da replica kopyalarından birini seçer (adaptive replica selection: o an en hızlı cevap veren). Toplam her
-zaman 90'dır (30 arama × 3 shard); dağılım her ölçümde değişir. Az önce yeniden başlatılan `es-b`'nin payı küçüktür,
-çünkü cache'i soğuk, cevabı yavaştır. Üretimde istemci de istekleri birden çok node'a (ya da önündeki bir load
+zaman 90'dır (30 arama × 3 shard); dağılım her ölçümde değişir. Az önce yeniden başlatılan `es-b`'nin payı çoğu zaman
+küçük çıkar, çünkü cache'i soğuk, cevabı yavaştır; bu testte bir koşuda 30/30/30 eşit de dağıldı. Üretimde istemci de istekleri birden çok node'a (ya da önündeki bir load
 balancer'a) gönderir; tek bir node'un adresi tek arıza noktası olur.
 
 <details>
