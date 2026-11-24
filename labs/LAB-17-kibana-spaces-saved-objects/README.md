@@ -8,12 +8,16 @@
 
 ## Bu lab ne öğretiyor?
 
-Satış ekibi yalnız kendi panolarını görmek istiyor; Observability, Security ve Machine Learning menüleri
-onları yalnız şaşırtıyor. Panoyu her ekip için yeniden çizmek de, test ortamında hazırlanan panoyu üretime
-elle kurmak da hem zaman kaybı hem hata kaynağıdır.
+Satış ekibi yalnız kendi panolarını görmek istiyor; Observability, Security ve Machine Learning menüleri onları
+şaşırtıyor. Panoyu her ekip için yeniden çizmek de test ortamındaki panoyu üretime elle kurmak da zaman kaybı ve
+hata kaynağıdır. Bu labda Kibana arayüzünden:
 
-Bu labda ekibe özel bir **Space** açacak, menüsünü sadeleştirecek, hazır bir panoyu Space'e kopyalayacak,
-aynı panoyu dosyaya dışa aktarıp başka bir Space'e içe aktaracağız. Hepsi Kibana arayüzünden yapılır.
+- Ekibe özel bir **Space** açıp menüsünü sadeleştireceğiz.
+- Hazır bir panoyu ilişkili nesneleriyle başka bir Space'e kopyalayacağız.
+- Aynı panoyu dosyaya **Export** edip üçüncü bir Space'e **Import** edeceğiz.
+- Silinen bir nesneyi bu dosyadan geri getireceğiz.
+
+Her tıklama kırmızı kutu ve numarayla gösterilir.
 
 ---
 
@@ -44,15 +48,10 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ## Kavramlar: Space ve saved object
 
-| Kavram | Ne demek | Bu labda |
-|---|---|---|
-| Space | Kibana içinde ayrı çalışma alanı: kendi panoları, data view'ları, menüsü. Veri ortaktır; Space veriyi bölmez | `Satış ekibi`, `Pazarlama` |
-| Feature visibility | Space menüsünde hangi uygulamaların görüneceği. **Yetki değildir**: menüden gizlenen uygulamaya rol izin veriyorsa adresle girilebilir. Yetki rolle verilir (LAB-20) | Observability, Security, ML gizli |
-| Saved object | Kibana'nın sakladığı her nesne: pano, Lens, harita, saved search, data view | örnek eCommerce panosu |
-| Referans | Pano, panellerini ve data view'ını kimliğiyle gösterir; nesneler bir zincirdir | pano → harita, saved search → data view |
-
-Panoyu tek başına taşırsanız panelleri ve data view'ı yoksa açılmaz; bu yüzden taşırken ilişkili
-nesneler de seçilir.
+- **Space:** Kibana içinde ayrı çalışma alanı; kendi panoları, data view'ları ve menüsü vardır. Veri ortaktır, Space veriyi bölmez.
+- **Feature visibility:** Space menüsünde hangi uygulamaların görüneceği. Yetki değildir; yetki rolle verilir (LAB-20).
+- **Saved object:** Kibana'nın sakladığı her nesne: pano, Lens, harita, saved search, data view.
+- **Referans:** pano panellerini ve data view'ını kimliğiyle gösterir; nesneler bir zincirdir. Pano tek başına taşınırsa açılmaz, bu yüzden ilişkili nesneler de seçilir.
 
 ---
 
@@ -60,61 +59,125 @@ nesneler de seçilir.
 
 ### 1. Space oluşturmak
 
-Kibana menüsünden **Stack Management › Spaces › Create space**. **Name** alanına `Satış ekibi` (1) yazın;
-**URL identifier** (2) addan kendiliğinden üretilir, ama Türkçe harfleri tireye çevirir (`sat---ekibi`); kutuya
-`satis-ekibi` yazın. Bu kimlik adreste görünür (`/s/satis-ekibi/`) ve sonradan değişmez. **Solution view**
-(3) olarak **Classic** seçin: bütün uygulamalar açık gelir, menüyü bir sonraki adımda kendimiz sadeleştireceğiz.
-(Elasticsearch, Observability ve Security görünümleri menüyü o çözüme göre hazır daraltır.) **Avatar** bölümünde
-baş harfleri `SE` yapıp bir renk seçebilirsiniz.
+**Soru: Satış ekibine ayrı bir çalışma alanı nasıl açılır?**
 
-![Create space: 1 ad, 2 URL identifier, 3 Solution view](../../assets/screenshots/LAB-17/01-space-olustur.png)
+1. Sol üstteki menü düğmesi (1), **Management** altında **Stack Management** (2):
 
-Sayfanın altındaki **Create space** ile kaydedin. Spaces listesinde Default'un yanında `Satış ekibi` görünür.
+![Menü: 1 menü düğmesi, 2 Stack Management](../../assets/screenshots/LAB-17/01a-menu-stack-management.png)
+
+2. Soldaki listede **Kibana** altında **Spaces** (1):
+
+![Stack Management: 1 Spaces](../../assets/screenshots/LAB-17/01b-spaces.png)
+
+3. Sağ üstte **Create space** (1):
+
+![Spaces: 1 Create space](../../assets/screenshots/LAB-17/01c-create-space.png)
+
+4. **Name** kutusuna `Satış ekibi` yazın. **URL identifier** addan kendiliğinden üretilir ama Türkçe harfleri
+   tireye çevirir (`sat---ekibi`); kutuyu silip `satis-ekibi` yazın. Bu kimlik adreste görünür (`/s/satis-ekibi/`)
+   ve sonradan değişmez. **Solution view** kutusunu açıp **Classic**'i (1) seçin: bütün uygulamalar açık gelir,
+   menüyü Adım 2'de kendimiz sadeleştireceğiz:
+
+![Solution view: 1 Classic](../../assets/screenshots/LAB-17/01d-solution-view.png)
+
+5. Formun üst kısmı şöyle olmalı: **Name** (1), **URL identifier** (2), **Solution view** (3). Elasticsearch,
+   Observability ve Security görünümleri menüyü o çözüme göre hazır daraltır:
+
+![Create space: 1 Name, 2 URL identifier, 3 Solution view](../../assets/screenshots/LAB-17/01e-space-formu.png)
+
+6. Sayfayı aşağı kaydırın. **Define an avatar** bölümünde **Initials** kutusuna (1) `SE` yazın, **Create space** (2):
+
+![Avatar: 1 Initials, 2 Create space](../../assets/screenshots/LAB-17/01f-avatar-kaydet.png)
+
+7. Spaces listesinde Default'un altında `Satış ekibi` (1) görünür:
+
+![Spaces listesi: 1 Satış ekibi](../../assets/screenshots/LAB-17/01g-space-listesi.png)
 
 ### 2. Menüyü sadeleştirmek: feature visibility
 
-Spaces listesinde `Satış ekibi`'ni açın. **Set feature visibility** bölümünde **Observability** ve
-**Security** kategorilerinin kutusunu (4) kaldırın; **Analytics** kategorisini açıp **Machine Learning**'i de
-kaldırın. **Apply changes** ile kaydedin:
+**Soru: Satış ekibinin menüsünden kullanmadıkları uygulamalar nasıl kaldırılır?**
 
-![Feature visibility: 4 kaldırılan kategoriler](../../assets/screenshots/LAB-17/02-space-ozellik.png)
+1. Spaces listesinde `Satış ekibi`'ne tıklayın (önceki görüntüde 1). **Set feature visibility** bölümünde
+   **Observability** (1) ve **Security** (2) kutularını kaldırın. **Analytics** satırını (3) açın, altındaki
+   **Machine Learning** kutusunu (4) kaldırın:
 
-Sol üstteki Space seçicisinden (5) `Satış ekibi`'ne geçin ve menüyü açın. Default Space'in menüsüyle
-karşılaştırın:
+![Feature visibility: 1 Observability, 2 Security, 3 Analytics, 4 Machine Learning](../../assets/screenshots/LAB-17/02a-ozellikler.png)
 
-![Default Space menüsü: Observability, Security ve Machine Learning var](../../assets/screenshots/LAB-17/03-menu-default.png)
+2. Sayfanın altında **Apply changes** (1):
 
-![Satış ekibi menüsü: 5 Space seçici, 6 sadeleşmiş menü](../../assets/screenshots/LAB-17/04-menu-satis.png)
+![Apply changes: 1](../../assets/screenshots/LAB-17/02b-apply.png)
 
-Satış ekibi menüsünde Observability (APM, Logs, Infrastructure, SLOs…), Security (Detections, Timelines…),
-Machine Learning, Alerts ve Cases yoktur; Discover, Dashboards, Maps ve Stack Management yerindedir.
+3. Onay penceresinde **Update space** (1); sayfa yeniden yüklenir:
 
-Gizlemek yetki vermez, yetki de almaz. Bu Space'e giren kullanıcının neyi okuyup yazabileceğini rolü
-belirler; rolü Space'e bağlamayı LAB-20'de yapacağız.
+![Confirm update space: 1 Update space](../../assets/screenshots/LAB-17/02c-onay.png)
+
+4. Karşılaştırma için önce Default Space'in menüsünü açın: sol üstteki **D** simgesi (1) şu anki Space'tir;
+   menüde Observability, Security ve Machine Learning vardır:
+
+![Default Space menüsü: 1 Space seçici](../../assets/screenshots/LAB-17/02d-menu-default.png)
+
+5. Space seçiciye (1) tıklayın, `Satış ekibi`'ni (2) seçin:
+
+![Space seçici: 1 seçici, 2 Satış ekibi](../../assets/screenshots/LAB-17/02e-space-sec.png)
+
+6. Menüyü açın: Space simgesi artık **SE** (1); menü sadeleşti (2). Observability (APM, Logs, SLOs…), Security
+   (Detections, Timelines…), Machine Learning, Alerts ve Cases yoktur; Discover, Dashboards, Maps ve Stack
+   Management yerindedir:
+
+![Satış ekibi menüsü: 1 SE, 2 sadeleşmiş menü](../../assets/screenshots/LAB-17/02f-menu-satis.png)
+
+Gizlemek yetki vermez, yetki de almaz. Bu Space'e giren kullanıcının neyi okuyup yazabileceğini rolü belirler;
+rolü Space'e bağlamayı LAB-20'de yapacağız.
 
 ### 3. Panoyu başka bir Space'e kopyalamak
 
-Yeni Space boştur: panolar ve data view'lar Space'e aittir. Default Space'e dönüp **Stack Management ›
-Saved objects** açın. `[eCommerce] Revenue Dashboard` satırının sonundaki **Actions** menüsünden **Copy to
-spaces** (7):
+**Soru: Hazır bir panoyu yeniden çizmeden Satış ekibine nasıl veririz?**
 
-![Saved objects: 7 Copy to spaces](../../assets/screenshots/LAB-17/05-copy-menu.png)
+Yeni Space boştur: panolar ve data view'lar Space'e aittir.
 
-Açılan pencerede hedef olarak `Satış ekibi`'ni (8) seçin ve **Copy to 1 space** (9) deyin:
+1. Space seçici (1), **Default** (2):
 
-![Copy to space: 8 hedef Space, 9 kopyala](../../assets/screenshots/LAB-17/06-copy-hedef.png)
+![Space seçici: 1 seçici, 2 Default](../../assets/screenshots/LAB-17/03a-default-don.png)
 
-Pencerede sonuç olarak pano ve ilişkili dört nesnesi (data view, saved search, harita, Markdown paneli)
-görünür; **Finish** ile kapatın. **Include related saved objects** varsayılan olarak açıktır: panonun panelleri
-ve data view'ı da kopyalanır, yoksa pano yeni Space'te boş panellerle açılırdı.
+2. Menü, **Stack Management**, soldaki listede **Saved Objects** (1):
+
+![Stack Management: 1 Saved Objects](../../assets/screenshots/LAB-17/03b-saved-objects.png)
+
+3. Arama kutusuna (1) `Revenue` yazıp Enter'a basın. `[eCommerce] Revenue Dashboard` satırının sonundaki **⋮**
+   düğmesine (2) tıklayın:
+
+![Saved Objects: 1 arama, 2 satır menüsü](../../assets/screenshots/LAB-17/03c-arama.png)
+
+4. **Copy to spaces** (1):
+
+![Satır menüsü: 1 Copy to spaces](../../assets/screenshots/LAB-17/03d-copy-menu.png)
+
+5. Pencerede **Select spaces** altında `Satış ekibi`'ni (1) işaretleyin, **Copy to 1 space** (2). Varsayılan seçenekler
+   yeterlidir: **Create new objects with random IDs** kopyaları yeni kimlikle oluşturur, **Include related saved
+   objects** işaretli ve değiştirilemez:
+
+![Copy to spaces: 1 Satış ekibi, 2 Copy to 1 space](../../assets/screenshots/LAB-17/03e-copy-hedef.png)
+
+6. Sonuç: **Copied 5**. Pano ve ilişkili dört nesnesi (data view, saved search, harita, Markdown paneli) kopyalandı;
+   ilişkili nesneler kopyalanmasaydı pano yeni Space'te boş panellerle açılırdı. **Finish** (1):
+
+![Copy sonucu: Copied 5, 1 Finish](../../assets/screenshots/LAB-17/03f-copy-sonuc.png)
 
 ### 4. Export: panoyu dosyaya aktarmak
 
-Copy to space aynı Kibana içinde çalışır. Panoyu başka bir Kibana'ya (örneğin testten üretime) taşımak ya da
-yedeklemek için dosyaya aktarılır. Saved objects listesinde (arama: `Revenue`) `[eCommerce] Revenue Dashboard` satırını işaretleyin
-(10) ve tablonun üstünde **Delete**'in yanındaki **Export** düğmesine basın. Açılan kutuda **Include related objects** (11) açık kalsın; **Export** (12):
+**Soru: Panoyu başka bir Kibana'ya taşımak ya da yedeklemek için ne yapılır?**
 
-![Export: 10 seçilen pano, 11 ilişkili nesneler, 12 dışa aktar](../../assets/screenshots/LAB-17/07-export.png)
+Copy to spaces aynı Kibana içinde çalışır. Başka bir Kibana'ya (örneğin testten üretime) taşımak ya da yedeklemek
+için pano dosyaya aktarılır.
+
+1. Saved Objects listesinde (arama: `Revenue`) pano satırının kutusunu (1) işaretleyin, tablonun üstündeki
+   **Export** (2):
+
+![Export: 1 pano kutusu, 2 Export](../../assets/screenshots/LAB-17/04a-export-sec.png)
+
+2. **Include related objects** (1) açık kalsın, **Export** (2):
+
+![Export seçenekleri: 1 Include related objects, 2 Export](../../assets/screenshots/LAB-17/04b-export-ayar.png)
 
 Tarayıcı `export.ndjson` dosyasını kendi bilgisayarınıza indirir. Her satır bir saved object'tir:
 
@@ -131,33 +194,52 @@ Pano tek başına seçildi ama **Include related objects** onun gösterdiği dö
 
 ### 5. Import: dosyayı üçüncü bir Space'e yüklemek
 
-Pazarlama ekibi için ikinci bir Space açın. Bu kez API ile; arayüzdeki form aynı alanları doldurur:
+**Soru: İndirilen dosya başka bir Space'e nasıl yüklenir?**
+
+Pazarlama ekibi için ikinci bir Space açın. Bu kez Kibana › Dev Tools'tan; arayüzdeki form aynı alanları doldurur:
 
 ```http
 POST kbn:/api/spaces/space
 { "id": "pazarlama", "name": "Pazarlama", "initials": "PZ", "color": "#E7664C" }
 ```
 
-Space seçicisinden `Pazarlama`'ya geçin, **Stack Management › Saved objects › Import**. İndirdiğiniz `export.ndjson` dosyasını (13) seçin. Çakışma seçenekleri (14):
+1. Space seçici (1), **Pazarlama** (2):
 
-- **Check for existing objects**: aynı kimlikte nesne varsa ne yapılacağını sorar ya da (**Automatically
-  overwrite conflicts** işaretliyse) üzerine yazar. Aynı panoyu güncellemek için.
-- **Create new objects with random IDs**: her nesneyi yeni kimlikle ekler; var olana dokunmaz. Aynı panonun
-  ikinci bir kopyası için.
+![Space seçici: 1 seçici, 2 Pazarlama](../../assets/screenshots/LAB-17/05a-space-pazarlama.png)
 
-**Check for existing objects** seçili kalsın, **Import** (15):
+2. Menü, **Stack Management**, **Saved Objects** (Adım 3'ün 2. maddesi). Sağ üstte **Import** (1):
 
-![Import: 13 dosya, 14 çakışma seçenekleri, 15 içe aktar](../../assets/screenshots/LAB-17/08-import.png)
+![Saved Objects: 1 Import](../../assets/screenshots/LAB-17/05b-import-dugme.png)
 
-Sonuç penceresi `5 objects imported`, `5 new` der; **Done** ile kapatın. Pazarlama Space'i boş olduğu için
-çakışma yoktu.
+3. Sağda açılan panelde dosya kutusuna (1) indirdiğiniz `export.ndjson`'u sürükleyin ya da tıklayıp seçin.
+   **Import options** (2) varsayılan hâliyle kalsın, **Import** (3):
+
+![Import: 1 dosya, 2 Import options, 3 Import](../../assets/screenshots/LAB-17/05c-import.png)
+
+| Seçenek | Ne yapar |
+|---|---|
+| **Check for existing objects** (varsayılan) | Aynı kimlikte nesne varsa **Automatically overwrite conflicts** ile üzerine yazar ya da **Request action on conflict** ile sorar. Aynı panoyu güncellemek için |
+| **Create new objects with random IDs** | Her nesneyi yeni kimlikle ekler, var olana dokunmaz. Aynı panonun ikinci kopyası için |
+
+4. Sonuç: `5 objects imported`, `5 new`; Pazarlama boş olduğu için çakışma yoktu. **Done** (1):
+
+![Import sonucu: 5 new, 1 Done](../../assets/screenshots/LAB-17/05d-import-sonuc.png)
 
 ### 6. Doğrulama: panoyu Pazarlama Space'inde açmak
 
-Adres çubuğunda Space adresin içindedir. `http://<IP>:5601/s/pazarlama/app/dashboards` adresini açın ve
-`[eCommerce] Revenue Dashboard`'u (16) tıklayın; paneller veriyle gelir (17):
+**Soru: İçe aktarılan pano gerçekten çalışıyor mu?**
 
-![Pazarlama Space'i: 16 içe aktarılan pano, 17 veriyle gelen paneller](../../assets/screenshots/LAB-17/09-pazarlama-pano.png)
+1. Menü, **Analytics** altında **Dashboards** (1):
+
+![Menü: 1 Dashboards](../../assets/screenshots/LAB-17/06a-menu-dashboards.png)
+
+2. `[eCommerce] Revenue Dashboard` (1):
+
+![Dashboards: 1 içe aktarılan pano](../../assets/screenshots/LAB-17/06b-pano-listesi.png)
+
+3. Sol üstte Space simgesi **PZ** (1); paneller veriyle gelir (2). Adres çubuğunda da Space vardır: `/s/pazarlama/`:
+
+![Pazarlama Space'i: 1 PZ, 2 veriyle gelen paneller](../../assets/screenshots/LAB-17/06c-pazarlama-pano.png)
 
 Üç Space'te üç ayrı pano kopyası var; biri değişince ötekiler değişmez. Veri ise tek: hepsi aynı
 `kibana_sample_data_ecommerce` index'ini okur.
@@ -165,28 +247,31 @@ Adres çubuğunda Space adresin içindedir. `http://<IP>:5601/s/pazarlama/app/da
 <details>
 <summary><strong>Silinen bir nesneyi yedekten geri getirmek</strong></summary>
 
-Adım 4'teki `export.ndjson` aynı zamanda bir yedektir. Biri panodaki bir nesneyi yanlışlıkla silerse aynı dosyayla geri
-gelir. Pazarlama Space'inde deneyin; Default'taki örnek pano etkilenmez.
+Adım 4'teki `export.ndjson` aynı zamanda bir yedektir. Pazarlama Space'inde deneyin; Default'taki pano etkilenmez.
 
-**Silin.** Pazarlama'da **Stack Management › Saved objects**, arama: `Orders by Country`. Haritayı işaretleyin (1),
-**Delete** (2), onay penceresinde yine **Delete**:
+1. **Silin.** Pazarlama'da **Stack Management › Saved Objects**, arama kutusuna `Orders by Country`. Haritanın
+   kutusunu (1) işaretleyin, **Delete** (2):
 
-![Saved objects: 1 harita, 2 Delete](../../assets/screenshots/LAB-17/10-sil-harita.png)
+![Saved Objects: 1 harita, 2 Delete](../../assets/screenshots/LAB-17/07a-sil-harita.png)
 
-**Panoya bakın.** `[eCommerce] Revenue Dashboard`'u açın: harita paneli (3) boş kalır ve **Not Found** yazar:
+2. Onay penceresinde **Delete 1 object** (1):
 
-![Pano: 3 silinen nesnenin paneli hata veriyor](../../assets/screenshots/LAB-17/11-eksik-panel.png)
+![Silme onayı: 1 Delete 1 object](../../assets/screenshots/LAB-17/07b-sil-onay.png)
 
-**Geri yükleyin.** Saved objects › **Import**, aynı `export.ndjson` dosyası (4). Bu kez Space dolu, dosyadaki nesnelerin
-çoğu zaten var: **Automatically overwrite conflicts** (5) seçin, **Import** (6):
+3. **Panoya bakın.** `[eCommerce] Revenue Dashboard`'u açın: harita paneli (1) boş kalır ve **Not Found** yazar:
 
-![Import: 4 aynı dosya, 5 çakışmaların üzerine yaz, 6 içe aktar](../../assets/screenshots/LAB-17/12-geri-yukle.png)
+![Pano: 1 silinen nesnenin paneli](../../assets/screenshots/LAB-17/07c-eksik-panel.png)
 
-Sonuç penceresi `5 objects imported`, `1 new`, `4 overwritten` der: silinen harita yeni olarak geldi, öteki dördü
-dosyadaki hâline döndü. Panoyu yeniden açın; bütün paneller veriyle gelir.
+4. **Geri yükleyin.** Saved Objects › **Import**, aynı `export.ndjson` (1). Bu kez Space dolu; **Automatically
+   overwrite conflicts** (2) seçili olsun, **Import** (3):
 
-- **Neden üzerine yaz?** **Request action on conflict** seçilirse her var olan nesne için tek tek sorulur.
-- **Yedek alışkanlığı:** önemli panoları değiştirmeden önce Export ile dosyaya alın.
+![Import: 1 aynı dosya, 2 Automatically overwrite conflicts, 3 Import](../../assets/screenshots/LAB-17/07d-geri-yukle.png)
+
+Sonuç `5 objects imported`, `1 new`, `4 overwritten` der: silinen harita yeni olarak geldi, öteki dördü dosyadaki
+hâline döndü. Panoyu yeniden açın; bütün paneller veriyle gelir.
+
+- **Request action on conflict** seçilirse var olan her nesne için tek tek sorulur.
+- Önemli panoları değiştirmeden önce Export ile dosyaya alın.
 
 </details>
 
