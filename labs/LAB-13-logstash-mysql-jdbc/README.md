@@ -339,12 +339,70 @@ Beklenen çıktı:
 
 Ciroya Adım 5'te eklenen 121 numaralı sipariş de dahildir.
 
+### 7. Kibana'da arama ve kısa rapor
+
+**Soru: MySQL'den gelen siparişleri sorgu yazmadan nasıl arar ve raporlarız?**
+
+Kibana bir index'i data view üzerinden gösterir. Zaman field'ı olarak siparişin güncellenme zamanı kullanılır.
+Kibana › Dev Tools'a yapıştırın:
+
+```http
+POST kbn:/api/data_views/data_view
+{ "data_view": { "id": "mysql-siparisler", "title": "mysql-siparisler", "name": "MySQL siparişleri", "timeFieldName": "guncellendi" } }
+```
+
+**Arama.** Menüden **Discover**'ı açın. Data view olarak **MySQL siparişleri**'ni (1) seçin, zaman aralığını
+**Last 1 year** (2) yapın. Arama kutusuna (3) Adım 6'daki soruyu KQL ile yazıp Enter'a basın; 1 document gelir (4),
+103 numaralı sipariş:
+
+```text
+urun : kulaklık and il : "Antalya"
+```
+
+![Discover: 1 data view, 2 Last 1 year, 3 KQL, 4 sonuç sayısı](../../assets/screenshots/LAB-13/07a-discover-arama.png)
+
+**Rapor: il bazında ciro.**
+
+1. Menüden **Visualize library › Create visualization › Visualization**. Data view **MySQL siparişleri** (1),
+   zaman **Last 1 year**. Field listesinde `il` ve `tutar` field'larını aratıp **⊕** ile ekleyin: il yatay eksene (2),
+   dikey eksene (3) Lens'in kendiliğinden koyduğu `Count of records` ile `Median of tutar` gelir:
+
+![Lens: 1 data view, 2 yatay eksen il, 3 dikey eksen tutar](../../assets/screenshots/LAB-13/07b-lens-il-tutar.png)
+
+2. Dikey eksendeki `Median of tutar`'a tıklayın. **Quick function** (1) altında **Sum**'ı (2) seçin, sonra **Close**:
+
+![Quick function: 1 sekme, 2 Sum](../../assets/screenshots/LAB-13/07c-sum.png)
+
+3. Dikey eksende iki seri var; yalnız ciro kalsın. `Count of records` satırının üzerine gelin, sağında beliren çöp
+   kutusu simgesine (1) tıklayın:
+
+![Dikey eksen: 1 Count of records'ı kaldır](../../assets/screenshots/LAB-13/07c2-count-sil.png)
+
+4. Grafik il başına toplam ciroyu gösterir (1); en yüksek üç il Adım 6'daki ES|QL sonucuyla aynıdır:
+
+![Lens: 1 il bazında ciro](../../assets/screenshots/LAB-13/07d-ciro-grafigi.png)
+
+5. Sağ üstte **Save**: **Title** (1) `İl bazında ciro`, **Add to dashboard** altında **New** (2), **Add to library**
+   (3) işaretli (grafik başka panolarda da kullanılabilsin), kaydet düğmesi (4):
+
+![Kaydetme: 1 Title, 2 New, 3 Add to library, 4 kaydet ve panoya git](../../assets/screenshots/LAB-13/07e-kaydet-pano.png)
+
+6. Yeni panoda zaman aralığını **Last 1 year** yapın. Sağ üstte **Save**: **Title** (1) `MySQL siparişleri`,
+   **Store time with dashboard** (2) açık, **Save** (3). Pano bir dahaki açılışta da son bir yılı gösterir:
+
+![Pano kaydetme: 1 Title, 2 Store time with dashboard, 3 Save](../../assets/screenshots/LAB-13/07f-pano-kaydet.png)
+
+7. **Exit edit** ile okuma moduna geçin; rapor hazır (1). MySQL'de bir sipariş değiştiğinde Logstash onu 10
+   saniye içinde aktarır (`schedule`), pano yenilendiğinde grafik de değişir:
+
+![Pano: 1 il bazında ciro paneli](../../assets/screenshots/LAB-13/07g-pano.png)
+
 ---
 
 ## Temizlik
 
 Yalnız bu labın MySQL ve Logstash container'larını (volume'leriyle), `mysql-siparisler` index'ini ve
-şablonunu, rolünü ve kullanıcısını siler. Ana cluster'a dokunmaz. İndirilen sürücü `drivers/` altında
+şablonunu, rolünü ve kullanıcısını, data view'ını ve ona bağlı Kibana nesnelerini (grafik, pano) siler. Ana cluster'a dokunmaz. İndirilen sürücü `drivers/` altında
 kalır:
 
 ```bash
@@ -363,7 +421,11 @@ index mysql-siparisler -> 200
 sablon mysql-siparisler -> 200
 kullanici mysql_logstash -> 200
 rol mysql-logstash-writer -> 200
+Kibana nesneleri -> 2 silindi
+data view mysql-siparisler -> 200
 ```
+
+`2`, Adım 7'deki grafik ve panodur; Adım 7'yi yapmadıysanız `0` ve `404` görürsünüz.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.
