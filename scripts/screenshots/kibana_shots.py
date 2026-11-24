@@ -102,7 +102,7 @@ def draw(path, marks):
         elif arrow == "down":
             tip, tail = (cx, y1 + 4), (cx, y1 + L)
         else:
-            tip = tail = None
+            tip = tail = None   # None: numara kutunun icinde solda; "ic": icinde sagda (basligi kapatmaz)
         if tip:
             d.line((tail, tip), fill=RED, width=7)
             import math
@@ -112,11 +112,16 @@ def draw(path, marks):
             p2 = (tip[0] - h * math.cos(ang + 0.45), tip[1] - h * math.sin(ang + 0.45))
             d.polygon([tip, p1, p2], fill=RED)
             nx, ny = tail
+        elif arrow == "ic":
+            nx, ny = x1 - 36, cy
         else:
-            nx, ny = x0, y0
+            nx, ny = x0 + 36, y0 + 36   # oksuz isaret: numara kutunun icinde, sol ust kosede
         if no is None:
             continue
         r = 24
+        # numara goruntunun disina tasmasin (kenara degen kutularda yarim kalmasin)
+        nx = min(max(nx, r + 6), im.width - r - 6)
+        ny = min(max(ny, r + 6), im.height - r - 6)
         d.ellipse((nx - r - 3, ny - r - 3, nx + r + 3, ny + r + 3), fill=(255, 255, 255))
         d.ellipse((nx - r, ny - r, nx + r, ny + r), fill=RED)
         t = str(no)

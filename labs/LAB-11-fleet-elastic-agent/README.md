@@ -445,11 +445,11 @@ Beklenen çıktı:
 3. **Collect metrics from System instances** satırında **Change defaults**'a tıklayın. **System process
    metrics** satırının **Period** değerini (1) `10s` yerine `30s` yapın ve **Save integration** (2):
 
-   ![Period 30s, Save integration](../../assets/screenshots/LAB-11/05c-period.png)
+   ![Period: 1 30s, 2 Save integration](../../assets/screenshots/LAB-11/05c-period.png)
 
 4. Onay penceresinde **Save and deploy changes** (1); pencere değişikliğin kaç ajanı etkileyeceğini söyler:
 
-   ![Save and deploy changes](../../assets/screenshots/LAB-11/05d-save-deploy.png)
+   ![Onay: 1 Save and deploy changes](../../assets/screenshots/LAB-11/05d-save-deploy.png)
 
 **Sonra:** ajanın yeni revision'a geçmesini bekleyin:
 
