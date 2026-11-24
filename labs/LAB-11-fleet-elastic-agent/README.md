@@ -154,7 +154,7 @@ Komutu **çalıştırmayın**: Fleet Server'ı paket olarak değil, Adım 3'te c
 
 ![Kurulum komutu: 1 service token, 2 politika id'si](../../assets/screenshots/LAB-11/01g-service-token.png)
 
-Görüntüde token gizlendi; sizin ekranınızda tamamı görünür. Pencereyi sağ üstteki **X** ile kapatın. 3. adım
+Görüntüde token gizlendi; sizin ekranınızda tamamı görünür. **Dikkat:** komut satırı ekranın sağında kesilir. Token 90 karakterdir; seçerken satırın sonuna kadar gidin, yalnız görünen kısmı kopyalamayın. Pencereyi sağ üstteki **X** ile kapatın. 3. adım
 (Confirm connection) Fleet Server container'ı açılınca kendiliğinden tamamlanır.
 
 Quick Start'ın politikası ajan izlemeyi (monitoring) açık getirir. Açık kalırsa Fleet Server ilk dakikalarda
@@ -250,6 +250,7 @@ FLEET_ENROLLMENT_TOKEN 58 karakter
 ```
 
 - **Uzunluk 20'nin altındaysa** (`buraya-...` kalmışsa) değer yapışmamıştır; ajan kaydolamaz.
+- **Service token 90 değilse** (örneğin 26) token kesik kopyalanmıştır. Fleet Server Elasticsearch'e bağlanamaz, Adım 3'teki bekleme zaman aşımına uğrar. Düzeltmesi Adım 3'ün altındaki kutuda.
 - **`.env` git'e girmez** (`.gitignore`); token'lar parola gibidir, paylaşılmaz.
 
 ### 3. Fleet Server ve ajanı başlatın
@@ -279,6 +280,75 @@ linux-agent-01  online
 ```
 
 Satırların sırası sizde farklı olabilir.
+
+<details>
+<summary><strong>Noktalar 5 dakika sürüp ajanlar online olmuyorsa</strong></summary>
+
+**1. Fleet Server yeniden başlayıp duruyor mu?**
+
+```bash
+docker ps --format '{{.Names}}  {{.Status}}' | grep -E 'fleet-server-lab|agent-fleet-lab'
+docker inspect -f '{{.Name}} restart={{.RestartCount}}' fleet-server-lab agent-fleet-lab
+docker logs fleet-server-lab 2>&1 | grep -oE 'security_exception: unable to authenticate|timed out waiting for Fleet Server to start' | sort -u
+```
+
+Sağlıklı durumda iki `restart` de 0'dır ve son komut hiçbir satır basmaz. Sorunlu durumda `fleet-server-lab` birkaç saniyedir açıktır (`Up 11 seconds`), ajan ise dakikalardır; `restart`
+sayısı 0'dan büyüktür ve log'da iki ifade görünür:
+
+```text
+agent-fleet-lab  Up 6 minutes
+fleet-server-lab  Up 11 seconds
+/fleet-server-lab restart=3
+/agent-fleet-lab restart=0
+security_exception: unable to authenticate
+timed out waiting for Fleet Server to start
+```
+
+- **`security_exception` (401):** Elasticsearch service token'ı tanımıyor. En sık neden kesik kopyalanan
+  token'dır; Adım 2'deki uzunluk kontrolü 90 yerine daha küçük bir sayı gösterir.
+- **İlk dakikadaki `localhost:9200 … connection refused` satırları normaldir:** ajan politikayı almadan önce
+  varsayılan adresi dener, politika gelince `elasticsearch-lab00`'a geçer.
+
+**2. Çözüm: yeni service token'ı doğrudan `.env`'ye yazın.** Değer ekrana basılmaz, kopyalama hatası olmaz:
+
+```bash
+T=$(curl -s -u elastic:'DevOps2026!' -H 'kbn-xsrf: true' -X POST http://127.0.0.1:5601/api/fleet/service_tokens | jq -r .value)
+sed -i "s|^FLEET_SERVER_SERVICE_TOKEN=.*|FLEET_SERVER_SERVICE_TOKEN=$T|" .env
+awk -F= '/^FLEET/ {print $1, length($2), "karakter"}' .env
+docker compose up -d fleet-server
+```
+
+Beklenen çıktı:
+
+```text
+FLEET_SERVER_SERVICE_TOKEN 90 karakter
+FLEET_ENROLLMENT_TOKEN 58 karakter
+ Container fleet-server-lab Recreated
+ Container fleet-server-lab Starting
+ Container fleet-server-lab Started
+```
+
+`.env` değişince compose yalnız Fleet Server container'ını yeniden kurar; ajan kendiliğinden yeniden bağlanır.
+Yukarıdaki bekleme komutunu tekrar çalıştırın; düzeltmeden sonra iki ajan 67 saniyede `online` oldu.
+
+**3. Hâlâ olmuyorsa iki ayara bakın:**
+
+```bash
+curl -s -u elastic:'DevOps2026!' http://127.0.0.1:5601/api/fleet/outputs | jq -r '.items[] | select(.is_default) | .hosts[]'
+curl -s -u elastic:'DevOps2026!' http://127.0.0.1:5601/api/fleet/agent_policies/fleet-server-policy | jq -c '.item.monitoring_enabled'
+```
+
+Beklenen çıktı:
+
+```text
+http://elasticsearch-lab00:9200
+[]
+```
+
+- **Adres `localhost:9200` ise** Adım 1.2'deki output kaydedilmemiştir; ajanlar online olur ama veri gelmez.
+- **`["logs","metrics"]` ise** Adım 1.3'te izleme kapatılmamıştır; Fleet Server ilk 5 dakika `degraded` görünür.
+
+</details>
 
 **Arayüzde:** **Fleet › Agents**: `linux-agent-01` (1) **Lab Linux sunucu**, `fleet-server` (2) **Fleet Server
 Policy** politikasında, ikisi de `Healthy`. **Last activity** birkaç saniye öncesini gösterir: ajanlar düzenli
