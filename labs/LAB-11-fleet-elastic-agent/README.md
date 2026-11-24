@@ -11,10 +11,12 @@
 Beats ile her Beat ayrı YAML ve servis demektir; 50 sunucuda hangi ayarın çalıştığını kimse bilemez. Fleet ayarı
 Kibana'ya taşır: sunucuda tek program (**Elastic Agent**) çalışır, ne toplayacağını Kibana'daki **agent policy** söyler.
 
-- **Fleet Server ve ajan:** container olarak kurmak, ajanın sunucuyu izlediğini görmek
+- **Fleet'i Kibana'dan kurmak:** output, Fleet Server, politika ve token'lar; token'ları compose'a elle vermek
 - **Politikayı Kibana'dan değiştirmek:** sunucuya girmeden ayarın ajana gitmesi (revision)
 - **Add integrations:** Nginx loglarını eklemek, integration'ın hazır panosu
 - **CPU yükü:** kısa bir yükü Lens panosunda görmek
+
+Kibana'daki her tıklama kırmızı kutu ve numarayla gösterilir.
 
 ![Fleet Server, Elastic Agent ve politika akışı](../../assets/infographics/15-fleet-agent-policy-akisi.png)
 
@@ -52,6 +54,9 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 - **Integration:** bir kaynağın hazır toplama ayarı (System, Nginx…); panolarını ve ingest pipeline'larını da getirir
 - **Fleet (Kibana):** politikaları ve integration'ları yönetilen arayüz
 - **Fleet Server:** ajanların düzenli sorduğu (check-in) sunucu; yeni politikayı ajana verir, veri taşımaz
+- **Output:** ajanların veriyi yazdığı Elasticsearch adresi
+- **Service token:** Fleet Server'ın Elasticsearch'e bağlanma kimliği. **Enrollment token:** ajanın hangi
+  politikaya kaydolacağını belirleyen anahtar
 - **Namespace:** data stream adının son parçası, ortamı ya da ekibi ayırır: `<tür>-<veri seti>-<namespace>` → `logs-system.auth-fleetlab`
 
 ---
@@ -76,98 +81,210 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 - `volumes`: sunucunun log dizini ve `/proc`'u salt okunur bağlanır. Bağlanmazsa ajan yalnız kendi
   container'ını görür; sunucunun SSH girişleri ve süreçleri gelmez.
 - `user: root`: `/var/log/auth.log` yalnız `root` ve `adm` grubunca okunur.
-- `FLEET_ENROLLMENT_TOKEN`: ajanın hangi politikaya kaydolacağını belirleyen token (Adım 1 üretir).
+- `${FLEET_ENROLLMENT_TOKEN}`: değer `.env` dosyasından gelir; Adım 1'de Kibana'dan kopyalayıp Adım 2'de
+  oraya yazacaksınız. Fleet Server servisi de `${FLEET_SERVER_SERVICE_TOKEN}`'ı aynı dosyadan alır.
 - `FLEET_INSECURE=true`: Fleet Server'ın kendi imzalı sertifikası doğrulanmaz; üretimde CA verilir.
 
-`scripts/setup_fleet.py` System integration'ını eklerken `system.hostfs: /hostfs` ayarını verir: metrik
-toplayıcılar `/proc` yerine sunucunun bağlanan `/hostfs/proc`'unu okur.
+Fleet Server servisinde `FLEET_SERVER_POLICY_ID=fleet-server-policy` yazar: Kibana'nın Adım 1'de açacağı Fleet
+Server politikasının id'si budur.
 
 ---
 
 ## Adım Adım Uygulama Rehberi
 
-### 1. Fleet'i hazırlayın
+### 1. Fleet'i Kibana'dan hazırlayın
 
-**Soru: Ajan çalışmadan önce Fleet'te ne hazır olmalı?** Betik Fleet Server için bir service token üretir,
-Fleet'in output'unu ana cluster'a yönlendirir, iki politika açar ve ajanın kayıt token'ını alır. Token'lar
-`.env.fleet` dosyasına yazılır, ekrana basılmaz:
+**Soru: Ajan çalışmadan önce Fleet'te ne hazır olmalı?** Dört şey: ajanların veriyi yazacağı adres (output),
+Fleet Server ve onun service token'ı, ajanın politikası, o politikanın enrollment token'ı. Hepsi Kibana › Fleet'te.
 
+<details>
+<summary><strong>Arayüz yerine betikle yapmak isterseniz</strong></summary>
+
+Betik bu adımdaki her şeyi API ile yapar ve iki token'ı `.env`'e yazar (Adım 2 de yapılmış olur). Token'lar
+ekrana basılmaz. Çalıştırdıktan sonra doğrudan Adım 3'e geçin:
+
+<!-- runner:skip -->
 ```bash
 python3 scripts/setup_fleet.py
 ```
 
-<details>
-<summary><strong>Çıktının tamamı (7 satır)</strong></summary>
-
 ```text
-service token          : uretildi (elastic/fleet-server/fleet-lab-token)
 output                 : http://elasticsearch-lab00:9200
 fleet server adresi    : https://fleet-server:8220
-paketler               : fleet_server, system
-politikalar            : fleet-server-policy, fleet-linux-policy (namespace fleetlab)
+Fleet Server politikasi: Fleet Server Policy (fleet-server-policy), service token alindi
+Linux politikasi       : Lab Linux sunucu (namespace fleetlab, system-lab, hostfs=/hostfs)
 enrollment token       : alindi
-.env.fleet             : yazildi
+.env                   : yazildi
 ```
 
 </details>
 
-- **Yaklaşık 40 saniye:** ilk çalıştırma paketleri indirir.
+**1.1 Fleet'i açın.** Sol üstteki menü düğmesine (1) tıklayın, **Management** altında **Fleet**'i (2) seçin:
 
-### 2. Fleet Server ve ajanı başlatın
+![Menü: 1 menü düğmesi, 2 Fleet](../../assets/screenshots/LAB-11/01a-menu-fleet.png)
 
-**Soru: Ajan Fleet'e nasıl kaydolur?** İki container'ı başlatın; ajan token'la Fleet Server'a kaydolur:
+**1.2 Output: veri nereye yazılacak?** Varsayılan adres `http://localhost:9200`'dür; ajan container'ında
+`localhost` container'ın kendisidir ve veri hiçbir yere gitmez. Ana cluster'ın Docker ağındaki adını verin.
+**Settings** sekmesine (1) tıklayın, **Outputs** tablosunda `default` satırının kalem düğmesine (2) basın:
+
+![Fleet Settings: 1 Settings, 2 default output'u düzenle](../../assets/screenshots/LAB-11/01b-settings-output.png)
+
+**Hosts** (1) kutusuna `http://elasticsearch-lab00:9200` yazın ve **Save and apply settings** (2):
+
+![Edit output: 1 Hosts, 2 Save and apply settings](../../assets/screenshots/LAB-11/01c-output-hosts.png)
+
+Onay penceresi çıkarsa **Save and deploy** (1):
+
+![Onay: 1 Save and deploy](../../assets/screenshots/LAB-11/01d-output-onay.png)
+
+**1.3 Fleet Server: politika ve service token.** **Agents** sekmesi (1) henüz Fleet Server olmadığını söyler;
+**Add Fleet Server**'a (2) tıklayın:
+
+![Agents: 1 sekme, 2 Add Fleet Server](../../assets/screenshots/LAB-11/01e-add-fleet-server.png)
+
+**Quick Start** (1) sekmesinde **Name** (2) `Lab Fleet Server`, **URL** (3) `https://fleet-server:8220` yazın
+(ajanların Fleet Server'a Docker ağında ulaşacağı adres) ve **Generate Fleet Server policy** (4):
+
+![Quick Start: 1 sekme, 2 Name, 3 URL, 4 Generate Fleet Server policy](../../assets/screenshots/LAB-11/01f-quick-start.png)
+
+Kibana `fleet-server-policy` adlı politikayı ve bir service token üretir, ikisini bir kurulum komutunda gösterir.
+Komutu **çalıştırmayın**: Fleet Server'ı paket olarak değil, Adım 3'te container olarak kuracağız. Yalnız
+`--fleet-server-service-token=` sonrasındaki değeri (1) kopyalayıp bir kenara not edin (`AAEAA` ile başlar).
+`--fleet-server-policy=fleet-server-policy` (2) compose dosyasındaki politika id'siyle aynıdır:
+
+![Kurulum komutu: 1 service token, 2 politika id'si](../../assets/screenshots/LAB-11/01g-service-token.png)
+
+Görüntüde token gizlendi; sizin ekranınızda tamamı görünür. Pencereyi sağ üstteki **X** ile kapatın. 3. adım
+(Confirm connection) Fleet Server container'ı açılınca kendiliğinden tamamlanır.
+
+Quick Start'ın politikası ajan izlemeyi (monitoring) açık getirir. Açık kalırsa Fleet Server ilk dakikalarda
+`localhost:9200`'e yazmaya çalışır ve 5 dakikaya kadar `degraded` görünür; bu labda gereksiz yüktür, kapatın.
+**Agent policies** sekmesinde (1) **Fleet Server Policy**'ye (2) tıklayın:
+
+![Agent policies: 1 sekme, 2 Fleet Server Policy](../../assets/screenshots/LAB-11/01g2-fs-policy.png)
+
+**Settings** sekmesi (1):
+
+![Fleet Server Policy: 1 Settings](../../assets/screenshots/LAB-11/01g3-fs-settings.png)
+
+Aşağı kaydırın; **Collect agent logs** (1) ve **Collect agent metrics** (2) işaretlerini kaldırıp **Save
+changes** (3):
+
+![Agent monitoring: 1 ve 2 kapalı, 3 Save changes](../../assets/screenshots/LAB-11/01g4-fs-monitoring.png)
+
+**1.4 Ajanın politikası.** **Agent policies** sekmesi (1), **Create agent policy** (2):
+
+![Agent policies: 1 sekme, 2 Create agent policy](../../assets/screenshots/LAB-11/01h-create-policy.png)
+
+**Name** (1) `Lab Linux sunucu`. **Collect system logs and metrics** (2) işaretli kalsın: politikaya System
+integration'ını ekler. Sonra **Advanced options** (3):
+
+![Create agent policy: 1 Name, 2 System integration'ı, 3 Advanced options](../../assets/screenshots/LAB-11/01i-policy-ad.png)
+
+**Default namespace** (1) kutusundaki `default`'u **x** ile silin, `fleetlab` yazıp Enter'a basın. Bu labın
+data stream'leri `-fleetlab` ile biter:
+
+![Advanced options: 1 Default namespace fleetlab](../../assets/screenshots/LAB-11/01j-namespace.png)
+
+Aşağı kaydırın. **Collect agent logs** (1) ve **Collect agent metrics** (2) işaretlerini kaldırın: ajanın kendi
+loglarını toplamak bu labda gereksiz yük olur. **Create agent policy** (3):
+
+![Agent monitoring: 1 ve 2 kapalı, 3 Create agent policy](../../assets/screenshots/LAB-11/01k-monitoring.png)
+
+**1.5 System integration'ı: sunucunun `/proc`'u.** Ajan container'da çalışır; metrikleri container'ın değil,
+bağlanan `/hostfs/proc`'tan okumalı. Listede **Lab Linux sunucu**'ya (1) tıklayın:
+
+![Agent policies: 1 Lab Linux sunucu](../../assets/screenshots/LAB-11/01l-policy-ac.png)
+
+Politikadaki `system-` ile başlayan integration'a (1) tıklayın (numarası sizde farklı olabilir):
+
+![Politika: 1 System integration'ı](../../assets/screenshots/LAB-11/01l2-policy-system.png)
+
+**Integration name** (1) kutusuna `system-lab` yazın (sonraki adımlar bu adı kullanır):
+
+![Edit integration: 1 Integration name system-lab](../../assets/screenshots/LAB-11/01m-integration-ad.png)
+
+Aşağıda **Collect metrics from System instances** satırının **Change defaults**'una (1) tıklayın:
+
+![Collect metrics: 1 Change defaults](../../assets/screenshots/LAB-11/01n-change-defaults.png)
+
+**Proc Filesystem Directory** (1) kutusuna `/hostfs` yazın ve sağ alttaki **Save integration** (2):
+
+![Proc Filesystem Directory: 1 /hostfs, 2 Save integration](../../assets/screenshots/LAB-11/01o-hostfs.png)
+
+**1.6 Enrollment token.** **Enrollment tokens** sekmesinde (1) **Lab Linux sunucu** satırının göz düğmesi (2)
+token'ı gösterir, kopyala düğmesi (3) panoya alır. Kopyalayıp bunu da not edin:
+
+![Enrollment tokens: 1 sekme, 2 göster, 3 kopyala](../../assets/screenshots/LAB-11/01q-enrollment-token.png)
+
+`Fleet Server Policy` satırındaki token'ı kullanmayın: o, Fleet Server'ın kendi politikasına kaydeder.
+
+### 2. Token'ları compose'a verin: `.env`
+
+**Soru: Container'lar token'ları nereden alır?** `docker compose` lab dizinindeki `.env` dosyasını kendiliğinden
+okur ve `${...}` değişkenlerine koyar. Örnek dosyayı kopyalayıp açın:
 
 ```bash
-docker compose --env-file .env.fleet up -d
+cp .env.example .env
+nano .env
+```
+
+İki satırdaki `buraya-...` kısmını Adım 1'de kopyaladığınız değerlerle değiştirin (tırnak ve boşluk yok):
+
+```text
+FLEET_SERVER_SERVICE_TOKEN=AAEAAWVsYXN0aWMvZmxlZXQtc2VydmVyL3Rva2VuLT...
+FLEET_ENROLLMENT_TOKEN=Rk5yN1lKb0JaTE5...
+```
+
+`Ctrl+O`, Enter ile kaydedin, `Ctrl+X` ile çıkın. Değerleri ekrana basmadan uzunluklarına bakın:
+
+```bash
+awk -F= '/^FLEET/ {print $1, length($2), "karakter"}' .env
+```
+
+Beklenen çıktı:
+
+```text
+FLEET_SERVER_SERVICE_TOKEN 90 karakter
+FLEET_ENROLLMENT_TOKEN 58 karakter
+```
+
+- **Uzunluk 20'nin altındaysa** (`buraya-...` kalmışsa) değer yapışmamıştır; ajan kaydolamaz.
+- **`.env` git'e girmez** (`.gitignore`); token'lar parola gibidir, paylaşılmaz.
+
+### 3. Fleet Server ve ajanı başlatın
+
+**Soru: Ajan Fleet'e nasıl kaydolur?** İki container'ı başlatın; Fleet Server service token'la Elasticsearch'e
+bağlanır, ajan enrollment token'la Fleet Server'a kaydolur:
+
+```bash
+docker compose up -d
 ```
 
 **Bekleyin:** Fleet Server açılır, ajan ona kaydolur ve ilk politikayı uygular; ikisinin de `online` olması
 yaklaşık 1 dakika sürer:
 
 ```bash
-timeout 300 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:5601/api/fleet/agents?perPage=50" | jq "[.items[] | select((.policy_id | test(\"^fleet-\")) and .status == \"online\")] | length")" -ge 2 ]; do printf .; sleep 5; done'; echo
+timeout 300 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:5601/api/fleet/agents?perPage=50" | jq "[.items[] | select((.local_metadata.host.hostname | test(\"^(fleet-server|linux-agent-01)$\")) and .status == \"online\")] | length")" -ge 2 ]; do printf .; sleep 5; done'; echo
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' \
-  | jq -r '.items[] | select(.policy_id | test("^fleet-")) | "\(.local_metadata.host.hostname)  \(.policy_id)  \(.status)"'
+  | jq -r '.items[] | select(.local_metadata.host.hostname | test("^(fleet-server|linux-agent-01)$")) | "\(.local_metadata.host.hostname)  \(.status)"'
 ```
 
 Beklenen çıktı:
 
 ```text
 ..........................
-fleet-server  fleet-server-policy  online
-linux-agent-01  fleet-linux-policy  online
+fleet-server  online
+linux-agent-01  online
 ```
 
 Satırların sırası sizde farklı olabilir.
 
-**Arayüzde:** **Management › Fleet › Agents**: `linux-agent-01` satırında (1) durum `Healthy`, politika
-`Lab Linux sunucu`. **Last activity** birkaç saniye öncesini gösterir: ajan düzenli check-in yapıyor.
+**Arayüzde:** **Fleet › Agents**: `linux-agent-01` (1) **Lab Linux sunucu**, `fleet-server` (2) **Fleet Server
+Policy** politikasında, ikisi de `Healthy`. **Last activity** birkaç saniye öncesini gösterir: ajanlar düzenli
+check-in yapıyor.
 
-![Fleet › Agents: 1 linux-agent-01 Healthy](../../assets/screenshots/LAB-11/01-fleet-agents.png)
-
-### 3. Politikada ne var?
-
-**Soru: Ajan ne topluyor?** Politikadaki integration'lar belirler:
-
-```bash
-curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/package_policies?perPage=50' \
-  | jq -r '.items[] | select(.policy_id | test("^fleet-")) | "\(.name)  \(.policy_id)  hostfs=\([.inputs[] | select(.type == "system/metrics") | .vars["system.hostfs"].value][0] // "-")"'
-docker exec agent-fleet-lab elastic-agent status
-```
-
-Beklenen çıktı:
-
-```text
-system-lab  fleet-linux-policy  hostfs=/hostfs
-fleet_server-lab  fleet-server-policy  hostfs=-
-┌─ fleet
-│  └─ status: (HEALTHY) Connected
-└─ elastic-agent
-   └─ status: (HEALTHY) Running
-```
-
-- **`system-lab`:** sunucunun loglarını ve metriklerini toplar; `hostfs=/hostfs` metriklerin sunucudan okunmasını sağlar.
-- **`elastic-agent status`:** ajan Fleet'e bağlı ve sağlıklı olduğunu kendisi söyler.
+![Fleet › Agents: 1 linux-agent-01, 2 fleet-server](../../assets/screenshots/LAB-11/03a-fleet-agents.png)
 
 ### 4. Önce ve sonra: ajan sunucuyu mu görüyor, container'ı mı?
 
@@ -175,15 +292,26 @@ fleet_server-lab  fleet-server-policy  hostfs=-
 image'ın kendi birkaç dosyası olurdu. Bağlamayla aynı dizin sunucunun dizinidir:
 
 ```bash
+curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/package_policies?perPage=50' \
+  | jq -r '.items[] | select(.name == "system-lab") | "\(.name)  hostfs=\([.inputs[] | select(.type == "system/metrics") | .vars["system.hostfs"].value][0] // "-")"'
+docker exec agent-fleet-lab elastic-agent status
 docker exec agent-fleet-lab ls /var/log | grep -E '^(syslog|auth\.log)$'
 ```
 
 Beklenen çıktı:
 
 ```text
+system-lab  hostfs=/hostfs
+┌─ fleet
+│  └─ status: (HEALTHY) Connected
+└─ elastic-agent
+   └─ status: (HEALTHY) Running
 auth.log
 syslog
 ```
+
+- **`hostfs=/hostfs`:** Adım 1.5'teki ayar; metrikler sunucunun `/proc`'undan okunur.
+- **`elastic-agent status`:** ajan Fleet'e bağlı ve sağlıklı olduğunu kendisi söyler.
 
 **Veri geliyor mu?** Süreç metriklerinin gelmesini bekleyip iki log veri setinin document sayısına ve son 5
 dakikada en çok görülen süreçlere bakın:
@@ -199,9 +327,9 @@ Beklenen çıktı:
 
 ```text
 
-system.syslog  9250
-system.auth    3521
-["MainThread","java","kthreadd","kworker/R-rcu_gp","kworker/R-sync_wq","pool_workqueue_release"]
+system.syslog  23085
+system.auth    36765
+["java","MainThread","pytorch_inferen","dockerd","containerd","metricbeat"]
 ```
 
 | | Bağlama yok (yalnız container) | Bağlamayla (bu lab) |
@@ -212,16 +340,19 @@ system.auth    3521
 
 - **Sayılar sizde farklıdır:** ajan dosyaları baştan okur; sayılar ve süreç listesi sunucunun yaşına ve yüküne bağlıdır.
 - **`auth` kayıtları:** internete açık sunucularda çoğu başarısız SSH denemeleridir.
+- **`pytorch_inferen`:** Elasticsearch'in makine öğrenmesi süreci; ana cluster'ın bir parçasıdır.
 - **Kısa süreç adları:** çekirdek süreç adlarını 15 karakterde keser.
 
 ### 5. Politikayı Kibana'dan canlı değiştirin
 
 **Soru: Ayar sunucuya girmeden nasıl değişir?** Her politika değişikliği revision'ı bir artırır; ajan yeni
-revision'ı bir sonraki check-in'de alır. **Önce:** politikanın ve ajanın revision'ı:
+revision'ı bir sonraki check-in'de alır. **Önce:** politikanın ve ajanın revision'ı (politika adla bulunur;
+arayüzde açılan politikanın id'si rastgeledir):
 
 ```bash
-curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agent_policies/fleet-linux-policy' | jq '.item.revision'
-curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq '[.items[] | select(.policy_id == "fleet-linux-policy") | .policy_revision][0]'
+POL=$(curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agent_policies?perPage=50' | jq -r '.items[] | select(.name == "Lab Linux sunucu") | .id')
+curl -s -u elastic:'DevOps2026!' "http://127.0.0.1:5601/api/fleet/agent_policies/$POL" | jq '.item.revision'
+curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq --arg p "$POL" '[.items[] | select(.policy_id == $p) | .policy_revision][0]'
 ```
 
 Beklenen çıktı:
@@ -233,31 +364,30 @@ Beklenen çıktı:
 
 **Kibana'da** süreç metriklerinin toplanma aralığını değiştirin:
 
-1. **Management › Fleet › Agent policies**'te **Lab Linux sunucu** politikasını açın ve `system-lab`
-   integration'ına (1) tıklayın.
+1. Menüden **Fleet**'i açın. **Agent policies** (1) sekmesinde **Lab Linux sunucu**'ya (2) tıklayın:
 
-   ![Politika sayfası: 1 system-lab](../../assets/screenshots/LAB-11/02-policy-system.png)
+   ![Agent policies: 1 sekme, 2 Lab Linux sunucu](../../assets/screenshots/LAB-11/05a-politika-ac.png)
 
-2. **Collect metrics from System instances** satırında **Change defaults**'a (2) tıklayın. Altında
-   **Proc Filesystem Directory** değeri `/hostfs`'tir: betiğin verdiği ayar.
+2. `system-lab` integration'ına (1) tıklayın:
 
-   ![Change defaults: 2 düğme; Proc Filesystem Directory /hostfs](../../assets/screenshots/LAB-11/03-change-defaults-hostfs.png)
+   ![Politika: 1 system-lab](../../assets/screenshots/LAB-11/05b-system-lab.png)
 
-3. **System process metrics** satırının **Period** değerini (3) `10s` yerine `30s` yapın ve sağ alttaki
-   **Save integration**'a (4) basın.
+3. **Collect metrics from System instances** satırında **Change defaults**'a tıklayın. **System process
+   metrics** satırının **Period** değerini (1) `10s` yerine `30s` yapın ve **Save integration** (2):
 
-   ![Period 30s ve Save integration](../../assets/screenshots/LAB-11/04-process-period-save.png)
+   ![Period 30s, Save integration](../../assets/screenshots/LAB-11/05c-period.png)
 
-4. Onay penceresinde **Save and deploy changes**'e (5) basın; pencere değişikliğin kaç ajanı etkileyeceğini söyler.
+4. Onay penceresinde **Save and deploy changes** (1); pencere değişikliğin kaç ajanı etkileyeceğini söyler:
 
-   ![Save and deploy changes onayı](../../assets/screenshots/LAB-11/05-save-and-deploy.png)
+   ![Save and deploy changes](../../assets/screenshots/LAB-11/05d-save-deploy.png)
 
 **Sonra:** ajanın yeni revision'a geçmesini bekleyin:
 
 ```bash
-curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agent_policies/fleet-linux-policy' | jq '.item.revision'
-timeout 120 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:5601/api/fleet/agents?perPage=50" | jq "[.items[] | select(.policy_id == \"fleet-linux-policy\") | .policy_revision][0]")" = 3 ]; do printf .; sleep 2; done'; echo
-curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq '[.items[] | select(.policy_id == "fleet-linux-policy") | .policy_revision][0]'
+POL=$(curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agent_policies?perPage=50' | jq -r '.items[] | select(.name == "Lab Linux sunucu") | .id')
+curl -s -u elastic:'DevOps2026!' "http://127.0.0.1:5601/api/fleet/agent_policies/$POL" | jq '.item.revision'
+timeout 120 bash -c "until [ \"\$(curl -s -u 'elastic:DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq '[.items[] | select(.policy_id == \"$POL\") | .policy_revision][0]')\" = 3 ]; do printf .; sleep 2; done"; echo
+curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq --arg p "$POL" '[.items[] | select(.policy_id == $p) | .policy_revision][0]'
 ```
 
 Beklenen çıktı:
@@ -272,43 +402,55 @@ Beklenen çıktı:
 
 ### 6. Kibana'dan integration ekleyin: Nginx
 
-**Soru: Yeni bir kaynağı toplamaya nasıl başlarız?** System integration'ını betik ekledi; aynı politikaya
-Kibana'nın **Add integrations** akışıyla Nginx'i ekliyoruz. Sunucudaki Nginx (80/443) her isteği
-`/var/log/nginx/access.log`'a yazar; ajan `/var/log`'u zaten okuyor, yeni bir bağlama gerekmez.
+**Soru: Yeni bir kaynağı toplamaya nasıl başlarız?** Aynı politikaya Kibana'nın **Integrations** sayfasından
+Nginx'i ekliyoruz. Sunucudaki Nginx (80/443) her isteği `/var/log/nginx/access.log`'a yazar; ajan `/var/log`'u
+zaten okuyor, yeni bir bağlama gerekmez.
 
-1. Kibana ana sayfasında **Add integrations**'a basın, arama kutusuna `nginx` yazın (1) ve **Nginx (ECS)**
-   kartını (2) açın; sonra **Add Nginx (ECS)** (3).
+1. Menü düğmesine (1) tıklayın, **Management** altında **Integrations**'ı (2) seçin:
 
-   ![Integrations: 1 arama, 2 Nginx (ECS) kartı](../../assets/screenshots/LAB-11/06-integrations-nginx.png)
+   ![Menü: 1 menü düğmesi, 2 Integrations](../../assets/screenshots/LAB-11/06a-menu-integrations.png)
 
-2. **Integration name** `nginx-lab` (4). Sunucunun Nginx'inde metrik ucu (`stub_status`) yok:
-   **Collect metrics from Nginx instances** anahtarını (5) kapatın, yalnız loglar kalsın.
+2. Arama kutusuna (1) `nginx` yazın ve **Nginx (ECS)** kartını (2) açın:
 
-   ![Add Nginx: 4 integration adı, 5 metrikler kapalı](../../assets/screenshots/LAB-11/07-nginx-ayar.png)
+   ![Integrations: 1 arama, 2 Nginx (ECS)](../../assets/screenshots/LAB-11/06b-nginx-ara.png)
 
-3. **Where to add this integration?** altında **Existing hosts** (6), **Agent policies** listesinden
-   **Lab Linux sunucu** (7), sonra **Save and continue** (8). Onay penceresinde **Save and deploy changes**.
+3. Sağ üstte **Add Nginx (ECS)** (1):
 
-   ![Existing hosts: 6 sekme, 7 Lab Linux sunucu, 8 Save and continue](../../assets/screenshots/LAB-11/08-nginx-politika.png)
+   ![Nginx (ECS): 1 Add Nginx (ECS)](../../assets/screenshots/LAB-11/06c-add-nginx.png)
+
+4. **Integration name** (1) `nginx-lab`. Sunucunun Nginx'inde metrik ucu (`stub_status`) yok:
+   **Collect metrics from Nginx instances** anahtarını (2) kapatın, yalnız loglar kalsın:
+
+   ![Add Nginx: 1 integration adı, 2 metrikler kapalı](../../assets/screenshots/LAB-11/06d-nginx-ayar.png)
+
+5. **Where to add this integration?** altında **Existing hosts** (1), **Agent policies** listesinden
+   **Lab Linux sunucu** (2), sonra **Save and continue** (3):
+
+   ![Existing hosts: 1 sekme, 2 Lab Linux sunucu, 3 Save and continue](../../assets/screenshots/LAB-11/06e-nginx-politika.png)
+
+6. Onay penceresinde **Save and deploy changes** (1):
+
+   ![Onay: 1 Save and deploy changes](../../assets/screenshots/LAB-11/06f-nginx-onay.png)
 
 **Nginx logları geliyor mu?** Politika revision'ı yine artar; ajan yetişince loglar gelir:
 
 ```bash
 timeout 180 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" http://127.0.0.1:9200/logs-nginx.access-fleetlab/_count | jq .count 2>/dev/null)" -gt 0 ] 2>/dev/null; do printf .; sleep 5; done'; echo
+POL=$(curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agent_policies?perPage=50' | jq -r '.items[] | select(.name == "Lab Linux sunucu") | .id')
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/package_policies?perPage=50' \
-  | jq -r '.items[] | select(.policy_id == "fleet-linux-policy") | "\(.name)  \(.package.name)  namespace=\(if (.namespace // "") == "" then "politikadan" else .namespace end)"' | sort
-curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq '[.items[] | select(.policy_id == "fleet-linux-policy") | .policy_revision][0]'
+  | jq -r --arg p "$POL" '.items[] | select(.policy_id == $p) | "\(.name)  \(.package.name)  namespace=\(if (.namespace // "") == "" then "politikadan" else .namespace end)"' | sort
+curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq --arg p "$POL" '[.items[] | select(.policy_id == $p) | .policy_revision][0]'
 ```
 
 Beklenen çıktı:
 
 ```text
 nginx-lab  nginx  namespace=politikadan
-system-lab  system  namespace=fleetlab
+system-lab  system  namespace=politikadan
 4
 ```
 
-- **`namespace=politikadan`:** `nginx-lab` namespace'i kendisi vermez, politikanınkini (`fleetlab`) alır.
+- **`namespace=politikadan`:** integration'lar namespace'i kendileri vermez, politikanınkini (`fleetlab`) alır.
 
 **Önce ve sonra:** sunucunun ham satırı ve aynı türden bir isteğin ajanın yazdığı hâli. Integration'ın ingest
 pipeline'ı satırı ECS field'larına ayırır:
@@ -322,8 +464,8 @@ curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/logs-nginx.access-fleetl
 Beklenen çıktı:
 
 ```text
-185.242.226.111 - - [22/Nov/2026:04:13:13 +0300] "GET / HTTP/1.1" 200 1471 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64
-{"ip":"188.114.102.252","method":"GET","kod":200,"url":"/api/console/autocomplete_entities?field","tarayici":"Chrome"}
+78.153.140.39 - - [24/Nov/2026:22:50:56 +0300] "POST / HTTP/1.1" 200 1524 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+{"ip":"78.153.140.39","method":"GET","kod":301,"url":"/.env","tarayici":"Chrome"}
 ```
 
 - **Sizde farklıdır:** istekler, IP'ler ve URL sunucunun Nginx trafiğine bağlıdır.
@@ -379,18 +521,23 @@ Beklenen çıktı:
 <summary><strong>Integration'ın hazır panosunu açmak</strong></summary>
 
 Integration yalnız veri toplama ayarı değildir; kurulunca kendi hazır panolarını, index şablonlarını ve ingest
-pipeline'larını da getirir. Pano kurmadan veriye hemen bakmanın en kısa yolu budur (Grafana'daki hazır pano
-galerisinin Kibana'daki karşılığı).
+pipeline'larını da getirir. Pano kurmadan veriye hemen bakmanın en kısa yolu budur.
 
-1. **Management › Integrations › Installed integrations › Nginx (ECS)**, **Assets** sekmesi (1)
-2. **Dashboards** altında **[Logs Nginx] Overview** (2):
+1. Menüden **Integrations**'ı açın. **Installed integrations** (1) sekmesinde **Nginx (ECS)** (2):
 
-![Nginx (ECS) Assets: 1 Assets sekmesi, 2 hazır pano](../../assets/screenshots/LAB-11/08a-nginx-assets.png)
+   ![Installed integrations: 1 sekme, 2 Nginx (ECS)](../../assets/screenshots/LAB-11/06g-installed.png)
 
-3. Pano (3) açılır; zaman aralığını **Last 7 days** yapın. Harita ziyaretçilerin ülkesini, alttaki paneller durum
-   kodlarını ve en çok istenen adresleri gösterir:
+2. **Assets** sekmesi (1), **Dashboards** altında **[Logs Nginx] Overview** (2):
 
-![Hazır pano: 3 [Logs Nginx] Overview](../../assets/screenshots/LAB-11/08b-nginx-hazir-pano.png)
+   ![Nginx (ECS) Assets: 1 Assets, 2 hazır pano](../../assets/screenshots/LAB-11/06h-nginx-assets.png)
+
+3. Zaman seçicisini (1) açıp **Last 7 days**'i (2) seçin:
+
+   ![Zaman seçici: 1 açık seçici, 2 Last 7 days](../../assets/screenshots/LAB-11/06i-son-7-gun.png)
+
+4. Harita ziyaretçilerin ülkesini, alttaki paneller durum kodlarını ve en çok istenen adresleri gösterir:
+
+   ![Hazır pano: [Logs Nginx] Overview](../../assets/screenshots/LAB-11/06j-nginx-hazir-pano.png)
 
 - **Managed:** hazır panolar integration'a aittir, doğrudan değiştirilmez; değiştirmek için panonun menüsünden kopyası
   (**Duplicate**) alınır.
@@ -430,34 +577,58 @@ curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/metrics-system.cpu-fleet
 Beklenen çıktı:
 
 ```text
-"yukten once: %10"
+"yukten once: %22"
 dispatching hogs: 2 cpu
-successful run completed in 1 min, 30.02 secs
-"yuk sirasinda: %46"
+successful run completed in 1 min, 30.03 secs
+"yuk sirasinda: %55"
 ```
 
 - **Fark önemli:** yüzdeler sunucunun o anki yüküne göre sizde farklıdır; 4 çekirdeğin 2'si %80'de olunca ortalama
-  yaklaşık 40 puan artar.
+  yaklaşık 40 puan artar. Ölçümde 22'den 55'e çıktı: ana cluster ve öteki lablar da CPU kullanıyordu.
 
-**Panoya koyun:** aynı veriyi Lens ile çizin:
+**Panoya koyun:** aynı veriyi Lens ile çizin.
 
-1. **Dashboards › Create dashboard › Create visualization**. Data view **metrics-\*** (1), sorgu kutusuna
-   `data_stream.dataset : "system.cpu" and data_stream.namespace : "fleetlab"` (2). Soldaki listeden
-   `system.cpu.total.norm.pct`'yi **+** ile ekleyin: zamana göre bir **Line** grafiği gelir.
+1. Menü düğmesine (1) tıklayın, **Analytics** altında **Dashboards**'u (2) seçin:
 
-   ![Lens: 1 metrics-*, 2 sorgu, sol listede system.cpu.total.norm.pct](../../assets/screenshots/LAB-11/09-lens-cpu.png)
+   ![Menü: 1 menü düğmesi, 2 Dashboards](../../assets/screenshots/LAB-11/07a-menu-dashboards.png)
 
-2. Sağdaki **Median of system.cpu.total.norm.pct**'ye tıklayın, **Average** (3) seçin ve **Name** kutusuna
-   `Sunucu CPU (%)` (4) yazın; **Close**, sonra **Save and return**.
+2. **Create dashboard** (1):
 
-   ![Dimension: 3 Average, 4 Name](../../assets/screenshots/LAB-11/10-lens-average.png)
+   ![Dashboards: 1 Create dashboard](../../assets/screenshots/LAB-11/07b-create-dashboard.png)
 
-3. Panoyu **Save** ile `Sunucu CPU (Fleet)` adıyla kaydedin; **Store time with dashboard** (5) açık olsun, pano
-   her açılışta son 15 dakikayı göstersin.
+3. Boş panoda **Create visualization** (1); Lens açılır:
 
-   ![Pano kaydı: 5 Store time with dashboard](../../assets/screenshots/LAB-11/11-pano-kaydet.png)
+   ![Boş pano: 1 Create visualization](../../assets/screenshots/LAB-11/07c-create-visualization.png)
 
-   ![Pano: CPU çizgisinde yük penceresi](../../assets/screenshots/LAB-11/12-pano-cpu.png)
+4. Sol üstteki data view düğmesine (1) tıklayın, `metrics-*` yazıp **metrics-\*** (2) seçin:
+
+   ![Lens: 1 data view, 2 metrics-*](../../assets/screenshots/LAB-11/07d-data-view.png)
+
+5. Zaman seçicisinden **Last 15 minutes**'ı seçin. Sorgu kutusuna (1)
+   `data_stream.dataset : "system.cpu" and data_stream.namespace : "fleetlab"` yazıp Enter'a basın. Field arama
+   kutusuna (2) `total.norm` yazın, `system.cpu.total.norm.pct`'nin **+** düğmesine (3) basın; zamana göre bir
+   **Line** grafiği gelir:
+
+   ![Lens: 1 sorgu, 2 field arama, 3 ekle](../../assets/screenshots/LAB-11/07e-sorgu-alan.png)
+
+6. Sağda **Median of system.cpu.total.norm.pct**'ye (1) tıklayın:
+
+   ![Lens: 1 Median of system.cpu.total.norm.pct](../../assets/screenshots/LAB-11/07f-median.png)
+
+7. **Average** (1) seçin, **Name** kutusuna (2) `Sunucu CPU (%)` yazın ve **Close** (3):
+
+   ![Dimension: 1 Average, 2 Name, 3 Close](../../assets/screenshots/LAB-11/07g-average.png)
+
+8. Sağ üstte **Save and return** (1); grafik panoya eklenir:
+
+   ![Lens: 1 Save and return](../../assets/screenshots/LAB-11/07h-save-return.png)
+
+9. Panonun **Save** düğmesine basın. **Title** (1) `Sunucu CPU (Fleet)`, **Store time with dashboard** (2) açık
+   (pano her açılışta son 15 dakikayı göstersin), **Save** (3):
+
+   ![Pano kaydı: 1 Title, 2 Store time with dashboard, 3 Save](../../assets/screenshots/LAB-11/07i-pano-kaydet.png)
+
+   ![Pano: CPU çizgisinde yük penceresi](../../assets/screenshots/LAB-11/07j-pano-cpu.png)
 
 - **Yük penceresi:** çizgide yükün başladığı ve bittiği an görünür; sayılar sunucunun o anki işine göre sizde farklıdır.
 
@@ -465,26 +636,28 @@ successful run completed in 1 min, 30.02 secs
 
 ## Temizlik
 
-Yalnız bu labın container'larını, Fleet'teki ajan kayıtlarını, iki politikasını (içindeki `system-lab` ve
-`nginx-lab` ile), service token'ını, `fleetlab` namespace'li data stream'lerini ve **Sunucu CPU (Fleet)**
-panosunu siler. Ana cluster'a, Fleet'in genel ayarlarına ve host Nginx'e dokunmaz. `stress-ng` süreci süresi
-dolunca kendiliğinden biter; paket sunucuda kalır (`sudo apt-get remove stress-ng` ile kaldırılır):
+Yalnız bu labın container'larını, Fleet'teki ajan kayıtlarını, **Fleet Server Policy** ve **Lab Linux sunucu**
+politikalarını (içindeki integration'larla), Fleet Server'ın service token'larını, labın Fleet Server adresini,
+labın data stream'lerini, **Sunucu CPU (Fleet)** panosunu ve `.env` dosyasını siler. Ana cluster'a, Fleet'in
+output ayarına ve host Nginx'e dokunmaz. `stress-ng` süreci süresi dolunca kendiliğinden biter; paket sunucuda
+kalır (`sudo apt-get remove stress-ng` ile kaldırılır):
 
 ```bash
 ./teardown.sh
 ```
 
 <details>
-<summary><strong>Çıktının tamamı (8 satır)</strong></summary>
+<summary><strong>Çıktının tamamı (9 satır)</strong></summary>
 
 ```text
 Container agent-fleet-lab Removed
 Container fleet-server-lab Removed
 ajan kaydi kaldirildi -> 2
-politika fleet-linux-policy -> 200
-politika fleet-server-policy -> 200
-servis token -> 200
-data stream (fleetlab) -> 200
+politika Lab Linux sunucu -> 200
+politika Fleet Server Policy -> 200
+service token -> 1 silindi
+fleet server adresi -> 200
+data stream -> 200
 pano (Sunucu CPU (Fleet)) -> 1
 ```
 

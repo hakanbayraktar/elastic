@@ -1,3 +1,3 @@
-Kibana 9.5.5
-Alinma tarihi: 2026-11-21
-Akis: scripts/screenshots/shots_lab15.py (Adim 5 degisikligini gercekten yapar)
+Kibana 9.5.5 (Elastic Stack 9.5.5) ile alindi: 2026-11-24.
+Kibana surumu degisince bu klasordeki goruntuler yeniden alinir (scripts/screenshots/shots_lab11.py).
+Service token goruntude maskelenir; enrollment token goruntude acilmaz.
