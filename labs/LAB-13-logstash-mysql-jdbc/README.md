@@ -67,8 +67,37 @@ cd ~/elastic/labs/LAB-13-logstash-mysql-jdbc
 - `guncellendi`: tabloda `ON UPDATE CURRENT_TIMESTAMP(3)` ile tanımlı; satır her değişince kendiliğinden
   güncellenir. Uygulama bu sütunu güncellemiyorsa artımlı aktarım değişikliği göremez.
 - `ORDER BY`: Logstash son satırın değerini sakladığı için sonuç zamana göre sıralı gelmeli.
-- `schedule`: cron biçimi, başta saniye alanıyla. Gerçek sistemde dakikada bir yeterlidir; labda
-  beklememek için 10 saniye.
+- `schedule`: sorgunun ne zaman çalışacağı, cron biçiminde. Gerçek sistemde dakikada bir yeterlidir; labda
+  beklememek için 10 saniye. Linux cron'u (`crontab`) 5 alanlıdır ve ilk alan **dakikadır**. Logstash'in
+  `schedule`'ı 6 alan da kabul eder; 6 alan verilirse ilk alan **saniyedir**, gerisi cron'la aynıdır:
+
+```text
+*/10   *      *      *      *      *
+ │     │      │      │      │      └─ haftanın günü (0-6, 0 = pazar)
+ │     │      │      │      └──────── ay (1-12)
+ │     │      │      └─────────────── ayın günü (1-31)
+ │     │      └────────────────────── saat (0-23)
+ │     └───────────────────────────── dakika (0-59)
+ └─────────────────────────────────── saniye (0-59)  ← Linux cron'unda bu alan yok
+```
+
+`*` "her değer", `*/N` "N'de bir" demektir. Alan sayısı anlamı değiştirir: `*/10 * * * *` (5 alan) 10 dakikada
+bir, `*/10 * * * * *` (6 alan) 10 saniyede bir çalışır.
+
+<details>
+<summary><strong>Başka schedule örnekleri</strong></summary>
+
+| `schedule` | Ne zaman çalışır |
+|---|---|
+| `*/10 * * * * *` | Her 10 saniyede (bu lab) |
+| `* * * * *` | Her dakika (5 alan: ilk alan dakika) |
+| `*/5 * * * *` | 5 dakikada bir |
+| `0 2 * * *` | Her gece 02:00'de |
+| `30 8 * * 1-5` | Hafta içi her sabah 08:30'da (`1-5`: pazartesi-cuma) |
+
+`schedule` hiç verilmezse sorgu Logstash açılınca yalnız bir kez çalışır.
+
+</details>
 
 `docker-compose.yml`'de MySQL servisinin `ports` satırı yoktur: veritabanı host'a açılmaz, Logstash ona
 labın kendi Docker ağı üzerinden `mysql-magaza-lab:3306` adıyla bağlanır.
