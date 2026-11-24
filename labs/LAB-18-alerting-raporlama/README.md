@@ -399,25 +399,43 @@ Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adr
 
 **Kibana: iki connector**
 
-1. **Stack Management › Connectors › Create connector › Slack**, **Webhook** sekmesi: **Connector name**
-   `apache-slack-alerts`, **Webhook URL** Slack'ten kopyaladığınız adres, **Save**. **Save & test** ile açılan
-   **Test** sekmesinde bir mesaj yazıp **Run**; mesaj kanala düşer:
+1. **Stack Management › Connectors**'ta **Create connector** (1):
 
-   ![Slack connector formu](../../assets/screenshots/LAB-18/13-connector-create-slack.png)
+   ![Connectors: 1 Create connector](../../assets/screenshots/LAB-18/12-connectors-list.png)
 
-2. Yeniden **Create connector › Email**:
+2. Arama kutusuna `Slack` yazın ve **Slack** kartını (2) seçin. Slack (v2) değil; webhook ile çalışan sürüm budur:
 
-   | Alan | Değer |
-   |---|---|
-   | Connector name | `apache-email-resend` |
-   | Sender | `onboarding@resend.dev` |
-   | Service | `Other` |
-   | Host / Port | `smtp.resend.com` / `465`, **Secure** açık |
-   | Username / Password | `resend` / Resend API anahtarı |
+   ![Connector türü: 2 Slack](../../assets/screenshots/LAB-18/13a-connector-select-slack.png)
 
-   ![E-posta connector formu](../../assets/screenshots/LAB-18/14-connector-email-resend.png)
+3. **Webhook** sekmesinde **Connector name** (3) `apache-slack-alerts`, **Webhook URL** (4) Slack'ten kopyaladığınız
+   adres, **Save** (5):
 
-   **Save & test**; **Test** sekmesinde **To** alanına Resend hesabınızın e-posta adresini yazıp **Run**.
+   ![Slack connector: 3 Connector name, 4 Webhook URL, 5 Save](../../assets/screenshots/LAB-18/13-connector-create-slack.png)
+
+4. Yeniden **Create connector**; arama kutusuna `Email` yazın ve **Email** kartını (1) seçin:
+
+   ![Connector türü: 1 Email](../../assets/screenshots/LAB-18/14a-connector-select-email.png)
+
+5. Formu doldurun ve **Save** (8):
+
+   ![Email connector: 2 ad, 3 Sender, 4 Service, 5 Host ve Port, 6 Secure kapalı, 7 Username ve Password, 8 Save](../../assets/screenshots/LAB-18/14-connector-email-resend.png)
+
+   | No | Alan | Değer |
+   |---|---|---|
+   | 2 | Connector name | `apache-email-resend` |
+   | 3 | Sender | `onboarding@resend.dev` |
+   | 4 | Service | `Other` |
+   | 5 | Host / Port | `smtp.resend.com` / `587` |
+   | 6 | Secure | **kapalı** bırakın |
+   | 7 | Username / Password | `resend` / Resend API anahtarı |
+
+   **Secure neden kapalı?** Bağlantı yine şifrelidir. Port 587'de Kibana önce normal bağlanır, sunucu izin verince
+   bağlantıyı TLS'e yükseltir (STARTTLS). **Secure** anahtarı ise "baştan TLS ile bağlan" demektir ve yalnız port
+   465 içindir. 587'de Secure'ü açarsanız bağlantı kurulamaz, test e-postası gitmez. Kural kısaca:
+   587 → Secure kapalı, 465 → Secure açık.
+
+6. Kaydedince açılan **Test** sekmesinde: Slack'te bir mesaj yazıp **Run**, mesaj kanala düşer; Email'de **To**
+   alanına Resend hesabınızın e-posta adresini yazıp **Run**.
 
 Kurala ikinci bir action olarak eklenir; mesajda aynı değişkenler kullanılır
 (`{{rule.name}}`, `{{context.value}}`, `{{context.link}}`). Linklerin dolu gelmesi için Kibana'da
