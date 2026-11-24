@@ -665,58 +665,6 @@ def lab07runtime(page):
     ])
 
 
-def lab14(page):
-    """On kosul: LAB-14 adim 1-3 ve 6 calismis (grok-* verisi son 30 dk icinde, pano kurulu)."""
-    lab = "LAB-14"
-    line = ('2026-11-02 10:14:09 [ERROR] payment-gateway: {"error":"Payment timeout",'
-            '"order_id":"ORD-9912","response_time_ms":30000}')
-    pattern = ("^%{TIMESTAMP_ISO8601:ts} \\[%{LOGLEVEL:loglevel}\\] %{NOTSPACE:service}: "
-               "%{GREEDYDATA:rest_msg}$")
-    page.goto(BASE + "/app/dev_tools#/grokdebugger", wait_until="domcontentloaded"); settle(page, 6)
-    for subj, text in (("eventInput", line), ("patternInput", pattern)):
-        # Monaco: klavyeyle yazmak tirnak/parantezi otomatik kapatir; insert_text yapistirma gibidir.
-        page.locator(f'[data-test-subj="{subj}"] .monaco-editor').first.click(); time.sleep(0.5)
-        page.keyboard.insert_text(text); time.sleep(0.5)
-    page.locator('[data-test-subj="btnSimulate"]').first.click(); time.sleep(3)
-    page.mouse.move(800, 60); time.sleep(1)
-    shoot(page, lab, "01-grok-debugger", [
-        (("text", "Sample Data", True), 1, "right"),
-        (("text", "Grok Pattern", True), 2, "right"),
-        (("testsubj", "btnSimulate"), 3, "right"),
-        (("text", "Structured Data", True), 4, "right"),
-    ], scroll_to=("testsubj", "eventInput"))
-    page.goto(BASE + "/app/dashboards#/view/grok-logstash-overview", wait_until="domcontentloaded")
-    settle(page, 10)
-    page.mouse.move(800, 60); time.sleep(1)
-    shoot(page, lab, "02-grok-dashboard", [
-        (("text", "Ayrıştırılamayan Olay (Karantina)", True), 1, "right"),
-        (("text", "Servis Bazında Hata Sayısı", True), 2, "right"),
-        (("text", "Zaman İçinde Log Seviyesi Dağılımı", True), 3, "right"),
-    ])
-    # Adim 6 <details>: paneli elle kurmak (Discover -> service -> Visualize -> Lens)
-    page.goto(BASE + "/app/discover", wait_until="domcontentloaded"); settle(page, 6)
-    pick_dataview(page, 'Logstash Grok Logları'); settle(page, 5)
-    page.locator('[data-test-subj="dateRangePickerControlButton"]').first.click(); time.sleep(1.5)
-    page.locator('[data-test-subj="dateRangePickerPresetItem-Last_1_hour"]').first.click(); settle(page, 3)
-    q = page.locator('[data-test-subj="queryInput"]').first
-    q.click(); q.fill('loglevel : "error"'); page.keyboard.press("Enter"); settle(page, 5)
-    page.locator('[data-test-subj="field-service-showDetails"]').first.click(); time.sleep(2)
-    shoot(page, lab, "03-discover-service-visualize", [
-        (("testsubj", "discover-dataView-switch-link"), 1, "right"),
-        (("testsubj", "queryInput"), 2, "down"),
-        (("testsubj", "field-service-showDetails"), 3, "right"),
-        (("testsubj", "fieldVisualize-service"), 4, "right"),
-    ])
-    page.locator('[data-test-subj="fieldVisualize-service"]').first.click(); settle(page, 8)
-    for txt in ("Don't show again", "Got it", "Dismiss"):
-        try: page.get_by_text(txt).first.click(timeout=1500)
-        except Exception: pass
-    page.mouse.move(800, 60); time.sleep(1)
-    shoot(page, lab, "04-lens-service-errors", [
-        (("css", '[data-test-subj="lnsWorkspace"], .lnsWorkspacePanelWrapper'), 5, None),
-    ])
-
-
 def lab10(page):
     """On kosul: LAB-10 adim 1-6 calismis (beats-log data view, trafik son 1 saat icinde)."""
     lab = "LAB-10"
@@ -751,95 +699,6 @@ def lab24_izleme(page):
     print("NODES tablo:", page.locator("tbody tr").first.inner_text().replace("\n", " | ")[:300])
     shoot(page, lab, "02-izleme-nodes", [(("css", "tbody tr >> nth=0"), 3, "left")])
     shoot(page, "sunum", "stack-monitoring-nodes", [])
-
-
-def lab14_ingest_arayuz(page):
-    """LAB-14 Adim 7 (details): ingest pipeline'i Kibana arayuzunden kurmak ve Test pipeline ile denemek.
-    Isaretli goruntuler LAB-14 klasorune, isaretsiz kopyalar assets/screenshots/sunum/lab14-ingest-arayuz-*.png yazilir."""
-    lab = "LAB-14"
-    AD = "grok-ayristir-arayuz"
-    SATIR = "2026-11-02 10:14:09 [ERROR] payment-gateway: Payment timeout"
-    DESEN = "^%{TIMESTAMP_ISO8601:ts} \\[%{LOGLEVEL:loglevel}\\] %{NOTSPACE:service}: %{GREEDYDATA:rest_msg}$"
-    page.goto(BASE + "/app/management/ingest/ingest_pipelines", wait_until="domcontentloaded"); settle(page, 6)
-    page.get_by_role("button", name="Create pipeline").first.click(); time.sleep(1.5)
-    page.get_by_role("menuitem", name="New pipeline").first.click(); settle(page, 4)
-    page.locator('[data-test-subj="nameField"] input').first.fill(AD)
-    page.locator('[data-test-subj="descriptionField"] textarea, [data-test-subj="descriptionField"] input').first.fill("Uygulama logu: grok, kucuk harf"); time.sleep(1)
-    m = [(("testsubj", "nameField"), 1, "right"), (("testsubj", "addProcessorButton"), 2, "right")]
-    shoot(page, lab, "18-ingest-arayuz-olustur", m); shoot(page, "sunum", "lab14-ingest-arayuz-olustur", [])
-    def isle(tip):
-        page.locator('[data-test-subj="addProcessorButton"]').first.click(); time.sleep(2)
-        page.locator('[data-test-subj="processorTypeSelector"]').first.click(); time.sleep(1); page.keyboard.type(tip); time.sleep(1.5); page.keyboard.press("Enter"); time.sleep(2)
-    isle("Grok")
-    page.locator('[data-test-subj="fieldNameField"] input').first.fill("message")
-    page.locator('[data-test-subj="input-0"]').first.fill(DESEN); time.sleep(1)
-    shoot(page, lab, "19-ingest-arayuz-grok", [(("testsubj", "processorTypeSelector"), 1, "left"), (("testsubj", "fieldNameField"), 2, "left"),
-                                               (("testsubj", "input-0"), 3, "left"), (("css", 'role=button[name="Add processor"s]'), 4, "up")])
-    shoot(page, "sunum", "lab14-ingest-arayuz-grok", [])
-    page.locator('role=button[name="Add processor"s]').first.click(); time.sleep(2)
-    print("subj sonra:", sorted(set(x for x in (e.get_attribute("data-test-subj") for e in page.locator("[data-test-subj]").all()) if x and any(w in x.lower() for w in ("processor", "test", "failure", "document", "add", "submit")))))
-    isle("Lowercase")
-    page.locator('[data-test-subj="fieldNameField"] input').first.fill("loglevel")
-    page.locator('role=button[name="Add processor"s]').first.click(); time.sleep(2)
-    # hata durumu: Failure processors bolumune Append (tags alanina _grokparsefailure ekler)
-    page.locator('[data-test-subj="onFailure"] [data-test-subj="addProcessorButton"], [data-test-subj="onFailure"] button:has-text("Add a processor")').first.click(); time.sleep(2)
-    page.locator('[data-test-subj="processorTypeSelector"]').first.click(); time.sleep(1); page.keyboard.type("Append"); time.sleep(1.5); page.keyboard.press("Enter"); time.sleep(2)
-    print("APPEND inputs:", [(e.get_attribute("data-test-subj"), e.get_attribute("type")) for e in page.locator(".euiFlyout input:visible, .euiFlyout textarea:visible").all()])
-    page.locator('[data-test-subj="fieldNameField"] input').first.fill("tags")
-    deger = page.locator('.euiFlyout [data-test-subj="comboBoxSearchInput"]').nth(1)
-    deger.click(); page.keyboard.type("_grokparsefailure"); page.keyboard.press("Enter"); time.sleep(1)
-    shoot(page, lab, "20-ingest-arayuz-onfailure", [(("testsubj", "processorTypeSelector"), 1, "left"), (("testsubj", "fieldNameField"), 2, "left"),
-                                                     (("css", 'role=button[name="Add processor"s]'), 3, "up")])
-    shoot(page, "sunum", "lab14-ingest-arayuz-onfailure", [])
-    page.locator('role=button[name="Add processor"s]').first.click(); time.sleep(2)
-    print("flyout acik mi:", page.locator(".euiFlyout").count(), "| hata:", [e.inner_text() for e in page.locator(".euiFormErrorText").all()])
-    page.screenshot(path="/tmp/ing-sonrasi.png")
-    # Test pipeline: ornek document
-    page.locator('[data-test-subj="addDocumentsButton"]').first.click(); time.sleep(3)
-    page.locator('[data-test-subj="testPipelineFlyout"] .monaco-editor').first.click(); time.sleep(0.5)
-    page.keyboard.press("Meta+A"); page.keyboard.press("Backspace")
-    # Monaco parantezleri kendisi kapatir: yapistirma (insert_text) bozulur, tus tus yazmak dogru sonuc verir
-    page.keyboard.type('[{"_source": {"message": "' + SATIR + '"}}, {"_source": {"message": "bozuk satir: seviye ve servis yok"}}]', delay=10); time.sleep(1)
-    shoot(page, lab, "21-ingest-arayuz-test", [(("css", '[data-test-subj="testPipelineFlyout"] .monaco-editor'), 1, "left"), (("testsubj", "runPipelineButton"), 2, "up")])
-    shoot(page, "sunum", "lab14-ingest-arayuz-test", [])
-    page.locator('[data-test-subj="runPipelineButton"]').first.click(); time.sleep(4)
-    cikti = page.locator('[data-test-subj="outputTabContent"]').first.inner_text().replace("\n", " ")
-    print("TEST CIKTI ts/loglevel/service:", all(s in cikti for s in ('"ts"', '"loglevel": "error"', '"service": "payment-gateway"')), "| hata etiketi:", "_grokparsefailure" in cikti)
-    shoot(page, lab, "22-ingest-arayuz-cikti", [(("testsubj", "outputTab"), 1, "down"), (("testsubj", "outputTabContent"), 2, "left")])
-    shoot(page, "sunum", "lab14-ingest-arayuz-cikti", [])
-    page.locator('[data-test-subj="euiFlyoutCloseButton"]').first.click(); time.sleep(1.5)
-    page.locator('[data-test-subj="submitButton"]:has-text("Create pipeline")').first.click(); settle(page, 5)
-    print("kaydedildi:", page.url.replace(BASE, "")[:90])
-
-
-def lab14_default_pipeline(page):
-    """LAB-14 Adim 7 (details, ingest arayuzu sonrasi): grok-varsayilan index'inin default_pipeline ayarini
-    Index Management > Settings > Edit mode ile grok-ayristir-arayuz yapmak. On kosul: lab14_ingest_arayuz."""
-    lab = "LAB-14"
-    IDX = "grok-varsayilan"
-    page.goto(BASE + "/app/management/data/index_management/indices", wait_until="domcontentloaded"); settle(page, 6)
-    ara = page.locator('[data-test-subj="indicesSearch"]').first
-    ara.fill(IDX); ara.press("Enter"); settle(page, 3)
-    ad = f'[data-test-subj="indexTableIndexNameLink"]:text-is("{IDX}")'
-    shoot(page, lab, "23-index-listesi", [(("testsubj", "indicesSearch"), 1, "left"), (("css", ad), 2, "left")])
-    page.locator(ad).first.click(); settle(page, 5)
-    page.locator('[data-test-subj="indexDetailsTab-settings"]').first.click(); settle(page, 3)
-    page.locator('[data-test-subj="indexDetailsSettingsEditModeSwitch"]').first.click(); time.sleep(2)
-    satir = page.locator('.monaco-editor .view-line', has_text='"index.default_pipeline"').first
-    satir.click(); time.sleep(0.5); page.keyboard.press("End")
-    # satir sonu: "grok-ayristir", ya da "grok-ayristir" -> imleci kapanis tirnaginin onune al
-    geri = 2 if satir.inner_text().replace("\xa0", " ").rstrip().endswith('",') else 1
-    for _ in range(geri):
-        page.keyboard.press("ArrowLeft")
-    page.keyboard.type("-arayuz"); time.sleep(1)
-    print("SATIR:", satir.inner_text().replace("\xa0", " ").strip())
-    shoot(page, lab, "24-index-ayar-pipeline", [
-        (("testsubj", "indexDetailsTab-settings"), 1, "up"),
-        (("testsubj", "indexDetailsSettingsEditModeSwitch"), 2, "left"),
-        (("css", '.monaco-editor .view-line:has-text("index.default_pipeline")'), 3, "left"),
-        (("testsubj", "indexDetailsSettingsSave"), 4, "left")])
-    page.locator('[data-test-subj="indexDetailsSettingsSave"]').first.click(); settle(page, 4)
-    print("BILDIRIM:", [t.inner_text().replace("\n", " ")[:120] for t in page.locator(".euiToast").all()])
 
 
 def lab12_upload(page):
@@ -1008,7 +867,7 @@ def lab07ek(page):
     shoot(page, lab, "11-pano-dort-panel", [(("css", '[data-test-subj="dashboardPanel"]'), 1, "right")])
 
 FLOWS = {"sunum": sunum, "lab01": lab01, "lab02": lab02, "lab04": lab04, "lab07": lab07, "lab07canli": lab07canli, "lab07runtime": lab07runtime, "lab07ek": lab07ek,
-         "lab14": lab14, "lab10": lab10, "lab12_upload": lab12_upload, "lab24_izleme": lab24_izleme, "lab14_ingest_arayuz": lab14_ingest_arayuz, "lab14_default_pipeline": lab14_default_pipeline, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
+         "lab10": lab10, "lab12_upload": lab12_upload, "lab24_izleme": lab24_izleme, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
          "eski_3node": eski_3node}
 
 if __name__ == "__main__":

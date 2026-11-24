@@ -10,9 +10,14 @@
 
 `2026-11-02 10:14:09 [ERROR] payment-gateway: {"error":"Payment timeout",...}` satırı Elasticsearch'e
 olduğu gibi yazılırsa tek bir metin field'ı olur: "hangi servis kaç hata verdi?" ya da "ortalama yanıt
-süresi ne?" diye sorulamaz. Bu labda Logstash'in `grok` filtresiyle satırı field'lara ayıracak, saatini
-`@timestamp`'e taşıyacak, JSON gövdesini açacak ve olayı türüne göre üç ayrı index'e yönlendireceğiz.
-Ayrıştırılamayan satırın kaybolmadığını görecek, aynı işi daha hızlı yapan `dissect` ile karşılaştıracağız.
+süresi ne?" diye sorulamaz. Bu labda:
+
+- Logstash'in `grok` filtresiyle satırı field'lara ayırıp olayı türüne göre üç index'e yönlendireceğiz.
+- Ayrıştırılamayan satırın kaybolmadığını görecek, aynı işi `dissect` ile yapıp karşılaştıracağız.
+- Sonucu Kibana panosunda okuyacağız.
+- Aynı ayrıştırmayı Logstash'siz, Elasticsearch'in **ingest pipeline**'ıyla yapacağız.
+
+Kibana'daki her tıklama kırmızı kutu ve numarayla gösterilir.
 
 ![Logstash grok hattı: TCP girdisi, filtreler, üç hedef index ve pano](../../assets/infographics/07-logstash-grok-pipeline.png)
 
@@ -27,6 +32,15 @@ Ayrıştırılamayan satırın kaybolmadığını görecek, aynı işi daha hız
 ```bash
 cd ~/elastic/labs/LAB-14-logstash-grok-dissect
 ```
+
+---
+
+## Kavramlar: grok, dissect, ingest pipeline
+
+- **grok:** satırı hazır regex desenleriyle (`%{LOGLEVEL:loglevel}`) field'lara ayırır; birden çok biçimi dener.
+- **dissect:** regex çalıştırmaz, satırı yalnız ayraçlara göre dilimler; hızlıdır ama tek, sabit biçim ister.
+- **`_grokparsefailure`:** hiçbir desene uymayan olayın etiketi. Olay silinmez, ayrı index'e gider.
+- **Ingest pipeline:** Elasticsearch'in document'i yazmadan hemen önce çalıştırdığı processor sırası; Logstash gerekmez.
 
 ---
 
@@ -63,6 +77,8 @@ if "_grokparsefailure" not in [tags] {
 ## Adım Adım Uygulama Rehberi
 
 ### 1. Şablonu kurun ve Logstash'i başlatın
+
+**Soru: Loglar hangi field tipleriyle yazılacak, Logstash ne zaman hazır?**
 
 Index şablonu `grok-*` index'lerinde field tiplerini sabitler (`service`, `loglevel` → `keyword`,
 `payload.response_time_ms` → `integer`). Şablon olmasa tip ilk gelen document'e göre seçilir ve
@@ -102,6 +118,8 @@ Logstash API'si (`:9600`) `filter_path` desteklemez; field seçmek için `jq` ku
 
 ### 2. Deseni Grok Debugger'da deneyin
 
+**Soru: Desen satırı doğru field'lara ayırıyor mu? Pipeline'a koymadan nasıl anlarız?**
+
 | Desen parçası | Anlamı |
 |---|---|
 | `%{TIMESTAMP_ISO8601:ts}` | Hazır desen + yakalanan field'ın adı (`ts`) |
@@ -123,20 +141,33 @@ Beklenen çıktı:
 Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 ```
 
-Kibana menüsünden **Management › Dev Tools › Grok Debugger**. **Sample Data** (1) alanına bu satırı,
-**Grok Pattern** (2) alanına `pipeline/logstash.conf`'taki ilk deseni yapıştırıp **Simulate** (3):
+1. Kibana'yı açın. Sol üstteki menü düğmesine (1) tıklayın, **Management** altında **Dev Tools**'u (2) seçin:
+
+![Menü: 1 menü düğmesi, 2 Dev Tools](../../assets/screenshots/LAB-14/02a-menu-dev-tools.png)
+
+2. Üstteki sekmelerden **Grok Debugger**'a (1) tıklayın:
+
+![Dev Tools: 1 Grok Debugger sekmesi](../../assets/screenshots/LAB-14/02b-grok-debugger-sekme.png)
+
+3. **Sample Data** (1) alanına bu satırı yapıştırın:
 
 ```text
 2026-11-02 10:14:09 [ERROR] payment-gateway: {"error":"Payment timeout","order_id":"ORD-9912","response_time_ms":30000}
 ```
 
-![Grok Debugger: 1 örnek satır, 2 desen, 3 Simulate, 4 yapılandırılmış sonuç](../../assets/screenshots/LAB-14/01-grok-debugger.png)
+4. **Grok Pattern** (2) alanına `pipeline/logstash.conf`'taki ilk deseni yapıştırın
+   (`^%{TIMESTAMP_ISO8601:ts} \[%{LOGLEVEL:loglevel}\] %{NOTSPACE:service}: %{GREEDYDATA:rest_msg}$`) ve
+   **Simulate**'e (3) basın. Sonuç **Structured Data** (4) altında gelir:
+
+![Grok Debugger: 1 örnek satır, 2 desen, 3 Simulate, 4 yapılandırılmış sonuç](../../assets/screenshots/LAB-14/02c-grok-debugger.png)
 
 Sonuç (4) dört field'dır: `ts`, `loglevel`, `service`, `rest_msg`. `ts` henüz metin, `rest_msg` tek parça;
 bunları pipeline'daki `date` ve `json` filtreleri devralır. Eski biçimli bir satırı
 (`… ERROR legacy-batch - …`) aynı desenle denerseniz sonuç boş gelir; ikinci desen bu yüzden var.
 
 ### 3. Logları gönderin ve yönlendirmeyi görün
+
+**Soru: Hangi olay hangi index'e gitti, kaç satır ayrıştırılamadı?**
 
 `send-logs.sh` 11 satırlık örnek dosyayı TCP 5000'e gönderir ve zaman damgalarını "şimdi"ye kadar
 uzanan bir zaman çizgisine yayar:
@@ -176,6 +207,8 @@ Beklenen çıktı:
 artıyorsa desen yeni bir log biçimini kaçırıyor demektir.
 
 ### 4. Önce ve sonra: satır nasıl document'e dönüştü?
+
+**Soru: Ham satırın hangi parçası hangi field'a dönüştü?**
 
 Hata index'inden JSON gövdeli bir document, yalnız ilgili field'larla:
 
@@ -219,6 +252,8 @@ Beklenen çıktı:
 
 ### 5. Aynı işi dissect ile yapmak
 
+**Soru: Regex'siz, daha ucuz bir ayrıştırma ne zaman yeter?**
+
 `dissect` regex çalıştırmaz; satırı yalnız ayraçlara göre dilimler. Birinci biçimin karşılığı:
 
 ```conf
@@ -250,23 +285,25 @@ Beklenen çıktı:
 
 ```text
 [+] 300000 olay x 3 gecis (her gecis ayri, tek seferlik konteynerde)
-    referans (filtre yok) : 36.28 s
-    yalniz dissect        : 41.01 s
-    yalniz grok           : 60.91 s
+    referans (filtre yok) : 35.67 s
+    yalniz dissect        : 34.66 s
+    yalniz grok           : 39.83 s
 
-    grok - dissect        : +19.90 s  ->  olay basina +66.3 us ek CPU
-    dissect - referans    : +4.73 s  ->  olay basina +15.8 us ek CPU
+    grok - dissect        : +5.17 s  ->  olay basina +17.2 us ek CPU
+    dissect - referans    : -1.01 s  ->  olcum gurultusu (<1.5 s) icinde: dissect pratikte bedava
 ```
 
-Sayılar sunucuya ve koşuya göre değişir; anlamlı olan sıralamadır. Ölçüm CPU'ya duyarlıdır: başka Logstash ya da
-Beats container'ları çalışıyorsa sıralama ters çıkabilir. Önce onları durdurun (`docker compose stop`), sonuç yine
-tersse betiği bir kez daha çalıştırın. Üç ayrı ölçümde grok olay başına
-dissect'ten 12 µs ile 66 µs arası fazla CPU harcadı. Saniyede birkaç yüz satırda bu fark hissedilmez;
-saniyede on binlerce satırda kaç worker gerektiğini belirler.
+Sayılar sunucuya ve koşuya göre değişir; anlamlı olan sıralamadır. Ölçüm CPU'ya duyarlıdır: başka Logstash,
+Beats ya da Elastic Agent container'ları çalışırken bir ölçümde sıralama ters çıktı (dissect 57 s, grok 44 s).
+Onları durdurduktan (`docker compose stop`) sonra üç ölçüm de aynı sonucu verdi: grok olay başına dissect'ten
+17-22 µs fazla CPU harcadı, dissect'in maliyeti ölçüm gürültüsünün altında kaldı. Saniyede birkaç yüz satırda
+bu fark hissedilmez; saniyede on binlerce satırda kaç worker gerektiğini belirler.
 
 </details>
 
 ### 6. Kibana'da pano
+
+**Soru: Hangi servis ne zaman hata verdi, ayrıştırılamayan olay var mı?**
 
 `grok-*` data view'ını ve altı panelli bir panoyu kurun:
 
@@ -290,10 +327,17 @@ Kibana bekleniyor (http://localhost:5601) ...
     http://localhost:5601/app/dashboards#/view/grok-logstash-overview
 ```
 
-Komutun yazdırdığı bağlantıyla ya da **Analytics › Dashboards** listesinden panoyu açın. Pano son 30
-dakikaya kayıtlı açılır; logları daha önce gönderdiyseniz zaman aralığını genişletin.
+1. Menü düğmesine (1) tıklayın, **Analytics** altında **Dashboards**'u (2) seçin:
 
-![Logstash grok panosu: 1 ayrıştırılamayan olay sayacı, 2 servis bazında hata, 3 zaman içinde seviye dağılımı](../../assets/screenshots/LAB-14/02-grok-dashboard.png)
+![Menü: 1 menü düğmesi, 2 Dashboards](../../assets/screenshots/LAB-14/06a-menu-dashboards.png)
+
+2. Arama kutusuna (1) `Grok` yazıp Enter'a basın, **Logstash Grok Ayrıştırma ve Log Analizi** (2) panosunu açın:
+
+![Dashboards: 1 arama, 2 pano](../../assets/screenshots/LAB-14/06b-pano-ara.png)
+
+Pano son 30 dakikaya kayıtlı açılır; logları daha önce gönderdiyseniz sağ üstten zaman aralığını genişletin.
+
+![Logstash grok panosu: 1 ayrıştırılamayan olay sayacı, 2 servis bazında hata, 3 zaman içinde seviye dağılımı](../../assets/screenshots/LAB-14/06c-grok-pano.png)
 
 "Ayrıştırılamayan Olay" (1) panonun sağlık göstergesidir: sıfırdan büyükse desen bir log biçimini
 kaçırıyordur. Servis bazında hata (2) ve zaman içinde seviye dağılımı (3) hangi servisin ne zaman sorun
@@ -302,21 +346,31 @@ kaçırıyordur. Servis bazında hata (2) ve zaman içinde seviye dağılımı (
 <details>
 <summary><strong>"Servis bazında hata" panelini elle kurmak</strong></summary>
 
-1. **Discover**'da data view olarak `Logstash Grok Logları`'nı (1) seçin, zaman aralığını **Last 1 hour**
-   yapın, sorgu çubuğuna `loglevel : "error"` (2) yazıp Enter'a basın.
-2. Field listesinde `service` field'ına (3) tıklayın, açılan pencerede **Visualize** (4):
+1. Menüden **Analytics › Discover**'ı açın. Sol üstteki **Data view** düğmesine (1) tıklayın, arama kutusuna (2)
+   `Grok` yazın ve **Logstash Grok Logları**'nı (3) seçin:
 
-![Discover: 1 data view, 2 hata sorgusu, 3 service field'ı, 4 Visualize](../../assets/screenshots/LAB-14/03-discover-service-visualize.png)
+![Discover: 1 Data view, 2 arama, 3 Logstash Grok Logları](../../assets/screenshots/LAB-14/06d-data-view.png)
 
-3. Lens, sorguyu koruyarak servis başına hata sayısını çizer (5). **Save** ile kaydedip **Add to
-   dashboard** altında panoyu seçerek panele ekleyebilirsiniz.
+2. Sağ üstteki zaman seçicisine (1) tıklayın, **Last 1 hour**'u (2) seçin:
 
-![Lens: 5 servis bazında hata sayısı](../../assets/screenshots/LAB-14/04-lens-service-errors.png)
+![Zaman seçici: 1 açık seçici, 2 Last 1 hour](../../assets/screenshots/LAB-14/06e-zaman.png)
+
+3. Sorgu çubuğuna (1) `loglevel : "error"` yazıp Enter'a basın. Soldaki field listesinde `service`'e (2)
+   tıklayın; açılan pencerede **Visualize** (3):
+
+![Discover: 1 hata sorgusu, 2 service field'ı, 3 Visualize](../../assets/screenshots/LAB-14/06f-service-visualize.png)
+
+4. Lens, sorguyu koruyarak servis başına hata sayısını çizer (1). Panoya eklemek isterseniz **Save**'e (2)
+   basın, **Add to dashboard** altında panoyu seçin:
+
+![Lens: 1 servis bazında hata sayısı, 2 Save](../../assets/screenshots/LAB-14/06g-lens-servis-hata.png)
 
 </details>
 
 
 ### 7. Aynı ayrıştırma Elasticsearch'te: ingest pipeline
+
+**Soru: Logstash olmadan, document Elasticsearch'e yazılırken ayrıştırılabilir mi?**
 
 Grok için Logstash şart değildir: Elasticsearch, document'i index'e yazmadan hemen önce **ingest pipeline**
 ile işleyebilir. Pipeline processor'ların sırasıdır; grok, date, rename, convert gibi Logstash'teki
@@ -491,58 +545,81 @@ e-posta yok, document yalnız etiketli. `_simulate` pipeline'ı kaydetmeden dene
 <details>
 <summary><strong>Aynı ingest pipeline'ı Kibana arayüzünden kurmak</strong></summary>
 
-Dev Tools'taki `PUT _ingest/pipeline` isteğinin arayüz karşılığı **Stack Management › Ingest › Ingest Pipelines**
-sayfasıdır. Burada `grok-ayristir-arayuz` adıyla, adlar çakışmasın diye ayrı bir pipeline kurun. **Create pipeline
-› New pipeline** deyin, **Name**'e (1) adı yazın; processor'lar **Add a processor** (2) ile eklenir:
+Dev Tools'taki `PUT _ingest/pipeline` isteğinin arayüz karşılığı **Ingest Pipelines** sayfasıdır. Burada
+`grok-ayristir-arayuz` adıyla, adlar çakışmasın diye ayrı bir pipeline kurun.
 
-![Create pipeline: 1 ad, 2 Add a processor](../../assets/screenshots/LAB-14/18-ingest-arayuz-olustur.png)
+1. Menüden **Management › Stack Management**'ı açın, soldaki listede **Ingest Pipelines**'a (1) tıklayın:
 
-1. **Add a processor**, **Processor** (1) listesinden **Grok**'u seçin. **Field** (2) `message`, **Patterns** (3)
-   bu labdaki desen: `^%{TIMESTAMP_ISO8601:ts} \[%{LOGLEVEL:loglevel}\] %{NOTSPACE:service}: %{GREEDYDATA:rest_msg}$`.
+![Stack Management: 1 Ingest Pipelines](../../assets/screenshots/LAB-14/07a-ingest-menu.png)
+
+2. **Create pipeline** (1) düğmesine, açılan menüde **New pipeline**'a (2) tıklayın:
+
+![Ingest Pipelines: 1 Create pipeline, 2 New pipeline](../../assets/screenshots/LAB-14/07b-create-pipeline.png)
+
+3. **Name**'e (1) `grok-ayristir-arayuz` yazın (Description isteğe bağlıdır), sonra **Add a processor** (2):
+
+![Create pipeline: 1 Name, 2 Add a processor](../../assets/screenshots/LAB-14/07c-pipeline-ad.png)
+
+4. **Processor** (1) listesine `Grok` yazıp seçin. **Field** (2) `message`, **Patterns** (3) bu labdaki desen:
+   `^%{TIMESTAMP_ISO8601:ts} \[%{LOGLEVEL:loglevel}\] %{NOTSPACE:service}: %{GREEDYDATA:rest_msg}$`.
    **Add processor** (4) ile ekleyin:
 
-![Grok processor: 1 tür, 2 field, 3 desen, 4 ekle](../../assets/screenshots/LAB-14/19-ingest-arayuz-grok.png)
+![Grok processor: 1 tür, 2 field, 3 desen, 4 ekle](../../assets/screenshots/LAB-14/07d-grok-processor.png)
 
-2. Aynı şekilde **Lowercase** ekleyin, Field `loglevel` (seviyeyi küçük harfe çevirir).
-3. Altta **Failure processors** bölümünün **Add a processor**'ünden **Append** ekleyin: Field `tags`, Value
-   `_grokparsefailure`. Bir processor hata verirse document reddedilmez, bu etiketle gelir (Dev Tools'taki
-   `on_failure` bloğunun karşılığı):
+5. Yine **Add a processor**: **Processor** (1) `Lowercase`, **Field** (2) `loglevel` (seviyeyi küçük harfe çevirir),
+   **Add processor** (3):
 
-![On-failure processor: 1 tür, 2 field, 3 ekle](../../assets/screenshots/LAB-14/20-ingest-arayuz-onfailure.png)
+![Lowercase processor: 1 tür, 2 field, 3 ekle](../../assets/screenshots/LAB-14/07e-lowercase.png)
 
-4. Sağ üstte **Test pipeline › Add documents**: **Documents** (1) sekmesine iki document yazın, biri uyan satır, biri
-   bozuk satır (`_simulate`'in arayüz karşılığı). **Run the pipeline** (2):
+6. Altta **Failure processors** bölümünün **Add a processor**'ü: **Processor** (1) `Append`, **Field** (2) `tags`,
+   **Value** (3) `_grokparsefailure` (yazıp Enter), **Add processor** (4). Bir processor hata verirse document
+   reddedilmez, bu etiketle gelir (Dev Tools'taki `on_failure` bloğunun karşılığı):
+
+![On-failure processor: 1 tür, 2 field, 3 değer, 4 ekle](../../assets/screenshots/LAB-14/07f-on-failure.png)
+
+7. Sağdaki **Test pipeline** kutusunda **Add documents**'a (1) tıklayın:
+
+![Create pipeline: 1 Add documents](../../assets/screenshots/LAB-14/07g-add-documents.png)
+
+8. **Documents** (1) alanındaki örneği silip iki document yazın, biri uyan satır, biri bozuk satır (`_simulate`'in
+   arayüz karşılığı). **Run the pipeline** (2):
 
 ```json
 [{"_source": {"message": "2026-11-02 10:14:09 [ERROR] payment-gateway: Payment timeout"}},
  {"_source": {"message": "bozuk satir: seviye ve servis yok"}}]
 ```
 
-![Test pipeline: 1 documents, 2 Run the pipeline](../../assets/screenshots/LAB-14/21-ingest-arayuz-test.png)
+![Test pipeline: 1 Documents, 2 Run the pipeline](../../assets/screenshots/LAB-14/07h-test-dokuman.png)
 
-5. **Output** sekmesi (1) her document'in sonucunu verir (2): ilkinde `ts`, `loglevel: "error"` (küçük harf),
+9. **Output** sekmesi (1) her document'in sonucunu verir (2): ilkinde `ts`, `loglevel: "error"` (küçük harf),
    `service`, `rest_msg` field'ları vardır; ikincisi ayrışmaz ve `tags` içinde `_grokparsefailure` taşır.
    **View verbose output** her processor'ın document'i nasıl değiştirdiğini adım adım gösterir:
 
-![Output: 1 sekme, 2 sonuç](../../assets/screenshots/LAB-14/22-ingest-arayuz-cikti.png)
+![Output: 1 sekme, 2 sonuç](../../assets/screenshots/LAB-14/07i-test-cikti.png)
 
-Pipeline'ı kaydetmek için **Create pipeline**'a basın. Pipeline adı `grok-ayristir-arayuz`'dur; `./teardown.sh`
-onu da siler. **Show request** düğmesi, arayüzün Elasticsearch'e göndereceği `PUT _ingest/pipeline` isteğini
-gösterir: yukarıdaki Dev Tools adımının aynısıdır.
+10. Test penceresini sağ üstteki **X** ile kapatın. Sayfanın en altındaki **Create pipeline**'a (1) basın:
+
+![Create pipeline: 1 kaydet](../../assets/screenshots/LAB-14/07j-pipeline-kaydet.png)
+
+`./teardown.sh` bu pipeline'ı da siler. **Show request** düğmesi, arayüzün Elasticsearch'e göndereceği
+`PUT _ingest/pipeline` isteğini gösterir: yukarıdaki Dev Tools adımının aynısıdır.
 
 **Pipeline'ı arayüzden index'e bağlamak.** `grok-varsayilan`'ı Dev Tools'ta `index.default_pipeline: grok-ayristir`
 ayarıyla açmıştınız. Bu ayar arayüzden de değişir. Index'i az önce kurduğunuz `grok-ayristir-arayuz`'a bağlayın:
 
-1. **Stack Management › Index Management**'ı açın. Arama kutusuna (1) `grok-varsayilan` yazın, index adına (2)
-   tıklayın:
+1. **Stack Management**'ta soldaki listeden **Index Management**'a (1) tıklayın:
 
-![Index Management: 1 arama, 2 index adı](../../assets/screenshots/LAB-14/23-index-listesi.png)
+![Stack Management: 1 Index Management](../../assets/screenshots/LAB-14/07k-index-management.png)
 
-2. **Settings** sekmesi (1) index'in ayarlarını JSON olarak gösterir. **Edit mode** (2) anahtarını açın:
+2. Arama kutusuna (1) `grok-varsayilan` yazıp Enter'a basın, index adına (2) tıklayın:
+
+![Index Management: 1 arama, 2 index adı](../../assets/screenshots/LAB-14/07l-index-listesi.png)
+
+3. **Settings** sekmesi (1) index'in ayarlarını JSON olarak gösterir. **Edit mode** (2) anahtarını açın:
    değiştirilebilen ayarlar düzenlenebilir hâle gelir.
-3. `"index.default_pipeline"` satırında (3) değeri `"grok-ayristir-arayuz"` yapın ve **Save changes**'e (4) basın:
+4. `"index.default_pipeline"` satırında (3) değeri `"grok-ayristir-arayuz"` yapın ve **Save changes**'e (4) basın:
 
-![Index ayarı: 1 Settings, 2 Edit mode, 3 default_pipeline, 4 Save changes](../../assets/screenshots/LAB-14/24-index-ayar-pipeline.png)
+![Index ayarı: 1 Settings, 2 Edit mode, 3 default_pipeline, 4 Save changes](../../assets/screenshots/LAB-14/07m-index-ayar.png)
 
 **Save changes**, Dev Tools'taki `PUT grok-varsayilan/_settings` isteğiyle aynı işi yapar. Dev Tools'ta
 pipeline adı vermeden bir satır yazın:
@@ -561,7 +638,7 @@ GET grok-varsayilan/_source/arayuz-1?_source_includes=loglevel,log,service
 ```
 
 ```json
-{"loglevel":"error","service":"auth-service"}
+{"service":"auth-service","loglevel":"error"}
 ```
 
 `loglevel` küçük harfe çevrildi ama `log.level`'e taşınmadı: satırı Dev Tools'taki `grok-ayristir` değil,
