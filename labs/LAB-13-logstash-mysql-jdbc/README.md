@@ -343,7 +343,8 @@ Ciroya Adım 5'te eklenen 121 numaralı sipariş de dahildir.
 
 **Soru: MySQL'den gelen siparişleri sorgu yazmadan nasıl arar ve raporlarız?**
 
-Kibana bir index'i data view üzerinden gösterir. Zaman field'ı olarak siparişin güncellenme zamanı kullanılır.
+Kibana bir index'i data view üzerinden gösterir. Zaman field'ı olarak `guncellendi` seçilir: `@timestamp`
+Logstash'in satırı okuduğu andır, siparişin kendi zamanı `guncellendi`'dir.
 Kibana › Dev Tools'a yapıştırın:
 
 ```http
