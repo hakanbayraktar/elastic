@@ -8,20 +8,19 @@
 
 ## Bu lab ne öğretiyor?
 
-Gerçek bir panoda aynı grafik birden çok panoda kullanılır, her panel ayrı bir soruya cevap verir ve pano tek tıkla süzülür. Bir grafiği her
-panoda yeniden çizmek, birinde düzeltip ötekinde unutmak demektir.
+Gerçek bir panoda aynı grafik birden çok panoda kullanılır, her panel ayrı bir soruya cevap verir ve pano tek
+tıkla süzülür. Bir grafiği her panoda yeniden çizmek, birinde düzeltip ötekinde unutmak demektir.
 
 Bu labda bir mağazanın 7 günlük web sunucusu loglarından dört grafik kurup **Visualize library**'ye
-kaydedecek, her grafiğin hangi aggregation'la çalıştığını görecek ve bunları bir panoda arayarak
-birleştireceğiz. Logda bir arıza saklı: iki gün önce 14:00-16:00 arasında ödeme sayfası 500 döndü.
+kaydedecek, bunları bir panoda birleştirecek ve panoyu tek tıkla süzeceğiz. Logda bir arıza saklı: iki gün önce
+14:00-16:00 arasında ödeme sayfası 500 döndü. Her tıklama aşağıda kırmızı kutu ve numarayla gösterilir.
 
 ---
 
 ## Ön Koşullar
 
 - LAB-01 ana cluster'ı çalışıyor.
-- Önceki labları atladıysanız da lab çalışır: veri bu labın kendi betiğiyle gelir. Lens'te bir field'dan
-  grafik çıkarmayı bildiğiniz varsayılır.
+- Önceki labları atladıysanız da lab çalışır: veri bu labın kendi betiğiyle gelir.
 
 ```bash
 cd ~/elastic/labs/LAB-16-kibana-pano-atolyesi
@@ -44,8 +43,8 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ## Kavramlar: Lens ve aggregation
 
-Kibana'daki her grafik arka planda bir Elasticsearch aggregation'ıdır. Lens'te yatay eksen ya
-da satırlar **bucket** (grupla), dikey eksen ya da değerler **metric** (hesapla) aggregation'ıdır:
+Kibana'daki her grafik arka planda bir Elasticsearch aggregation'ıdır. Lens'te yatay eksen ya da satırlar
+**bucket** (grupla), dikey eksen ya da değerler **metric** (hesapla) aggregation'ıdır:
 
 | Lens'te | Aggregation | Bu labdaki soru |
 |---|---|---|
@@ -64,8 +63,8 @@ Library'de değiştirildiğinde onu kullanan bütün panolarda değişir.
 
 ### 1. Örnek veri
 
-Betik, son 7 güne yayılmış 6000 erişim olayını `pano-apache` index'ine yazar (sabit tohum: sayılar
-her seferinde aynıdır; tarihler labı yaptığınız güne göre kayar):
+Betik, son 7 güne yayılmış 6000 erişim olayını `pano-apache` index'ine yazar (sabit tohum: sayılar her
+seferinde aynıdır; tarihler labı yaptığınız güne göre kayar):
 
 ```bash
 python3 scripts/veri_uret.py
@@ -79,171 +78,290 @@ Beklenen çıktı:
     ilk 3 ulke : Turkey=3220, Germany=808, United States=483
 ```
 
-Her olayda sayfa (`url.path`), durum kodu ve sınıfı (`2xx`/`4xx`/`5xx`), yanıt süresi
-(`response_time_ms`), ülke ve şehir vardır. Data view'ı kurun (Kibana › Dev Tools):
+Her olayda sayfa (`url.path`), durum kodu ve sınıfı (`2xx`/`4xx`/`5xx`), yanıt süresi (`response_time_ms`),
+ülke ve şehir vardır. Grafikler bir data view üzerinden çizilir. Kibana › Dev Tools'a yapıştırın:
 
 ```http
 POST kbn:/api/data_views/data_view
 { "data_view": { "id": "pano-apache", "title": "pano-apache", "name": "Apache erişim logları", "timeFieldName": "@timestamp" } }
 ```
 
-### 2. Visualize library ve grafik türleri
+### 2. Visualize library'yi açın
 
-Kibana menüsünden **Analytics › Visualize library**'yi açın ve **Create visualization**'a (1) tıklayın:
+1. Sol üstteki menü düğmesine (1) tıklayın, **Analytics** altında **Visualize library**'yi (2) seçin:
 
-![Visualize library: 1 Create visualization](../../assets/screenshots/LAB-16/01-visualize-library.png)
+![Menü: 1 menü düğmesi, 2 Visualize library](../../assets/screenshots/LAB-16/02a-menu-visualize-library.png)
 
-![Create visualization: 2 Visualization (Lens), 3 Maps, 4 Legacy](../../assets/screenshots/LAB-16/02-create-visualization.png)
+2. Sağ üstte **Create visualization** (1):
+
+![Visualize library: 1 Create visualization](../../assets/screenshots/LAB-16/02b-create-visualization.png)
+
+3. Açılan pencerede grafik türü seçilir. **Visualization**'a (1) tıklayın; Lens açılır:
+
+![Create visualization: 1 Visualization (Lens), 2 Maps, 3 Legacy](../../assets/screenshots/LAB-16/02c-tur-penceresi.png)
 
 | Seçenek | Ne zaman |
 |---|---|
-| **Visualization** (2) — Lens | Varsayılan: sürükle-bırak ya da tıklayarak her grafik türü; bu labın konusu |
-| **Maps** (3) | Konum field'ı (`geo_point`) olan veride harita, katmanlarla |
+| **Visualization** (1), yani Lens | Varsayılan: tıklayarak her grafik türü; bu labın konusu |
+| **Maps** (2) | Konum field'ı (`geo_point`) olan veride harita (LAB-18) |
 | **Vega** | Lens'in çizemediği özel grafik, JSON ile; nadiren |
-| **Legacy** (4): Aggregation-based, TSVB | Eski panolarda karşınıza çıkar; yeni grafikte Lens kullanın |
+| **Legacy** (3) | Eski editörler; eski panolarda karşınıza çıkar |
 
 <details>
 <summary><strong>Legacy sekmesi: Aggregation-based ve TSVB</strong></summary>
 
-![Legacy: TSVB ve Aggregation-based](../../assets/screenshots/LAB-16/03-legacy.png)
+![Legacy: 1 sekme; TSVB ve Aggregation-based](../../assets/screenshots/LAB-16/02d-legacy.png)
 
-**Aggregation-based** (Area, Data table, Gauge, Goal, Heat map, Horizontal/Vertical bar, Line, Metric, Pie,
-Tag cloud) Lens'ten önceki editördür; her türü Lens'te de vardır. Burada aggregation'ları tek tek seçersiniz
-(Buckets › X-axis › Date histogram, Metrics › Count): Lens'in arka planda yaptığını açıkça gösterir.
-**TSVB** zaman serisi için eski bir editördür. İkisi de yeni panolarda önerilmez.
+**Aggregation-based** (Area, Data table, Gauge, Heat map, Bar, Line, Metric, Pie, Tag cloud) Lens'ten önceki
+editördür; her türü Lens'te de vardır. Aggregation'ları tek tek seçersiniz (Buckets › X-axis › Date histogram,
+Metrics › Count): Lens'in arka planda yaptığını açıkça gösterir. **TSVB** eski bir zaman serisi editörüdür.
+İkisi de yeni panolarda önerilmez.
 
 </details>
 
-Pencerede **Visualization**'ı seçin. Lens açılır.
-
-### 3. Lens: zaman içinde istekler ve Library'ye kaydetme
+### 3. İlk Lens grafiği: zaman içinde istekler
 
 Soru: trafik saatlere göre nasıl değişiyor, hatalar ne zaman artıyor?
 
-1. Sol üstte data view olarak `Apache erişim logları`'nı (1) seçin, zaman aralığını **Last 7 days** yapın.
-2. Field listesinde `@timestamp`'in (2) ve `http.response.status_class`'ın (3) üzerine gelip **+** ile
-   ekleyin. Lens her durum sınıfı için bir çizgi çizer (4): yatay eksen `date_histogram`, renkler `terms`.
+1. Sol üstteki **Data view** kutusuna (1) tıklayın, listeden **Apache erişim logları**'nı (2) seçin:
 
-![Lens: 1 data view, 2 @timestamp, 3 status_class, 4 grafik](../../assets/screenshots/LAB-16/04-lens-ilk-grafik.png)
+![Data view: 1 kutu, 2 Apache erişim logları](../../assets/screenshots/LAB-16/03a-data-view-sec.png)
 
-Gece-gündüz deseni görünür; `5xx` çizgisi iki gün önce öğleden sonra yükselir.
+2. Sağ üstteki zaman kutusuna (1) tıklayın, listeden **Last 7 days**'i (2) seçin; görünmüyorsa listeyi aşağı
+   kaydırın. Kutuda `Last 7 days (rounded)` yazar:
 
-3. Grafik türü menüsünden (5) aynı veriyi Bar, Area, Table ya da Pie olarak görebilirsiniz; veri ve
-   aggregation aynı kalır, yalnız gösterim değişir.
+![Zaman: 1 zaman kutusu, 2 Last 7 days](../../assets/screenshots/LAB-16/03b-zaman-7-gun.png)
 
-![Grafik türü menüsü: 5](../../assets/screenshots/LAB-16/05-lens-grafik-turu.png)
+3. Lens ekranının parçaları:
 
-4. **Save**: Title `Zaman içinde istekler (durum sınıfı)` (6), **Add to library** (7) işaretli, **Save and
-   add to library** (8). Add to dashboard seçimini **None** bırakın; panoyu Adım 5'te kuracağız.
+![Lens ekranı: 1 data view, 2 field listesi, 3 çalışma alanı, 4 grafik türü, 5 katman paneli, 6 Save](../../assets/screenshots/LAB-16/03c-lens-ekrani.png)
 
-![Kaydetme: 6 başlık, 7 Add to library, 8 kaydet](../../assets/screenshots/LAB-16/06-lens-kaydet-library.png)
+| No | Parça | Ne işe yarar |
+|---|---|---|
+| 1 | Data view | Hangi veriden çizileceği |
+| 2 | Field listesi | Grafiğe eklenecek field'lar; üstteki kutuyla aranır |
+| 3 | Çalışma alanı | Grafiğin kendisi |
+| 4 | Grafik türü | Bar, Line, Table, Metric, Heat map... |
+| 5 | Katman paneli | **Horizontal axis** (yatay eksen), **Vertical axis** (dikey eksen), **Breakdown** (renklere bölme) |
+| 6 | Save | Grafiği kaydeder |
+
+4. Field arama kutusuna (1) `timestamp` yazın. Listede kalan `@timestamp`'in üzerine gelin, sağında beliren
+   **⊕** düğmesine (2) tıklayın:
+
+![Field ekleme: 1 arama kutusu, 2 ⊕ düğmesi](../../assets/screenshots/LAB-16/03d-timestamp-ekle.png)
+
+5. Lens zaman field'ını yatay eksene koydu (1), dikey eksene kendiliğinden **Count of records** (kayıt sayısı) (2)
+   ekledi ve çizgi grafik çizdi (3). Gece-gündüz deseni görünür:
+
+![İlk grafik: 1 yatay eksen @timestamp, 2 dikey eksen Count of records, 3 grafik](../../assets/screenshots/LAB-16/03e-ilk-grafik.png)
+
+6. Aynı yolla arama kutusuna (1) `status_class` yazıp `http.response.status_class`'ın **⊕** düğmesine (2) tıklayın:
+
+![İkinci field: 1 arama kutusu, 2 ⊕ düğmesi](../../assets/screenshots/LAB-16/03f-status-class-ekle.png)
+
+7. Field **Breakdown**'a girdi (1): grafik her durum sınıfı için ayrı çizgi çizer (2). `5xx` çizgisi iki gün önce
+   öğleden sonra yükselir:
+
+![Kırılım: 1 Breakdown, 2 2xx/4xx/5xx çizgileri](../../assets/screenshots/LAB-16/03g-kirilimli-grafik.png)
+
+8. Grafik türü kutusu (1) aynı veriyi Bar, Area, Table ya da Pie olarak gösterir; veri ve aggregation aynı kalır.
+   Denedikten sonra **Line**'a geri dönün:
+
+![Grafik türü menüsü: 1](../../assets/screenshots/LAB-16/03h-grafik-turu.png)
+
+9. Sağ üstte **Save**'e tıklayın. Pencerede:
+   - **Title** (1): `Zaman içinde istekler (durum sınıfı)`
+   - **Add to library** (2): işaretli
+   - **Add to dashboard** altında **None** (3): panoyu Adım 5'te kuracağız
+   - **Save and add to library** (4)
+
+![Kaydetme: 1 Title, 2 Add to library, 3 None, 4 Save and add to library](../../assets/screenshots/LAB-16/03i-kaydet.png)
 
 ### 4. Üç soru, üç aggregation
 
-Her grafik için **Analytics › Visualize library › Create visualization › Visualization** ile yeni bir Lens
-açın, data view'ı ve **Last 7 days**'i seçin, grafik türünü (5) seçip field'ları **+** ile ekleyin. Her birini
-Adım 3'teki gibi **Add to library** ile kaydedin.
+Her grafik için yeni bir Lens açın: **Visualize library › Create visualization › Visualization** (Adım 2).
+Data view `Apache erişim logları`, zaman **Last 7 days** olmalı (Adım 3'ün 1-2. maddesi). Her birini Adım 3'ün
+9. maddesindeki gibi **Add to library** ile kaydedin.
 
-**a) Tablo: ülke başına istek ve yanıt süresi.** Tür **Table**; field'lar `source.geo.country_name` (Lens kayıt
-sayısı sütununu kendisi ekler) ve `response_time_ms`. Lens sayısal field'a **Median** uygular. Değer sütununa tıklayın: **Quick functions** (1)
-Elasticsearch'in metric aggregation'larıdır. **Percentile**'ı (3) seçin (varsayılan 95. yüzdelik):
-kullanıcıların %95'i bu süreden hızlı yanıt aldı demektir.
+**a) Tablo: ülke başına istek ve yanıt süresi.**
 
-![Quick functions: 1 sekme, 2 Average, 3 Percentile, 4 Formula](../../assets/screenshots/LAB-16/07-quick-functions.png)
+1. Grafik türü kutusuna (1) tıklayın, arama kutusuna (2) `Table` yazın, **Table**'ı (3) seçin:
 
-![Tablo: 5 ülke başına istek ve 95. yüzdelik](../../assets/screenshots/LAB-16/08-tablo.png)
+![Grafik türü: 1 kutu, 2 arama, 3 Table](../../assets/screenshots/LAB-16/04a-tablo-turu.png)
 
-Kaydedin: `Ülke bazında istek ve yanıt süresi`.
+2. Adım 3'ün 4. maddesindeki gibi önce `source.geo.country_name`, sonra `response_time_ms` field'ını **⊕** ile
+   ekleyin. Ülke **Rows**'a (1) girer, **Metrics**'e (2) kayıt sayısı ve `Median of response_time_ms` gelir (3):
 
-**b) Heat map: hangi sayfa ne zaman yoğun.** Tür **Heat map**; field'lar `@timestamp` ve `url.path`. Her hücre
-bir saat aralığındaki istek sayısıdır (6); iki `terms`/`date_histogram` bucket'ı bir arada.
+![Tablo: 1 Rows, 2 Metrics, 3 tablo](../../assets/screenshots/LAB-16/04b-tablo-alanlar.png)
 
-![Heat map: 6 sayfa x zaman](../../assets/screenshots/LAB-16/09-heatmap.png)
+3. **Metrics** altında `Median of response_time_ms`'e tıklayın. Açılan panelde **Quick function** (1) seçili
+   kalsın, **Percentile**'a (2) tıklayın (varsayılan 95. yüzdelik), sonra panelin altındaki **Close**:
 
-Kaydedin: `Sayfa ve saat yoğunluğu`.
+![Quick function: 1 sekme, 2 Percentile](../../assets/screenshots/LAB-16/04c-quick-functions.png)
 
-**c) Metric + Formula: hata oranı.** Tür **Metric**; **Primary metric**'e tıklayın, **Formula** (7) sekmesine
-geçip yazın (8):
+4. Sütun `95th percentile of response_time_ms` oldu (1): kullanıcıların %95'i bu süreden hızlı yanıt aldı.
+   Kaydedin: `Ülke bazında istek ve yanıt süresi`.
+
+![Tablo sonucu: 1 95. yüzdelik sütunu](../../assets/screenshots/LAB-16/04d-tablo-sonuc.png)
+
+**b) Heat map: hangi sayfa ne zaman yoğun.**
+
+1. Grafik türü kutusu (1), arama (2) `Heat`, **Heat map** (3):
+
+![Grafik türü: 1 kutu, 2 arama, 3 Heat map](../../assets/screenshots/LAB-16/04e-heatmap-turu.png)
+
+2. `@timestamp` ve `url.path` field'larını **⊕** ile ekleyin. Zaman yatay eksene (1), sayfa dikey eksene (2) girer;
+   her hücre bir saat aralığındaki istek sayısıdır, koyu hücre yoğun demektir (3). Kaydedin: `Sayfa ve saat yoğunluğu`.
+
+![Heat map: 1 yatay eksen, 2 dikey eksen, 3 hücreler](../../assets/screenshots/LAB-16/04f-heatmap.png)
+
+**c) Metric ve Formula: hata oranı.**
+
+1. Grafik türü kutusu (1), arama (2) `Metric`, **Metric** (3):
+
+![Grafik türü: 1 kutu, 2 arama, 3 Metric](../../assets/screenshots/LAB-16/04g-metric-turu.png)
+
+2. **Primary metric** altındaki **Add or drag-and-drop a field** satırına (1) tıklayın:
+
+![Metric: 1 Primary metric](../../assets/screenshots/LAB-16/04h-primary-metric.png)
+
+3. Açılan panelde **Formula** sekmesine (1) geçin, kutuya (2) aşağıdaki formülü yapıştırın. **Name** kutusuna (3)
+   `Hata oranı (%)` yazın, sonra **Close**:
 
 ```text
 count(kql='http.response.status_class : "5xx"') / count() * 100
 ```
 
-![Formula: 7 sekme, 8 formül](../../assets/screenshots/LAB-16/10-formula.png)
+![Formula: 1 sekme, 2 formül kutusu, 3 Name](../../assets/screenshots/LAB-16/04i-formula.png)
 
-`count(kql=...)` yalnız sorguya uyan document'leri sayar; ikiye bölünüp 100 ile çarpılınca yüzde olur (9).
+4. `count(kql=...)` yalnız sorguya uyan document'leri sayar; toplama bölünüp 100 ile çarpılınca yüzde olur (1):
+   6000 isteğin 59'u 5xx, yani yaklaşık 0,98. Kaydedin: `Hata oranı (5xx, %)`.
 
-![Metric: 9 hata oranı](../../assets/screenshots/LAB-16/11-metric.png)
-
-Kaydedin: `Hata oranı (5xx, %)`.
+![Metric sonucu: 1 hata oranı](../../assets/screenshots/LAB-16/04j-metric-sonuc.png)
 
 ### 5. Pano: Library'den arayarak eklemek
 
-**Analytics › Dashboards › Create dashboard**, zaman aralığı **Last 7 days**. Sağ üstte **Add**: açılan
-pencerede **From library** (1) sekmesi Library'deki her şeyi listeler. Arama kutusuna (2) `istek` yazıp
-Enter'a basın: başlığında bu kelime geçen grafikler kalır (3).
+1. Menü düğmesi, **Analytics › Dashboards** (1):
 
-![From library: 1 sekme, 2 arama, 3 sonuçlar](../../assets/screenshots/LAB-16/12-from-library-arama.png)
+![Menü: 1 Dashboards](../../assets/screenshots/LAB-16/05a-menu-dashboards.png)
 
-İki sonuca tıklayıp panoya ekleyin. Aynı yolla `yoğunluğu` ve `Hata oranı` diye arayıp kalan iki grafiği
-ekleyin ve pencereyi kapatın. Library büyüdükçe arama, listeyi sayfa sayfa gezmekten hızlıdır. Paneller Library'ye bağlıdır: Library'deki grafik değişirse bu pano da
-değişir. Bir panelin menüsündeki **Unlink from library** onu bu panoya özel bir kopyaya çevirir.
+2. Sağ üstte **Create dashboard** (1). Boş pano açılır; zaman kutusundan **Last 7 days**'i seçin (Adım 3'teki gibi):
+
+![Dashboards listesi: 1 Create dashboard](../../assets/screenshots/LAB-16/05b-create-dashboard.png)
+
+3. Sağ üstte **Add** (1):
+
+![Pano: 1 Add](../../assets/screenshots/LAB-16/05c-add.png)
+
+4. Sağda açılan panelde **From library** sekmesine (1) geçin. Arama kutusuna (2) `istek` yazıp Enter'a basın:
+   başlığında bu kelime geçen iki grafik kalır. **Zaman içinde istekler (durum sınıfı)**'na (3) tıklayın:
+
+![From library: 1 sekme, 2 arama, 3 grafik](../../assets/screenshots/LAB-16/05d-from-library.png)
+
+5. Grafik panoya panel olarak eklendi (1); sağdaki panel açık kalır:
+
+![Pano: 1 eklenen panel](../../assets/screenshots/LAB-16/05e-panel-eklendi.png)
+
+6. Aynı panelde **Ülke bazında istek ve yanıt süresi**'ne tıklayın. Sonra arama kutusuna `yoğunluğu` yazıp
+   **Sayfa ve saat yoğunluğu**'na, `Hata oranı` yazıp **Hata oranı (5xx, %)**'na tıklayın. Paneli sağ üstteki
+   **×** ile kapatın. Panoda dört panel olur (1-4):
+
+![Pano: 1-4 dört panel](../../assets/screenshots/LAB-16/05f-dort-panel.png)
+
+7. Panelin yerini ve boyunu değiştirmek için fareyi panelin üzerine getirin: başlıktaki tutamaçtan (1) sürükleyip
+   taşıyın, sağ alt köşeden (2) çekip büyütün:
+
+![Panel: 1 taşıma tutamacı, 2 boyutlandırma köşesi](../../assets/screenshots/LAB-16/05g-panel-tasi-boyutla.png)
+
+Paneller Library'ye bağlıdır: Library'deki grafik değişirse bu pano da değişir. Panelin `⋮` menüsündeki
+**Unlink from library** onu bu panoya özel bir kopyaya çevirir. Library büyüdükçe arama, listeyi sayfa sayfa
+gezmekten hızlıdır.
 
 ### 6. Control: panoyu tek tıkla süzmek
 
-**Add › Control** ile bir açılır liste ekleyin. Field kutusuna `country` yazıp `source.geo.country_name`'i (4)
-seçin, Control type **Options list** (5), **Save** (6):
+1. Sağ üstte **Add**, açılan panelde **Controls** altında **Control** (1):
 
-![Control: 4 field, 5 Options list, 6 kaydet](../../assets/screenshots/LAB-16/13-control.png)
+![Add paneli: 1 Control](../../assets/screenshots/LAB-16/06a-add-control.png)
 
-Panoyu **Save** ile `Apache atölye` adıyla kaydedin. Control'de (7) `Germany`'yi seçin: dört panel aynı anda
-yalnız Almanya'dan gelen istekleri gösterir; tabloda tek satır kalır (8). Control, panonun her paneline aynı
-filtreyi uygular. Sayısal field'lar için **Range slider** aynı işi aralıkla yapar (ör. `response_time_ms`).
+2. **Create control** panelinde **Field** arama kutusuna (1) `country` yazın, **source.geo.country_name**'i (2)
+   seçin. **Control type** olarak **Options list** (3) seçili olsun, **Save** (4):
 
-![Pano: 7 ülke seçimi, 8 süzülmüş tablo](../../assets/screenshots/LAB-16/14-pano-filtreli.png)
+![Create control: 1 field arama, 2 source.geo.country_name, 3 Options list, 4 Save](../../assets/screenshots/LAB-16/06b-control-ayar.png)
+
+3. Panoyu kaydedin: sağ üstte **Save**, **Title** (1) `Apache atölye`, **Save** (2):
+
+![Kaydetme: 1 Title, 2 Save](../../assets/screenshots/LAB-16/06c-pano-kaydet.png)
+
+4. Panonun üstüne gelen açılır listeye (1) tıklayın, **Germany**'yi (2) işaretleyin, listenin dışına tıklayın:
+
+![Control: 1 açılır liste, 2 Germany](../../assets/screenshots/LAB-16/06d-control-sec.png)
+
+5. Control'de `Germany` yazar (1); dört panel aynı anda yalnız Almanya'dan gelen istekleri gösterir, tabloda tek
+   satır kalır (2). Control panonun her paneline aynı filtreyi uygular. Seçimi kaldırmak için listeyi açıp
+   işareti kaldırın. Sayısal field'da (ör. `response_time_ms`) **Range slider** aynı işi aralıkla yapar.
+
+![Süzülmüş pano: 1 Germany, 2 tek satırlı tablo](../../assets/screenshots/LAB-16/06e-pano-suzuldu.png)
+
+6. Kaydettikten sonra pano düzenleme modunda kalır. Açılır listeyi (1) açıp **Germany** işaretini kaldırın, sonra
+   sağ üstte **Exit edit** (2). Pano kayıtlı hâline (filtresiz) döner ve okuma modunda açılır:
+
+![Düzenlemeden çıkış: 1 açılır liste, 2 Exit edit](../../assets/screenshots/LAB-16/06f-exit-edit.png)
 
 ### 7. Panoyu kaydetmek, paylaşmak ve dışa aktarmak
 
-**Zaman kaydı.** Yeni bir gizli pencerede Kibana'ya girip **Dashboards** listesinden `Apache atölye`'yi açın:
-zaman aralığı **Last 15 minutes** gelir ve paneller `No results found` der. Pano, hangi zaman aralığıyla
-açılacağını kaydetmediyse açılış anındaki genel zaman kutusunu kullanır. Kendi pencerenizde zaman aralığını
-**Last 7 days** yapın, **Edit** deyin, sağ üstteki `⋮` menüsünden **Settings**'i açın ve **Store time with
-dashboard** anahtarını (1) açıp **Apply** (2) ile onaylayın:
+**Zaman kaydı.** Panoyu başka biri açınca hangi zaman aralığı gelir? Yeni bir gizli pencerede Kibana'ya girip
+**Dashboards** listesinden `Apache atölye`'yi açın: zaman aralığı **Last 15 minutes** gelir ve paneller
+`No results found` der. Pano zaman aralığını kaydetmediyse açılış anındaki genel zaman kutusunu kullanır. Kendi
+pencerenizde:
 
-![Dashboard settings: 1 Store time with dashboard, 2 Apply](../../assets/screenshots/LAB-16/15-pano-zaman-kaydi.png)
+1. Zaman aralığı **Last 7 days** iken sağ üstte **Edit** (1); pano yeniden düzenleme moduna geçer:
 
-**Save**'e basıp **Exit edit** deyin. Aynı gizli pencerede panoyu yeniden açın: bu kez **Last 7 days** gelir ve
-paneller veriyle dolar. Zaman aralığı panoyla birlikte saklanıyor.
+![Pano: 1 Edit](../../assets/screenshots/LAB-16/07a-edit.png)
 
-**Share.** Okuyacak kişiye pano adresini vermek için **Share**: **Permissions** (1) bölümü, panoyu Space'teki
-herkesin ne yapabileceğini söyler (varsayılan **Can edit**; **Can view** yalnız okutur). **Link** sekmesinde
-**Use absolute time range** (2) kapalıyken bağlantıyı açan kişi, açtığı ana göre son 7 günü görür
-(`7 days ago rounded to the day to now`); açıksa sabit tarih aralığını görür. **Copy link** (3) kısa bir adres
-verir (`/app/r/s/<kod>`). **Embed** sekmesi aynı panoyu başka bir sayfaya gömmek içindir:
+2. Sağ üstteki `⋮` düğmesi (1), **Settings** (2):
 
-![Share dashboard: 1 Permissions, 2 absolute time range, 3 Copy link](../../assets/screenshots/LAB-16/16-pano-share.png)
+![Menü: 1 ⋮, 2 Settings](../../assets/screenshots/LAB-16/07b-settings-menu.png)
 
-**Export.** **Export** menüsünde dört seçenek vardır (1-4):
+3. **Store time with dashboard** anahtarını (1) açın, **Apply** (2):
 
-![Export menüsü: 1 JSON, 2 PDF, 3 PNG, 4 Schedule export](../../assets/screenshots/LAB-16/17-pano-export.png)
+![Dashboard settings: 1 Store time with dashboard, 2 Apply](../../assets/screenshots/LAB-16/07c-zaman-kaydi.png)
+
+4. **Save** (1), sonra **Exit edit** (2):
+
+![Pano: 1 Save, 2 Exit edit](../../assets/screenshots/LAB-16/07d-save-exit.png)
+
+Gizli pencerede panoyu yeniden açın: bu kez **Last 7 days** gelir ve paneller veriyle dolar. Aynı anahtar ilk
+kaydetme penceresinde de vardır (Adım 6'nın 3. maddesi).
+
+**Share.** Sağ üstte **Share**:
+
+- **Permissions** (1): panoyu Space'teki herkesin ne yapabileceği (varsayılan **Can edit**; **Can view** yalnız okutur).
+- **Use absolute time range** (2): kapalıyken bağlantıyı açan kişi açtığı ana göre son 7 günü görür
+  (`7 days ago rounded to the day to now`); açıksa sabit tarih aralığını görür.
+- **Copy link** (3): kısa bir adres verir (`/app/r/s/<kod>`). **Embed** sekmesi panoyu başka bir sayfaya gömmek içindir.
+
+![Share dashboard: 1 Permissions, 2 absolute time range, 3 Copy link](../../assets/screenshots/LAB-16/07e-share.png)
+
+**Export.** Sağ üstte **Export**; dört seçenek vardır (1-4):
+
+![Export menüsü: 1 JSON, 2 PDF, 3 PNG, 4 Schedule export](../../assets/screenshots/LAB-16/07f-export.png)
 
 | Seçenek | Ne yapar |
 |---|---|
-| **Export JSON** (1) | Panonun tanımını JSON olarak gösterir (teknik önizleme); **Copy to clipboard** ya da **Open in Console** |
-| **PDF reports** (2) | Panoyu PDF'e çevirir; **Print format** ile çok sayfalı çıktı. **Post URL**, aynı raporu betikten üretmek içindir |
-| **PNG reports** (3) | Panoyu tek resme çevirir; **Post URL** burada da var |
-| **Schedule export** (4) | Raporu saatlik, günlük, haftalık ya da aylık tekrarlatır; e-posta ile göndermek için bir e-posta connector'ı gerekir (yoksa pencere `Email connector hasn't been created yet` der) |
+| **Export JSON** (1) | Panonun tanımını JSON olarak gösterir; **Copy to clipboard** ya da **Open in Console** |
+| **PDF reports** (2) | Panoyu PDF'e çevirir; **Print format** ile çok sayfalı çıktı. **Post URL** aynı raporu betikten üretmek içindir |
+| **PNG reports** (3) | Panoyu tek resme çevirir |
+| **Schedule export** (4) | Raporu saatlik, günlük, haftalık ya da aylık tekrarlatır; e-posta için bir e-posta connector'ı gerekir |
 
-PDF ve PNG raporları ücretli lisans özelliğidir; LAB-01'de açtığınız deneme lisansıyla çalışır. Raporu gerçekten
-üretmek ve Reporting sayfasından indirmek LAB-18'dedir. Panoyu başka bir Space'e ya da Kibana'ya taşımak
-(`.ndjson` dosyası) LAB-17'dedir.
+PDF ve PNG raporları ücretli lisans özelliğidir; LAB-01'de açtığınız deneme lisansıyla çalışır. Raporu üretip
+Reporting sayfasından indirmek LAB-18'de, panoyu başka bir Space'e taşımak LAB-17'dedir.
 
 ---
 
 ## Temizlik
 
-Yalnız `pano-apache` index'ini ve şablonunu, data view'ı ve bu data view'a bağlı Kibana nesnelerini
-(Library grafikleri, pano) siler; ana cluster'a dokunmaz:
+Yalnız `pano-apache` index'ini ve şablonunu, data view'ı ve bu data view'a bağlı Kibana nesnelerini (Library
+grafikleri, pano) siler; ana cluster'a dokunmaz:
 
 ```bash
 ./teardown.sh
