@@ -1,3 +1,2 @@
-Kibana 9.5.5
-Alinma tarihi: 2026-11-21
-Akis: scripts/screenshots/shots_lab08.py
+Kibana 9.5.5 (Elastic Stack 9.5.5) ile alindi: 2026-11-25.
+Kibana surumu degisince bu klasordeki goruntuler yeniden alinir (scripts/screenshots/shots_lab12.py).

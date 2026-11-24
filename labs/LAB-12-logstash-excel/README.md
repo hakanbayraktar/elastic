@@ -11,8 +11,14 @@
 Bir satış Excel'i CSV olarak kaydedilince `28.499,90` ve `09.01.2026` gibi değerler metin olarak
 gelir. Elasticsearch bunları olduğu gibi alırsa ciro toplanamaz, tarih aralığıyla arama yapılamaz.
 
-Bu labda Excel dosyasını CSV'ye çevirip Logstash ile okuyacak, Türkçe biçimi sayıya ve tarihe
-çevirecek ve Logstash'i yalnız kendi index'ine yazabilen bir kullanıcıyla bağlayacağız.
+Bu labda:
+
+- Excel dosyasını CSV'ye çevirip Logstash ile okuyacak, Türkçe biçimi sayıya ve tarihe çevireceğiz.
+- Logstash'i yalnız kendi index'ine yazabilen bir kullanıcıyla bağlayacağız.
+- Container yeniden başlayınca dosyanın yeniden okunmadığını ve çift kayıt oluşmadığını göreceğiz.
+- Tek seferlik bir CSV'yi Logstash'siz, Kibana'dan yükleyeceğiz.
+
+Kibana'daki her tıklama kırmızı kutu ve numarayla gösterilir.
 
 ![Excel'den Elasticsearch'e: CSV, Logstash ve yalnız yazma yetkili kullanıcı](../../assets/infographics/16-logstash-excel-csv.png)
 
@@ -89,6 +95,8 @@ manage_template => false                        # sablonu biz kurduk; kullanicin
 
 ### 1. Excel dosyasını CSV'ye çevirin
 
+**Soru: Excel'in kaydettiği CSV neye benzer?**
+
 Excel'de dosyayı **Farklı Kaydet** ile CSV olarak kaydettiğinizde Türkçe bölge ayarlı Excel sütunları
 `;` ile ayırır. Sunucuda Excel olmadığı için aynı biçimi veren küçük bir betik kullanıyoruz (yalnız
 Python'un standart kütüphanesi; paket kurmanız gerekmez):
@@ -144,6 +152,8 @@ Excel'in **CSV UTF-8** seçeneğiyle kaydedilen dosyada bu iki ayar gerekmez.
 
 ### 2. Logstash için yalnız yazma yetkili kullanıcı
 
+**Soru: Logstash Elasticsearch'e hangi yetkiyle bağlanmalı?**
+
 Logstash'i `elastic` ile bağlamak, parolası bir config dosyasında duran süper kullanıcı demektir.
 Bunun yerine yalnız `excel-*` index'lerine yazabilen bir rol ve kullanıcı açıyoruz.
 
@@ -179,6 +189,49 @@ PUT /_security/user/excel_logstash
 - `monitor`: Logstash açılışta cluster'ın sürümünü ve lisansını okur; bunun için gerekir.
 - `create_index`, `index`: index açar ve document yazar. Silme, ayar değiştirme ve başka index yok.
 
+<details>
+<summary><strong>Dev Tools yerine arayüzden yapmak isterseniz</strong></summary>
+
+Aynı rol ve kullanıcı **Stack Management › Roles / Users** sayfalarından da açılır. **İkisinden birini yapın:**
+Dev Tools isteklerini çalıştırdıysanız bu kutuyu atlayın. Adlar ve parola birebir aynı olmalı; Logstash
+`docker-compose.yml`'deki `excel_logstash` / `Excel2026!` ile bağlanır.
+
+1. Sol üstteki menü düğmesine (1) tıklayın, **Management** altında **Stack Management**'ı (2) seçin:
+
+   ![Menü: 1 menü düğmesi, 2 Stack Management](../../assets/screenshots/LAB-12/02a-menu-stack-management.png)
+
+2. Soldaki listede **Security** altında **Roles** (1):
+
+   ![Stack Management: 1 Roles](../../assets/screenshots/LAB-12/02b-roles.png)
+
+3. **Create role** (1):
+
+   ![Roles: 1 Create role](../../assets/screenshots/LAB-12/02c-create-role.png)
+
+4. **Role name** (1) `excel-logstash-writer`. **Cluster privileges** (2) kutusuna `monitor` yazıp Enter:
+
+   ![Rol formu: 1 ad, 2 cluster yetkisi](../../assets/screenshots/LAB-12/02d-rol-form.png)
+
+   Aşağı kaydırın. **Index privileges** altında **Indices** (1) kutusuna `excel-*` yazıp Enter; **Privileges** (2)
+   kutusuna `create_index` yazıp Enter, sonra `index` yazıp Enter:
+
+   ![Index privileges: 1 index deseni, 2 yetkiler](../../assets/screenshots/LAB-12/02d2-index-yetkileri.png)
+
+5. Sayfanın altındaki **Create role** (1):
+
+   ![Rol formu: 1 Create role](../../assets/screenshots/LAB-12/02e-rol-kaydet.png)
+
+6. Soldaki listede **Users** (1), sonra **Create user** (2):
+
+   ![Users: 1 Users, 2 Create user](../../assets/screenshots/LAB-12/02f-create-user.png)
+
+7. **Username** (1) `excel_logstash`, **Full name** (2) `Excel Logstash`, **Password** (3) ve **Confirm password**
+   (4) `Excel2026!`, **Roles** (5) `excel-logstash-writer`; **Create user** (6):
+
+   ![Kullanıcı formu: 1 kullanıcı adı, 2 tam ad, 3-4 parola, 5 rol, 6 Create user](../../assets/screenshots/LAB-12/02g-kullanici-form.png)
+
+</details>
+
 Yetkinin gerçekten sınırlı olduğunu terminalde bu kullanıcıyla başka bir index'e yazarak görün:
 
 ```bash
@@ -193,6 +246,8 @@ Beklenen çıktı:
 ```
 
 ### 3. Index şablonu: tipleri önceden söyleyin
+
+**Soru: Field tiplerini Elasticsearch'in tahminine bırakmak neden yetmez?**
 
 Şablon olmasa Elasticsearch tipleri ilk document'ten tahmin eder: Logstash sayıları düzeltmiş olsa da `il`
 gibi field'lar `text` olur ve gruplamak için `.keyword` gerekir. Tipleri baştan veriyoruz:
@@ -227,6 +282,8 @@ Ham `tarih` metni `keyword` olarak kalır; arama ve zaman çizelgesi `@timestamp
 
 ### 4. Logstash'i başlatın
 
+**Soru: Kaç satır okundu, kaçı Elasticsearch'e gitti?**
+
 ```bash
 docker compose up -d
 ```
@@ -252,7 +309,70 @@ Beklenen çıktı:
 25 satır okundu ve filtrelerden geçti; biri (başlık) `drop` ile atıldığı için Elasticsearch'e 24 document
 gitti. Logstash API'si `filter_path` desteklemez; field seçimini `jq` yapar.
 
+**Container yeniden başlayınca dosya yine okunur mu?** Tekrarı iki katman birlikte engeller:
+
+| Katman | Nerede | Ne yapar |
+|---|---|---|
+| `sincedb` | Logstash, `logstash-data` volume'ü | Hangi dosyanın nereye kadar okunduğunu yazar; okunmuş dosyayı yeniden okumaz |
+| `document_id => "%{fatura_no}"` | Elasticsearch | Dosya yine okunsa bile aynı `_id`'li document'in üzerine yazar; kopya açılmaz |
+
+Önce Logstash'i yeniden başlatın. Volume yerinde kaldığı için sincedb dosyayı "okundu" bilir. Bekleme 20 saniye
+boyunca yeni satır okunup okunmadığına bakar:
+
+```bash
+docker compose restart logstash
+timeout 120 bash -c 'until curl -s 127.0.0.1:9603/_node/stats/pipelines/main | jq -e .pipelines.main.events >/dev/null 2>&1; do printf .; sleep 3; done'; echo
+timeout 20 bash -c 'until [ "$(curl -s 127.0.0.1:9603/_node/stats/pipelines/main | jq .pipelines.main.events.in)" -gt 0 ]; do sleep 2; done'; echo "20 sn beklendi"
+curl -s 127.0.0.1:9603/_node/stats/pipelines/main | jq -c '.pipelines.main.events | {in, out}'
+docker exec logstash-excel-lab cat /usr/share/logstash/data/okunan-dosyalar.log
+curl -s -u elastic:'DevOps2026!' http://127.0.0.1:9200/excel-satislar/_count | jq .count
+```
+
+Beklenen çıktı:
+
+```text
+ Container logstash-excel-lab Restarting
+ Container logstash-excel-lab Started
+...............
+20 sn beklendi
+{"in":0,"out":0}
+/data/satislar.csv
+24
+```
+
+Yeni Logstash süreci tek satır okumadı (`in: 0`); `okunan-dosyalar.log` dosyanın ilk açılışta okunduğunu
+gösterir, document sayısı 24'te kaldı.
+
+Şimdi sincedb'yi de silin: `down -v` volume'ü kaldırır, Logstash dosyayı ilk kez görüyormuş gibi baştan okur.
+Bu kez ikinci katman, `document_id`, çalışır:
+
+```bash
+docker compose down -v
+docker compose up -d
+timeout 180 bash -c 'until [ "$(curl -s 127.0.0.1:9603/_node/stats/pipelines/main | jq .pipelines.main.events.out 2>/dev/null)" = 24 ]; do printf .; sleep 3; done'; echo
+curl -s -u elastic:'DevOps2026!' -X POST http://127.0.0.1:9200/excel-satislar/_refresh -o /dev/null
+curl -s -u elastic:'DevOps2026!' http://127.0.0.1:9200/excel-satislar/_count | jq .count
+curl -s -u elastic:'DevOps2026!' http://127.0.0.1:9200/excel-satislar/_doc/F-2026-1003 | jq -c '{_id, _version}'
+```
+
+Beklenen çıktı:
+
+```text
+ Container logstash-excel-lab Removed
+ Volume logstash-excel-lab_logstash-data Removed
+ ...
+ Container logstash-excel-lab Started
+...........
+24
+{"_id":"F-2026-1003","_version":2}
+```
+
+24 satır yeniden gönderildi ama document sayısı yine 24: her fatura kendi `_id`'sinin üzerine yazıldı, `_version`
+1'den 2'ye çıktı. `document_id` olmasaydı Elasticsearch her satıra yeni bir `_id` verir, sayı 48 olurdu.
+
 ### 5. Önce ve sonra: aynı fatura
+
+**Soru: CSV satırı document'e nasıl dönüştü?**
 
 CSV'deki satır ve Elasticsearch'teki document:
 
@@ -289,6 +409,8 @@ Beklenen çıktı:
 
 ### 6. Discover'da bakın
 
+**Soru: Faturalar Kibana'da nasıl aranır?**
+
 Kibana adresini sunucuda hesaplayın:
 
 ```bash
@@ -296,22 +418,43 @@ IP=$(curl -s https://api.ipify.org); H=$(hostname -s)
 echo "Kibana: http://$IP:5601   https://$H-kibana.devopsatolyesi.com"
 ```
 
-**Stack Management › Data Views › Create data view**: Name `excel-satislar` (1), Index pattern
-`excel-satislar` (2), Timestamp field `@timestamp` (3), **Save data view to Kibana** (4):
+1. Menüden **Management › Stack Management**'ı açın, soldaki listede **Data Views**'a (1) tıklayın:
 
-![Data view: 1 ad, 2 index pattern, 3 @timestamp, 4 kaydet](../../assets/screenshots/LAB-12/01-dataview-excel.png)
+   ![Stack Management: 1 Data Views](../../assets/screenshots/LAB-12/06a-data-views.png)
 
-Discover'da `excel-satislar`'ı seçin. Faturalar 2026 yılına yayıldığı için zaman kutusundan (1)
-**Last 1 year**'ı seçin; varsayılan **Last 15 minutes** aralığında hiç document görünmez. Arama çubuğuna (2)
-`il : "İstanbul"` yazıp Enter'a basın: document sayısı 4 olur (3).
+2. **Create data view** (1):
 
-![Discover: 1 Last 1 year, 2 il : "İstanbul", 3 document sayısı](../../assets/screenshots/LAB-12/02-discover-excel.png)
+   ![Data Views: 1 Create data view](../../assets/screenshots/LAB-12/06b-create-data-view.png)
+
+3. **Name** (1) `excel-satislar`, **Index pattern** (2) `excel-satislar`, **Timestamp field** (3) `@timestamp`,
+   sonra **Save data view to Kibana** (4):
+
+   ![Data view: 1 ad, 2 index pattern, 3 @timestamp, 4 kaydet](../../assets/screenshots/LAB-12/06c-data-view-form.png)
+
+4. Menü düğmesine (1) tıklayın, **Analytics** altında **Discover**'ı (2) seçin:
+
+   ![Menü: 1 menü düğmesi, 2 Discover](../../assets/screenshots/LAB-12/06d-menu-discover.png)
+
+5. **Data view** düğmesine (1) tıklayın, arama kutusuna (2) `excel` yazıp **excel-satislar**'ı (3) seçin:
+
+   ![Discover: 1 Data view, 2 arama, 3 excel-satislar](../../assets/screenshots/LAB-12/06e-data-view-sec.png)
+
+6. Zaman seçicisini (1) açıp **Last 1 year**'ı (2) seçin. Faturalar 2026 yılına yayılmıştır; varsayılan
+   **Last 15 minutes** aralığında hiç document görünmez:
+
+   ![Zaman seçici: 1 açık seçici, 2 Last 1 year](../../assets/screenshots/LAB-12/06f-last-1-year.png)
+
+7. Arama çubuğuna (1) `il : "İstanbul"` yazıp Enter'a basın: document sayısı 4 olur (2):
+
+   ![Discover: 1 il : "İstanbul", 2 document sayısı](../../assets/screenshots/LAB-12/06g-discover-istanbul.png)
 
 Faturaların tarihi sabittir (Ocak–Kasım 2026). Labı daha sonraki bir tarihte yapıyorsanız zaman
 kutusunda daha geniş bir aralık seçin.
 
 
 ### 7. Tek seferlik dosya: CSV'yi Kibana'dan yüklemek ve düzeltmek
+
+**Soru: Bir kez bakılacak dosya için Logstash kurmak şart mı?**
 
 Elinizdeki bir CSV'yi bir kez bakmak için Elasticsearch'e koymanız gerekiyorsa Logstash kurmak gerekmez.
 Kibana dosyayı okur, sütunları ve tarihi tanır, index'i ve mapping'i kendisi kurar. Örnek dosya bir Spring
@@ -324,21 +467,33 @@ Yükleme tarayıcıdan yapılır; dosya kendi bilgisayarınızda olmalı. Kendi 
 scp student@<sunucu-ip>:~/elastic/labs/LAB-12-logstash-excel/sample-data/uygulama-loglari.csv .
 ```
 
-Kibana menüsünden **Integrations › Upload file**. Index name olarak `excel-uygulama-loglari` (1) yazın,
-dosyayı seçin (2). Kibana önizlemeyi gösterir (önizleme `@timestamp`'i saat dilimi göstermeden yazar); **Mappings** (3) sekmesinde `event_date`'i tarih olarak
-tanıdığını ve ondan bir `@timestamp` ürettiğini görürsünüz:
+1. Kibana ana sayfasında (sol üstteki **elastic** logosu) **Upload a file** (1):
 
-![Upload file: 1 index adı, 2 dosya, 3 Mappings](../../assets/screenshots/LAB-12/03-upload-onizleme.png)
+   ![Ana sayfa: 1 Upload a file](../../assets/screenshots/LAB-12/07a-upload-a-file.png)
 
-Önizlemenin altındaki **Advanced options**'ı açın: **Create data view** (4) işaretli kalsın; **Customize
-index settings** (5) ile ayarları yüklemeden önce değiştirebilirsiniz. Bu sefer varsayılanla devam edip
-adımın sonunda düzelteceğiz. **Import** (6):
+2. Dosya seçme alanına (1) tıklayıp indirdiğiniz `uygulama-loglari.csv`'yi seçin (ya da sürükleyip bırakın):
 
-![Upload file: 4 data view, 5 index ayarları, 6 Import](../../assets/screenshots/LAB-12/04-upload-import.png)
+   ![Upload file: 1 dosya seçme alanı](../../assets/screenshots/LAB-12/07b-dosya-sec.png)
 
-Yükleme bitince Discover'da açma ve index'i yönetme bağlantıları (7) gelir:
+3. Kibana dosyayı okuyup önizlemeyi gösterir. **Index name** (1) kutusuna `excel-uygulama-loglari` yazın, sonra
+   **Mappings** (2) sekmesine tıklayın:
 
-![Upload file: 7 sonuç bağlantıları](../../assets/screenshots/LAB-12/05-upload-sonuc.png)
+   ![Upload file: 1 index adı, 2 Mappings](../../assets/screenshots/LAB-12/07c-index-adi.png)
+
+4. **Mappings** (1) Kibana'nın önerdiği tipleri gösterir: `event_date`'i tarih olarak tanıdı ve ondan bir
+   `@timestamp` üretti (önizleme `@timestamp`'i saat dilimi göstermeden yazar):
+
+   ![Upload file: 1 Mappings](../../assets/screenshots/LAB-12/07d-mappings.png)
+
+5. Altta **Advanced options**'ı açın: **Create data view** (1) işaretli kalsın; **Customize index settings** (2)
+   ile ayarları yüklemeden önce değiştirebilirsiniz. Bu sefer varsayılanla devam edip adımın sonunda
+   düzelteceğiz. **Import** (3):
+
+   ![Upload file: 1 data view, 2 index ayarları, 3 Import](../../assets/screenshots/LAB-12/07e-import.png)
+
+6. Yükleme bitince Discover'da açma ve index'i yönetme bağlantıları (1) gelir:
+
+   ![Upload file: 1 sonuç bağlantıları](../../assets/screenshots/LAB-12/07f-upload-sonuc.png)
 
 | | Kibana › Upload file | Logstash (Adım 1-6) |
 |---|---|---|
