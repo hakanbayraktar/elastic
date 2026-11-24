@@ -12,10 +12,13 @@ Logstash'in önünde iki tehlike vardır. Elasticsearch'e ulaşamadığı sırad
 olaylar kaybolur. Elasticsearch bir document'i reddederse (yanlış tipte field), o document sessizce düşer.
 İkisi de "log geldi ama Kibana'da yok" şikâyetinin en sık sebebidir.
 
-Bu labda tek Logstash'ta iki pipeline çalıştıracağız. `ingest` olayları alır; kuyruğu diskte
-(persistent queue) tutulur ve reddedilen document'leri dead letter queue'ya (DLQ) yazar. `dlq-onarim`
-DLQ'yu okur, document'i onarır ve yeniden yazar. Elasticsearch bağlantısını keserek bir çökmede hiçbir
-olayın kaybolmadığını, reddedilen document'in de geri geldiğini sayılarla göreceğiz.
+Bu labda tek Logstash'ta iki pipeline çalıştıracağız:
+
+- `ingest` olayları alır; kuyruğu diskte (persistent queue) tutar, reddedilen document'leri dead letter
+  queue'ya (DLQ) yazar.
+- `dlq-onarim` DLQ'yu okur, document'i onarır ve yeniden yazar.
+- Elasticsearch bağlantısını keserek bir çökmede hiçbir olayın kaybolmadığını sayılarla göreceğiz.
+- Reddedilen document'in DLQ'dan onarılıp geri geldiğini, yeniden başlatmada hiçbir şeyin tekrarlanmadığını göreceğiz.
 
 ![Tek Logstash, iki pipeline: persistent queue ve dead letter queue](../../assets/infographics/19-logstash-pq-dlq.png)
 
@@ -90,6 +93,8 @@ mutate { rename => { "response_time_ms" => "response_time_raw" } add_tag => [ "d
 
 ### 1. Şablonu kurun ve iki pipeline'ı başlatın
 
+**Soru: Hangi field'ın tipi sonradan bir document'i reddedecek?**
+
 `response_time_ms` field'ı `integer`. Bu tip, Adım 4'te sayı olmayan değeri reddedecek olan kuraldır.
 
 Kibana adresini sunucuda hesaplayın:
@@ -150,6 +155,8 @@ Beklenen çıktı:
 ```
 
 ### 2. Normal akış ve pipeline sayaçları
+
+**Soru: Her pipeline'a kaç olay girdi, kaçı çıktı?**
 
 Önce gerekli dosyaları oluşturun: `scripts/gonder.sh`, `sample-data/olaylar.ndjson`
 
@@ -223,6 +230,8 @@ Beklenen çıktı:
 
 ### 3. Elasticsearch'e ulaşılamazken Logstash çöksün
 
+**Soru: Bağlantı yokken gelen ve Logstash çökünce bellekte kalan olaylar kaybolur mu?**
+
 Ana cluster'ı durdurmadan yalnız Logstash'in Elasticsearch ağ bağlantısını kesiyoruz. Girdi portu ayrı
 ağdan yayınlandığı için olaylar gelmeye devam eder:
 
@@ -294,6 +303,8 @@ anında giderdi.
 
 ### 4. Reddedilen document DLQ'ya düşer
 
+**Soru: Elasticsearch'in reddettiği document nereye gider?**
+
 `bozuk.ndjson`'daki iki olayda `response_time_ms` sayı değil (`"yavas"`, `"zaman asimi"`).
 Elasticsearch ikisini 400 ile reddeder:
 
@@ -325,6 +336,8 @@ Beklenen çıktı:
 yazılan document'lerdir (Adım 3'te kuyruktan gelen 5 olay).
 
 ### 5. DLQ'dan onarıp yeniden yazmak
+
+**Soru: Reddedilen document nasıl geri getirilir?**
 
 `dlq-onarim` DLQ dosyası kapanınca (5 sn) document'leri okur. İki document'in `ops-app`'e geri yazılmasını
 bekleyin:
@@ -364,6 +377,8 @@ Beklenen çıktı:
 | (yok) | `dlq.error_type` | Red sebebi; hangi hatanın ne sıklıkla geldiğini gösterir |
 
 ### 6. Yeniden başlatınca bir şey tekrarlanır mı?
+
+**Soru: Yeniden başlatmada kuyruktaki ya da DLQ'daki olaylar ikinci kez yazılır mı?**
 
 Düzgün bir yeniden başlatmada ne kuyruktaki ne de DLQ'daki olaylar ikinci kez yazılmalı:
 
