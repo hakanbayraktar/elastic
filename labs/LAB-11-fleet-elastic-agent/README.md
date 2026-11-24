@@ -233,7 +233,7 @@ nano .env
 
 ```text
 FLEET_SERVER_SERVICE_TOKEN=AAEAAWVsYXN0aWMvZmxlZXQtc2VydmVyL3Rva2VuLT...
-FLEET_ENROLLMENT_TOKEN=Rk5yN1lKb0JaTE5...
+FLEET_ENROLLMENT_TOKEN=<Enrollment tokens sekmesinden kopyaladığınız değer>
 ```
 
 `Ctrl+O`, Enter ile kaydedin, `Ctrl+X` ile çıkın. Değerleri ekrana basmadan uzunluklarına bakın:
