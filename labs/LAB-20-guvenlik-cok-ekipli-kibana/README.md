@@ -228,7 +228,7 @@ Beklenen çıktı:
 {"kullanici":"gvn_destek","toplam":6,"alanlar":["@timestamp","durum","ekip","konu","talep_id"]}
 ```
 
-Destek kullanıcısı 9 talepten yalnız destek ekibine ait olanları görür ve document'lerde `musteri_email` ile
+Index'te Adım 2'deki form talebiyle birlikte 9 talep var. Destek kullanıcısı yalnız destek ekibine ait olanları görür ve document'lerde `musteri_email` ile
 `telefon` field'ı hiç yoktur. Gizleme sunucuda yapılır; uygulama ya da Kibana bu field'ları isteyemez.
 
 ### 4. Kibana Space ve rolün Kibana yetkisi
