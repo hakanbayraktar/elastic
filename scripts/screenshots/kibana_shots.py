@@ -683,24 +683,6 @@ def lab10(page):
     ])
 
 
-def lab24_izleme(page):
-    """LAB-24 Adim 6: Stack Monitoring (Metricbeat veri toplamis olmali). Isaretli goruntuler LAB-24 klasorune,
-    isaretsiz kopyalar assets/screenshots/sunum/stack-monitoring-*.png olarak yazilir."""
-    lab = "LAB-24"
-    page.goto(BASE + "/app/monitoring", wait_until="domcontentloaded"); settle(page, 12)
-    if page.get_by_text("Create rules", exact=True).count():
-        page.get_by_label("No", exact=True).check(); time.sleep(1)
-        page.get_by_role("button", name="Continue").first.click(); settle(page, 6)
-    shoot(page, lab, "01-izleme-ozet", [(("testsubj", "esOverview"), 1, "right"), (("testsubj", "esNumberOfNodes"), 2, "left")])
-    shoot(page, "sunum", "stack-monitoring-cluster-ozet", [])
-    print("OZET:", page.locator('[data-test-subj="esOverview"]').first.inner_text().replace("\n", " | ")[:300])
-    page.locator('[data-test-subj="esNumberOfNodes"]').first.click(); settle(page, 8)
-    print("NODES url:", page.url.replace(BASE, "")[:80])
-    print("NODES tablo:", page.locator("tbody tr").first.inner_text().replace("\n", " | ")[:300])
-    shoot(page, lab, "02-izleme-nodes", [(("css", "tbody tr >> nth=0"), 3, "left")])
-    shoot(page, "sunum", "stack-monitoring-nodes", [])
-
-
 def lab12_upload(page):
     """LAB-12 Adim 7: Kibana'dan CSV yukleme. Dosya tarayicinin calistigi bilgisayardan secilir."""
     lab = "LAB-12"
@@ -867,7 +849,7 @@ def lab07ek(page):
     shoot(page, lab, "11-pano-dort-panel", [(("css", '[data-test-subj="dashboardPanel"]'), 1, "right")])
 
 FLOWS = {"sunum": sunum, "lab01": lab01, "lab02": lab02, "lab04": lab04, "lab07": lab07, "lab07canli": lab07canli, "lab07runtime": lab07runtime, "lab07ek": lab07ek,
-         "lab10": lab10, "lab12_upload": lab12_upload, "lab24_izleme": lab24_izleme, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
+         "lab10": lab10, "lab12_upload": lab12_upload, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
          "eski_3node": eski_3node}
 
 if __name__ == "__main__":

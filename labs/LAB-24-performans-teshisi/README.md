@@ -11,9 +11,14 @@
 "Arama bazen çok yavaş" şikâyeti geldiğinde cluster genelde green'dir; sorun tek bir sorgudadır. Hangi sorgu,
 hangi uygulamadan, ne kadar sürdü ve süresini nerede harcadı sorularının her biri ayrı bir araçla cevaplanır.
 
-Bu labda 200 bin ürünlük bir index'te slow log ile yavaş sorguyu ve onu gönderen uygulamayı bulacak, Profile API
-ile `must` ve `filter` farkını, joker karakterli sorgunun maliyetini ölçecek ve uzun süren bir sorguyu Tasks API ile
-bulup iptal edeceğiz. Son adımda Stack Monitoring ile cluster'ı sürekli izleyeceğiz.
+Bu labda 200 bin ürünlük bir index'te:
+
+- Slow log ile yavaş sorguyu ve onu gönderen uygulamayı bulacağız.
+- Profile API ile `must` ve `filter` farkını, joker karakterli sorgunun maliyetini ölçeceğiz.
+- Uzun süren bir sorguyu Tasks API ile bulup iptal edeceğiz.
+- Stack Monitoring ile cluster'ı sürekli izleyeceğiz.
+
+Kibana'daki her tıklama kırmızı kutu ve numarayla gösterilir.
 
 ![Yavaş sorgu teşhisi: slow log, Profile API, Tasks](../../assets/infographics/34-performans-teshisi.png)
 
@@ -62,6 +67,8 @@ Bu labdaki `http` blokları **Kibana › Dev Tools**'a, `bash` blokları termina
 
 ### 1. Veri: 200 bin ürün
 
+**Soru: Teşhis için yeterince büyük veri nereden gelir?**
+
 ```bash
 python3 scripts/veri_uret.py
 ```
@@ -76,6 +83,8 @@ Betik sabit tohumla üretir: veri her seferinde aynıdır. Ürün adı (`ad`) he
 index'lenir; neredeyse her ürünün adı farklıdır (yaklaşık 197 bin farklı değer).
 
 ### 2. Slow log: yavaş sorguyu ve gönderen uygulamayı bulmak
+
+**Soru: Hangi sorgu yavaş, onu hangi uygulama gönderdi?**
 
 Eşikleri yalnız bu index'e koyun. Labda her sorgu görünsün diye `trace` eşiği `0ms`; üretimde eşikler
 yüzlerce milisaniye ile saniyeler arasındadır:
@@ -118,6 +127,8 @@ Süre sizde farklıdır; ilk sorgu daha yavaş olabilir ve `INFO` seviyesine ç�
 
 ### 3. Profile API: `must` ile `filter` arasındaki fark
 
+**Soru: Aynı koşul `must` ve `filter` içinde neden farklı maliyetli?**
+
 Aynı iki koşul, önce `must` (puanlanır), sonra `filter` (puanlanmaz) içinde. Profile her alt sorgunun puan
 hesabını kaç kez yaptığını sayar:
 
@@ -143,6 +154,8 @@ Beklenen çıktı:
 fiyat aralığı, tarih) `filter`'a yazılır.
 
 ### 4. Joker karakterli sorgunun maliyeti
+
+**Soru: Başında joker karakter olan sorgu neden pahalıdır?**
 
 Aynı soruyu üç biçimde, üçer kez soruyoruz: kelime araması (`match`), başı bilinen değer (`prefix`) ve başında
 joker karakter olan değer (`wildcard`). Süreyi Profile API'den okuyoruz: profile sorgu önbelleğini kullanmaz, her
@@ -179,6 +192,8 @@ gerekiyorsa `match` (analiz edilmiş `text` field'ı) kullanılır; gerçek "iç
 `wildcard` field tipi ya da n-gram analyzer tasarlanır. Süreler sizde farklıdır, sıralama aynı kalır.
 
 ### 5. Tasks API: çalışan sorguyu bulup iptal etmek
+
+**Soru: Şu an çalışan ağır bir sorgu nasıl bulunur ve durdurulur?**
 
 `scripts/agir-sorgu.json` her document için ağır bir hesap yapan, yarım dakika kadar süren bir sorgu. Bir rapor
 servisinin unuttuğu bir sorgu gibi arka planda başlatın, Tasks API'de `X-Opaque-Id`'siyle bulun ve iptal edin:
@@ -219,6 +234,8 @@ zorlaşırdı.
 
 ### 6. Sürekli izleme: Stack Monitoring
 
+**Soru: Node'ların CPU, heap ve disk durumu zaman içinde nasıl izlenir?**
+
 Slow log, Profile ve Tasks sorun olduktan sonra teşhis içindir. Cluster'ın sağlığını, node'ların CPU ve heap'ini
 sürekli görmek için Kibana'nın **Stack Monitoring** uygulaması vardır. Elasticsearch 8'den beri cluster bu veriyi
 kendisi toplamaz; **Metricbeat** (ya da Elastic Agent) `elasticsearch` modülüyle toplar ve izleme index'ine yazar.
@@ -248,21 +265,27 @@ Beklenen çıktı:
 Noktaların sayısı sizde farklıdır. Veri `.monitoring-es-8-mb` data stream'ine yazılır; adı noktayla başladığı için
 Kibana'nın "gizli sistem index'i" kabul ettiği bir index'tir.
 
-Kibana menüsünden **Stack Monitoring**'i açın (ya da `/app/monitoring`). İlk açılışta "Create rules" sorusu gelir;
-alarmları LAB-18'de kuruyoruz, burada **No** deyip **Continue**'ya basın. **Cluster overview** sayfasında
-Elasticsearch kutusunun **Overview** bölümü (1) cluster'ın durumunu, sürümünü ve lisansını, **Nodes** (2) node
-sayısını gösterir:
+1. Sol üstteki menü düğmesine (1) tıklayın, **Management** altında **Stack Monitoring**'i (2) seçin:
 
-![Stack Monitoring: 1 Elasticsearch Overview, 2 Nodes](../../assets/screenshots/LAB-24/01-izleme-ozet.png)
+   ![Menü: 1 menü düğmesi, 2 Stack Monitoring](../../assets/screenshots/LAB-24/06a-menu-stack-monitoring.png)
 
+2. İlk açılışta hazır alarm kuralları önerilir; alarmları LAB-18'de kuruyoruz. **No** (1) seçip **Continue**'ya (2)
+   basın (pencere gelmezse bu adımı atlayın):
 
-**Nodes** bağlantısına tıklayın. Üstteki şerit cluster'ın özetini (Status, Nodes, Indices, JVM Heap, Total shards,
-Unassigned shards, Documents, Data) verir; altındaki listede (3) her node'un adı ve adresi, durumu (**Online**), rolleri,
+   ![Create rules: 1 No, 2 Continue](../../assets/screenshots/LAB-24/06b-create-rules.png)
+
+3. **Cluster overview** sayfasında Elasticsearch kutusunun **Overview** bölümü (1) cluster'ın durumunu, sürümünü ve
+   lisansını, **Nodes** (2) node sayısını gösterir. **Nodes**'a tıklayın:
+
+   ![Stack Monitoring: 1 Elasticsearch Overview, 2 Nodes](../../assets/screenshots/LAB-24/06c-izleme-ozet.png)
+
+Üstteki şerit cluster'ın özetini (Status, Nodes, Indices, JVM Heap, Total shards,
+Unassigned shards, Documents, Data) verir; altındaki listede (1) her node'un adı ve adresi, durumu (**Online**), rolleri,
 shard sayısı, **CPU Usage**, **JVM Heap** ve **Disk Free Space** değerleri yan yana durur. Bu Docker kurulumunda
 **CPU Usage** `N/A` görünür: container'ın CPU bilgisini Elasticsearch okuyamıyor. Node adına tıklarsanız o node'un
 grafikleri açılır; slow log "hangi sorgu" sorusunu, bu ekran "hangi node, ne zaman" sorusunu cevaplar:
 
-![Nodes: 3 node satırı, CPU, yük, JVM heap ve disk](../../assets/screenshots/LAB-24/02-izleme-nodes.png)
+![Nodes: 1 node listesi; CPU, JVM heap ve disk](../../assets/screenshots/LAB-24/06d-izleme-nodes.png)
 
 
 Cluster'da yerleşemeyen bir replica varsa **Health** `Missing replica shards` (yellow) gösterir; Nodes sayfasındaki
