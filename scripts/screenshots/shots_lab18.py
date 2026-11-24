@@ -194,7 +194,9 @@ def baglayici_arayuz(page):
     olustur = page.get_by_role("button", name="Create connector").first
     shot(page, "03b-create-connector", [(isaretle(olustur, "cc"), 1, "left")])
     olustur.click(); time.sleep(3)
-    shot(page, "03c-index-turu", [(("css", '[data-test-subj=".index-card"]'), 1, "right")])
+    ara = page.locator('.euiFlyout input[type="search"], .euiFlyout [placeholder*="Search"]').first
+    ara.fill("Index"); time.sleep(1.5)
+    shot(page, "03c-index-turu", [(isaretle(ara, "ctara"), 1, "up"), (("css", '[data-test-subj=".index-card"]'), 2, "left")])
     page.locator('[data-test-subj=".index-card"]').first.click(); time.sleep(3)
     page.locator('[data-test-subj="nameInput"]').fill("alarm-gecmisi-yaz")
     page.locator('[data-test-subj="connectorIdInput"]').fill("alarm-gecmisi-yaz")

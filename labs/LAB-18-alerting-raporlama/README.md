@@ -170,9 +170,9 @@ POST kbn:/api/actions/connector/alarm-gecmisi-yaz
 
    ![Connectors: 1 Create connector](../../assets/screenshots/LAB-18/03b-create-connector.png)
 
-3. Connector türlerinden **Index** (1):
+3. Arama kutusuna (1) `Index` yazın, **Index** (2) kartını seçin:
 
-   ![Connector türü: 1 Index](../../assets/screenshots/LAB-18/03c-index-turu.png)
+   ![Connector türü: 1 arama, 2 Index](../../assets/screenshots/LAB-18/03c-index-turu.png)
 
 4. **Connector name** (1) `alarm-gecmisi-yaz`, **Connector ID** (2) `alarm-gecmisi-yaz`; **Index** (3) kutusuna
    `alarm-gecmisi` yazıp listeden seçin. **Save** (4):
@@ -469,7 +469,7 @@ Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adr
 
    ![Connector türü: 2 Slack](../../assets/screenshots/LAB-18/13a-connector-select-slack.png)
 
-3. **Webhook** sekmesinde **Connector name** (3) `apache-slack-alerts`, **Webhook URL** (4) Slack'ten kopyaladığınız
+3. **Webhook** sekmesinde **Connector name** (3) `alarm-slack`, **Webhook URL** (4) Slack'ten kopyaladığınız
    adres, **Save** (5):
 
    ![Slack connector: 3 Connector name, 4 Webhook URL, 5 Save](../../assets/screenshots/LAB-18/13-connector-create-slack.png)
@@ -484,7 +484,7 @@ Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adr
 
    | No | Alan | Değer |
    |---|---|---|
-   | 2 | Connector name | `apache-email-resend` |
+   | 2 | Connector name | `alarm-eposta` |
    | 3 | Sender | `onboarding@resend.dev` |
    | 4 | Service | `Other` |
    | 5 | Host / Port | `smtp.resend.com` / `587` |
@@ -509,8 +509,9 @@ Kurala ikinci bir action olarak eklenir; mesajda aynı değişkenler kullanılı
 
 ## Temizlik
 
-Yalnız bu labın kuralını, connector'ını, `alarm-apache` ve `alarm-gecmisi` index'lerini, şablonunu, data
-view'ını, haritasını ve panosunu siler; ana cluster'a dokunmaz. Reporting listesindeki rapor Kibana'nın kendi kaydıdır
+Yalnız bu labın kuralını (arayüzden kurulduysa adıyla bulunur), connector'larını (`alarm-gecmisi-yaz`; kurduysanız
+`alarm-slack` ve `alarm-eposta`), `alarm-apache` ve `alarm-gecmisi` index'lerini, şablonunu, data view'ını, haritasını
+ve panosunu siler; ana cluster'a dokunmaz. Reporting listesindeki rapor Kibana'nın kendi kaydıdır
 ve kalır:
 
 ```bash
