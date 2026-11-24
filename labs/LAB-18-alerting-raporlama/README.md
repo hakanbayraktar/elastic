@@ -156,14 +156,40 @@ POST kbn:/api/actions/connector/alarm-gecmisi-yaz
 {"id":"alarm-gecmisi-yaz","name":"alarm-gecmisi-yaz","config":{"index":"alarm-gecmisi","refresh":true,"executionTimeField":null},"connector_type_id":".index", ...}
 ```
 
-Arayüzde aynı yer **Stack Management › Connectors › Create connector › Index**'tir.
+<details>
+<summary><strong>Dev Tools yerine arayüzden yapmak isterseniz</strong></summary>
+
+**İkisinden birini yapın:** Dev Tools isteğini çalıştırdıysanız connector zaten var, bu kutuyu atlayın.
+**Connector ID** mutlaka `alarm-gecmisi-yaz` olmalı: Adım 4'teki kural connector'ı bu kimlikle bulur.
+
+1. Menüden **Management › Stack Management**'ı açın, soldaki listede **Connectors**'a (1) tıklayın:
+
+   ![Stack Management: 1 Connectors](../../assets/screenshots/LAB-18/03a-connectors-menu.png)
+
+2. **Create connector** (1):
+
+   ![Connectors: 1 Create connector](../../assets/screenshots/LAB-18/03b-create-connector.png)
+
+3. Connector türlerinden **Index** (1):
+
+   ![Connector türü: 1 Index](../../assets/screenshots/LAB-18/03c-index-turu.png)
+
+4. **Connector name** (1) `alarm-gecmisi-yaz`, **Connector ID** (2) `alarm-gecmisi-yaz`; **Index** (3) kutusuna
+   `alarm-gecmisi` yazıp listeden seçin. **Save** (4):
+
+   ![Index connector: 1 ad, 2 ID, 3 index, 4 Save](../../assets/screenshots/LAB-18/03d-index-connector.png)
+
+Arayüz formunda `refresh` seçeneği yoktur: alarm document'i yaklaşık bir saniye sonra aramaya girer, Adım 5'in
+sonucu değişmez.
+
+</details>
 
 ### 4. Kural: 5 dakikada 10'dan fazla 5xx
 
 **Soru: Kibana "çok fazla hata var" kararını nasıl verir?**
 
 Kuralı Kibana › Dev Tools'tan kuruyoruz: tek istek her seferinde aynı kuralı kurar ve alanları tek bakışta gösterir.
-Arayüzdeki **Create rule** formu aynı alanları doldurur; formun nerede olduğu bu adımın sonundaki açılır kutudadır:
+Arayüzden kurmak isterseniz adımlar bu adımın sonundaki açılır kutudadır:
 
 ```http
 POST kbn:/api/alerting/rule/alarm-5xx
@@ -191,30 +217,66 @@ POST kbn:/api/alerting/rule/alarm-5xx
   vermez, boş gelir.
 
 <details>
-<summary><strong>Aynı kural arayüzde nerede görünür?</strong></summary>
+<summary><strong>Dev Tools yerine arayüzden kurmak isterseniz</strong></summary>
 
-Kuralı Dev Tools'la kurduk; arayüzden kurarken doldurulan alanlar aynıdır. Kuralın formunu açmak için:
+**İkisinden birini yapın:** Dev Tools isteğini çalıştırdıysanız kural zaten var, bu kutuyu atlayın. Arayüz kuralın
+kimliğini kendisi üretir; Adım 5'teki kapanma komutu `alarm-5xx` kimliğini kullanır. Arayüzden kurduysanız o komut
+yerine kural sayfasındaki **Active now** sayısının 1'den 0'a düşmesini izleyin.
 
-1. Menü, **Stack Management**, soldaki listede **Alerts and Insights** altında **Rules** (1):
+1. Menüden **Management › Stack Management**'ı açın, **Alerts and Insights** altında **Rules**'a (1) tıklayın:
 
-![Stack Management: 1 Rules](../../assets/screenshots/LAB-18/04a-rules-menu.png)
+   ![Stack Management: 1 Rules](../../assets/screenshots/LAB-18/04f-rules-menu.png)
 
-2. **Ödeme 5xx patlaması** (1):
+2. **Create rule** (1):
 
-![Rules: 1 kural](../../assets/screenshots/LAB-18/04b-rules-listesi.png)
+   ![Rules: 1 Create rule](../../assets/screenshots/LAB-18/04g-create-rule.png)
 
-3. Sağ üstteki **⋮** düğmesi (1), **Edit rule** (2):
+3. Arama kutusuna (1) `Elasticsearch query` yazın, **Elasticsearch query** (2) türünü seçin:
 
-![Kural: 1 menü, 2 Edit rule](../../assets/screenshots/LAB-18/04c-edit.png)
+   ![Kural türü: 1 arama, 2 Elasticsearch query](../../assets/screenshots/LAB-18/04h-kural-turu.png)
 
-4. Formda kural türü **Elasticsearch query** (1), index `alarm-apache` (2) ve eşik **IS ABOVE 10** (3) görünür:
+4. Sorgu biçimi olarak **Query DSL** (1):
 
-![Kural formu: 1 kural türü, 2 index, 3 eşik](../../assets/screenshots/LAB-18/04d-kural-formu.png)
+   ![Sorgu biçimi: 1 Query DSL](../../assets/screenshots/LAB-18/04i-query-dsl.png)
 
-5. Aşağıda **Actions** bölümünde connector `alarm-gecmisi-yaz` (1) ve document'e yazılan mesaj vardır. Değişiklik
-   yapmadan **Cancel** ile çıkın:
+5. **INDEX** ifadesine tıklayın. **Indices to query** (1) kutusuna `alarm-apache` yazıp listeden seçin, **Time
+   field** (2) `@timestamp`; pencereyi **X** ile kapatın:
 
-![Kural formu: 1 aksiyon ve connector](../../assets/screenshots/LAB-18/04e-kural-aksiyon.png)
+   ![Index penceresi: 1 index, 2 zaman field'ı](../../assets/screenshots/LAB-18/04j-index-zaman.png)
+
+6. Sorgu kutusundaki örneği silip (1) `{"query":{"term":{"http.response.status_class":"5xx"}}}` yazın. **IS ABOVE**
+   ifadesine (2) tıklayıp **Is above** ve `10` seçin; **FOR THE LAST** ifadesine (3) tıklayıp `5` **minutes**:
+
+   ![Sorgu ve eşik: 1 sorgu, 2 IS ABOVE 10, 3 son 5 dakika](../../assets/screenshots/LAB-18/04k-sorgu-esik.png)
+
+7. **Rule schedule**'da **Every** (1) `1` **minute**:
+
+   ![Rule schedule: 1 her 1 dakika](../../assets/screenshots/LAB-18/04l-zamanlama.png)
+
+8. **Actions** bölümünde **Add action** (1):
+
+   ![Actions: 1 Add action](../../assets/screenshots/LAB-18/04m-add-action.png)
+
+9. Açılan pencerede **alarm-gecmisi-yaz** (1):
+
+   ![Select connector: 1 alarm-gecmisi-yaz](../../assets/screenshots/LAB-18/04n-connector-sec.png)
+
+10. **Run when** (1) `Query matched`, **Action frequency** (2) `On status changes` kalsın (alarm açıldığında bir kez
+    yazar). **Document to index** (3) kutusuna yazın:
+
+    ```json
+    {"kural": "{{rule.name}}", "adet": "{{context.value}}", "kosul": "{{context.conditions}}", "zaman": "{{context.date}}"}
+    ```
+
+    ![Aksiyon: 1 Run when, 2 Action frequency, 3 document](../../assets/screenshots/LAB-18/04o-aksiyon.png)
+
+11. **Details** altında **Rule name** (1) `Ödeme 5xx patlaması`:
+
+    ![Details: 1 Rule name](../../assets/screenshots/LAB-18/04p-ad.png)
+
+12. Sayfanın altındaki **Create rule** (1):
+
+    ![Kural formu: 1 Create rule](../../assets/screenshots/LAB-18/04q-kaydet.png)
 
 </details>
 

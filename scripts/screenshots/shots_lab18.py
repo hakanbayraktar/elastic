@@ -95,34 +95,7 @@ def harita(page):
 
 
 # ------------------------------------------------------------------ Adim 4 kutusu: kural formu (API ile kurulan kural)
-def kural(page):
-    yonetim(page, "triggersActions", "04a-rules-menu")
-    satir = 'a:has-text("Ödeme 5xx patlaması"), button:has-text("Ödeme 5xx patlaması")'
-    shot(page, "04b-rules-listesi", [(("css", satir), 1, "right")])
-    page.locator(satir).first.click(); k.settle(page, 6)
-    ipucu(page, ["edit", "rule"])
-    page.locator('[data-test-subj="ruleActionsButton"]').first.click(); time.sleep(1.5)   # sag ustteki ... menusu
-    shot(page, "04c-edit", [(("testsubj", "ruleActionsButton"), 1, "left"), (("testsubj", "openEditRuleFlyoutButton"), 2, "left")])
-    page.locator('[data-test-subj="openEditRuleFlyoutButton"]').first.click(); k.settle(page, 8)
-    marks = []
-    for hedef, no, ok in ((("text", "Elasticsearch query", False), 1, "right"),
-                          (("text", "alarm-apache", False), 2, "right"),
-                          (("css", 'button:has-text("is above"), button:has-text("IS ABOVE")'), 3, "right"),
-                          (("css", 'button:has-text("for the last"), button:has-text("FOR THE LAST")'), 4, "right")):
-        try:
-            k.box_of(page, hedef); marks.append((hedef, no, ok))
-        except Exception as e:
-            print("isaret yok:", hedef, str(e)[:80])
-    shot(page, "04d-kural-formu", marks, scroll_to=marks[0][0] if marks else None)
-    shot(page, "04e-kural-aksiyon", [(("text", "alarm-gecmisi-yaz", False), 1, "right")], scroll_to=("text", "alarm-gecmisi-yaz", False))
-    for t in ("Cancel", "Discard changes"):
-        try:
-            page.get_by_role("button", name=t, exact=True).last.click(timeout=1500); time.sleep(1)
-        except Exception:
-            pass
 
-
-# ------------------------------------------------------------------ Adim 5: aktif alarm
 def aktif(page):
     yonetim(page, "triggersActions")
     satir = 'a:has-text("Ödeme 5xx patlaması"), button:has-text("Ödeme 5xx patlaması")'
@@ -209,13 +182,124 @@ def pdf(page):
     shot(page, "06l-reporting-pdf", [(("css", satir), 1, "left")])
 
 
+def isaretle(loc, ad):
+    loc.evaluate(f"e => e.setAttribute('data-isaret', '{ad}')")
+    return ("css", f'[data-isaret="{ad}"]')
+
+
+# ------------------------------------------------------------------ Adim 3 kutusu: Index connector arayuzde
+def baglayici_arayuz(page):
+    """Form doldurulur, KAYDEDILMEZ (connector Dev Tools ile zaten var; sunucuda hicbir sey silinmez/degismez)."""
+    yonetim(page, "triggersActionsConnectors", "03a-connectors-menu")
+    olustur = page.get_by_role("button", name="Create connector").first
+    shot(page, "03b-create-connector", [(isaretle(olustur, "cc"), 1, "left")])
+    olustur.click(); time.sleep(3)
+    shot(page, "03c-index-turu", [(("css", '[data-test-subj=".index-card"]'), 1, "right")])
+    page.locator('[data-test-subj=".index-card"]').first.click(); time.sleep(3)
+    page.locator('[data-test-subj="nameInput"]').fill("alarm-gecmisi-yaz")
+    page.locator('[data-test-subj="connectorIdInput"]').fill("alarm-gecmisi-yaz")
+    page.locator('[data-test-subj="connectorIndexesComboBox"] input').first.click()
+    page.keyboard.type("alarm-gecmisi"); time.sleep(2)
+    page.locator('[role="option"]').filter(has_text="alarm-gecmisi").first.click(); time.sleep(2)
+    # Connector Dev Tools ile zaten kurulu: id cakisma uyarisi bu cift kurulumdan gelir; arayuz yolunu secen gormez
+    page.evaluate("""() => { const row = document.querySelector('[data-test-subj="connectorIdInput"]').closest('.euiFormRow');
+        row.querySelectorAll('.euiFormErrorText, .euiFormControlLayoutIcons').forEach(e => e.style.display = 'none');
+        row.querySelectorAll('.euiFormLabel').forEach(e => { e.classList.remove('euiFormLabel-isInvalid'); e.style.color = 'inherit'; });
+        const i = row.querySelector('input'); i.removeAttribute('aria-invalid'); i.style.backgroundImage = 'none'; i.style.boxShadow = 'none'; }""")
+    shot(page, "03d-index-connector", [(("testsubj", "nameInput"), 1, "left"), (("testsubj", "connectorIdInput"), 2, "left"),
+                                       (("testsubj", "connectorIndexesComboBox"), 3, "left"),
+                                       (("testsubj", "create-connector-flyout-save-btn"), 4, "up")])
+    page.keyboard.press("Escape"); time.sleep(1)
+    print("connector formu kapatildi (kaydedilmedi)")
+
+
+# ------------------------------------------------------------------ Adim 4 kutusu: kurali arayuzde kurmak
+def kural_arayuz(page):
+    """Form doldurulur, KAYDEDILMEZ (kural Dev Tools ile zaten var)."""
+    yonetim(page, "triggersActions", "04f-rules-menu")
+    shot(page, "04g-create-rule", [(("testsubj", "createRuleButton"), 1, "left")])
+    page.locator('[data-test-subj="createRuleButton"]').first.click(); time.sleep(4)
+    page.locator('[data-test-subj="ruleTypeModalSearch"]').first.fill("Elasticsearch query"); time.sleep(2)
+    shot(page, "04h-kural-turu", [(("testsubj", "ruleTypeModalSearch"), 1, "left"), (("testsubj", ".es-query-SelectOption"), 2, "left")])
+    page.locator('[data-test-subj=".es-query-SelectOption"]').first.click(); k.settle(page, 8)
+    shot(page, "04i-query-dsl", [(("testsubj", "queryFormType_esQuery"), 1, "left")])
+    page.locator('[data-test-subj="queryFormType_esQuery"]').first.click(); time.sleep(3)
+    page.locator('[data-test-subj="selectIndexExpression"]').first.click(); time.sleep(2)
+    page.locator('[data-test-subj="thresholdIndexesComboBox"] input').first.click()
+    page.keyboard.type("alarm-apache"); time.sleep(3)
+    page.locator('[role="option"]').filter(has_text="alarm-apache").first.click(); time.sleep(3)
+    zs = page.locator('[data-test-subj="thresholdAlertTimeFieldSelect"]').first
+    zs.select_option(value="@timestamp"); time.sleep(1)
+    shot(page, "04j-index-zaman", [(("testsubj", "thresholdIndexesComboBox"), 1, "left"), (("testsubj", "thresholdAlertTimeFieldSelect"), 2, "left")])
+    page.locator('[data-test-subj="closePopover"]').first.click(); time.sleep(1)
+    ed = page.locator('[data-test-subj="queryJsonEditor"] .monaco-editor').first
+    ed.click(); page.keyboard.press("Meta+A"); page.keyboard.press("Backspace")
+    page.keyboard.type('{"query":{"term":{"http.response.status_class":"5xx"', delay=5); time.sleep(1)
+    print("sorgu:", page.locator('[data-test-subj="queryJsonEditor"] .view-lines').first.inner_text().replace("\n", " "))
+    page.locator('[data-test-subj="thresholdPopover"]').first.click(); time.sleep(1.5)
+    pop = page.locator('.euiPopover__panel').last
+    print("esik popover:", pop.inner_text()[:120].replace("\n", " | "))
+    sec = pop.locator("select").first
+    if sec.count():
+        sec.select_option(label="Is above")
+    pop.locator('input[type="number"]').first.fill("10"); time.sleep(0.5)
+    page.keyboard.press("Escape"); time.sleep(0.5)
+    page.locator('[data-test-subj="forLastExpression"]').first.click(); time.sleep(1.5)
+    pop = page.locator('.euiPopover__panel').last
+    pop.locator('input[type="number"]').first.fill("5")
+    s2 = pop.locator("select").first
+    if s2.count():
+        s2.select_option(label="minutes")
+    page.keyboard.press("Escape"); time.sleep(0.5)
+    page.locator('[data-test-subj="queryJsonEditor"]').first.evaluate("e => e.scrollIntoView({block: 'start'})"); time.sleep(1)
+    shot(page, "04k-sorgu-esik", [(("testsubj", "queryJsonEditor"), 1, "left"), (("testsubj", "thresholdPopover"), 2, "left"),
+                                  (("testsubj", "forLastExpression"), 3, "left")], scroll_to=("testsubj", "queryJsonEditor"))
+    page.locator('[data-test-subj="ruleScheduleNumberInput"]').first.fill("1")
+    page.locator('[data-test-subj="ruleScheduleUnitInput"]').first.select_option("m"); time.sleep(0.5)
+    page.locator('[data-test-subj="ruleScheduleNumberInput"]').first.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    shot(page, "04l-zamanlama", [(("testsubj", "ruleScheduleNumberInput"), 1, "left")], scroll_to=("testsubj", "ruleScheduleNumberInput"))
+    page.locator('[data-test-subj="ruleActionsAddActionButton"]').first.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    shot(page, "04m-add-action", [(("testsubj", "ruleActionsAddActionButton"), 1, "left")], scroll_to=("testsubj", "ruleActionsAddActionButton"))
+    page.locator('[data-test-subj="ruleActionsAddActionButton"]').first.click(); time.sleep(3)
+    print("aksiyon penceresi:", page.locator('[role="dialog"]').last.inner_text()[:200].replace("\n", " | "))
+    bag = page.locator('[role="dialog"]').last.get_by_text("alarm-gecmisi-yaz", exact=True).first
+    shot(page, "04n-connector-sec", [(isaretle(bag, "bag"), 1, "left")])
+    bag.click(); time.sleep(3)
+    print("aksiyon formu:", page.locator('[data-test-subj="ruleActions"]').first.inner_text()[:300].replace("\n", " | "))
+    ed = page.locator('[data-test-subj="ruleActions"] .monaco-editor').first
+    ed.click(); time.sleep(0.5)
+    page.keyboard.type('{"kural": "{{rule.name}}", "adet": "{{context.value}}", "kosul": "{{context.conditions}}", "zaman": "{{context.date}}"', delay=5)
+    time.sleep(1)
+    print("document:", page.locator('[data-test-subj="ruleActions"] .monaco-editor .view-lines').first.inner_text().replace("\n", " "))
+    ne_zaman = page.locator('[data-test-subj="ruleActions"] .euiFormRow:has(label:text-is("Run when"))').first
+    siklik = page.locator('[data-test-subj="ruleActions"] .euiFormRow:has(label:text-is("Action frequency"))').first
+    print("satirlar:", ne_zaman.count(), siklik.count())
+    page.locator('[data-test-subj="ruleActions"]').first.evaluate("e => e.scrollIntoView({block: 'start'})"); time.sleep(1)
+    shot(page, "04o-aksiyon", [(isaretle(ne_zaman, "nezaman"), 1, "left"), (isaretle(siklik, "siklik"), 2, "down"),
+                               (isaretle(ed, "doc"), 3, "left")], scroll_to=("testsubj", "ruleActions"))
+    ad = page.locator('[data-test-subj="ruleDetailsNameInput"]').first
+    ad.fill("Ödeme 5xx patlaması"); ad.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    shot(page, "04p-ad", [(("testsubj", "ruleDetailsNameInput"), 1, "left")], scroll_to=("testsubj", "ruleDetailsNameInput"))
+    kb = page.locator('[data-test-subj="rulePageFooterSaveButton"]').first
+    kb.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    print("kaydet dugmesi:", kb.inner_text())
+    shot(page, "04q-kaydet", [(("testsubj", "rulePageFooterSaveButton"), 1, "up")], scroll_to=("testsubj", "rulePageFooterSaveButton"))
+    page.locator('[data-test-subj="rulePageFooterCancelButton"]').first.click(); time.sleep(2)
+    try:
+        page.locator('[data-test-subj="confirmModalConfirmButton"]').first.click(timeout=3000)
+    except Exception:
+        pass
+    print("kural formu kapatildi (kaydedilmedi)")
+
+
 if __name__ == "__main__":
     with sync_playwright() as pw:
         br = pw.chromium.launch(channel="chrome")
         page = br.new_page(viewport={"width": 1600, "height": 900}, device_scale_factor=k.SCALE)
         k.login(page)
         for parca in sys.argv[1:]:
-            {"harita": harita, "kural": kural, "aktif": aktif, "rapor": rapor, "pdf": pdf}[parca](page)
+            {"harita": harita, "aktif": aktif, "rapor": rapor, "pdf": pdf,
+             "baglayici_arayuz": baglayici_arayuz, "kural_arayuz": kural_arayuz}[parca](page)
         br.close()
     print("HATALI GORUNTU:", HATA if HATA else "yok")
     sys.exit(1 if HATA else 0)
