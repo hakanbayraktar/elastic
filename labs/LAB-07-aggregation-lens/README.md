@@ -390,11 +390,15 @@ POST kbn:/api/data_views/data_view
 ```
 
 1. Discover'da `Canlı siparişler` data view'ı, zaman aralığı **Last 15 minutes** (1)
-2. Zaman kutusunu yeniden açın: **Settings** (2) → **Refresh every** anahtarı (3), değer `10 seconds`
+2. Zaman kutusunu yeniden açın, menünün altındaki dişli simgesine tıklayın (**Settings**, 2). Düğmenin yazısı yoktur:
 
-![Otomatik yenileme: 2 Settings, 3 Refresh every anahtarı](../../assets/screenshots/LAB-07/06a-canli-ayar.png)
+![Zaman menüsü: 2 Settings (dişli simgesi)](../../assets/screenshots/LAB-07/06a0-canli-settings.png)
 
-3. Histogram (4) her 10 saniyede yenilenir, sağ uçtaki çubuk büyür:
+3. **Refresh every** anahtarını açın (3), değer `10 seconds`:
+
+![Otomatik yenileme: 3 Refresh every anahtarı](../../assets/screenshots/LAB-07/06a-canli-ayar.png)
+
+4. Histogram (4) her 10 saniyede yenilenir, sağ uçtaki çubuk büyür:
 
 ![Canlı izleme: 1 Last 15 minutes, 4 dakikalık histogram](../../assets/screenshots/LAB-07/06-canli-discover.png)
 

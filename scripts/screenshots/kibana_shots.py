@@ -623,6 +623,10 @@ def lab07canli(page):
     page.locator('[data-test-subj="dateRangePickerControlButton"]').first.click(); time.sleep(1.5)
     page.locator('[data-test-subj="dateRangePickerPresetItem-Last_15_minutes"]').first.click(); settle(page, 4)
     page.locator('[data-test-subj="dateRangePickerControlButton"]').first.click(); time.sleep(1.5)
+    # Settings dugmesinin yazisi yok, yalniz disli simgesi: once onu kirmizi kutuyla gosteriyoruz.
+    shoot(page, lab, "06a0-canli-settings", [
+        (("testsubj", "dateRangePickerSettingsButton"), 2, "left"),
+    ])
     page.locator('[data-test-subj="dateRangePickerSettingsButton"]').first.click(); time.sleep(1.5)
     tg = page.locator('[data-test-subj="dateRangePickerAutoRefreshToggle"]').first
     if tg.get_attribute("aria-checked") != "true": tg.click(); time.sleep(1)
@@ -634,7 +638,6 @@ def lab07canli(page):
     time.sleep(1)
     print("auto refresh:", tg.get_attribute("aria-checked"))
     shoot(page, lab, "06a-canli-ayar", [
-        (("testsubj", "dateRangePickerSettingsPanel"), 2, "right"),
         (("testsubj", "dateRangePickerAutoRefreshToggle"), 3, "left"),
     ])
     page.keyboard.press("Escape"); settle(page, 12)
