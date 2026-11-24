@@ -275,11 +275,19 @@ def nginx(page):
                                   (("css", 'xpath=(//*[@data-test-subj="PackagePolicy.InputStreamConfig.Switch"])[2]'), 2, "left")],
          scroll_to=("testsubj", "packagePolicyNameInput"))
     page.locator('[data-test-subj="existingHostsTab"]').click(); time.sleep(3)
-    page.locator('[data-test-subj="agentPolicyMultiSelect"] [data-test-subj="comboBoxSearchInput"]').first.click(); time.sleep(2)
+    # Kibana uygun politika sayisina gore coklu (agentPolicyMultiSelect) ya da tekli (agentPolicySelect) kutu cizer
+    coklu = page.locator('[data-test-subj="agentPolicyMultiSelect"]').count() > 0
+    secici = "agentPolicyMultiSelect" if coklu else "agentPolicySelect"
+    if coklu:
+        page.locator('[data-test-subj="agentPolicyMultiSelect"] [data-test-subj="comboBoxSearchInput"]').first.click(); time.sleep(2)
+    else:
+        page.locator('[data-test-subj="agentPolicySelect"]').first.click(); time.sleep(2)
     page.get_by_role("option", name=POLITIKA).first.click(); time.sleep(2)
-    page.keyboard.press("Escape"); time.sleep(1)
-    shot(page, "06e-nginx-politika", [(("testsubj", "existingHostsTab"), 1, "up"), (("testsubj", "agentPolicyMultiSelect"), 2, "left"),
-                                      (("testsubj", "createPackagePolicySaveButton"), 3, "up")], scroll_to=("testsubj", "agentPolicyMultiSelect"))
+    if coklu:
+        page.keyboard.press("Escape"); time.sleep(1)
+    print("politika kutusu:", secici)
+    shot(page, "06e-nginx-politika", [(("testsubj", "existingHostsTab"), 1, "up"), (("testsubj", secici), 2, "left"),
+                                      (("testsubj", "createPackagePolicySaveButton"), 3, "up")], scroll_to=("testsubj", secici))
     page.locator('[data-test-subj="createPackagePolicySaveButton"]').click(); time.sleep(4)
     shot(page, "06f-nginx-onay", [(("testsubj", "confirmModalConfirmButton"), 1, "down")])
     onayla(page)

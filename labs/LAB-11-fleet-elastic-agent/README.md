@@ -133,6 +133,8 @@ enrollment token       : alindi
 
 ![Edit output: 1 Hosts, 2 Save and apply settings](../../assets/screenshots/LAB-11/01c-output-hosts.png)
 
+Labı daha önce yaptıysanız adres zaten `http://elasticsearch-lab00:9200`'dür ve düğme pasif kalır: değişiklik yok demektir, pencereyi **Cancel** ile kapatıp 1.3'e geçin.
+
 Onay penceresi çıkarsa **Save and deploy** (1):
 
 ![Onay: 1 Save and deploy](../../assets/screenshots/LAB-11/01d-output-onay.png)
@@ -289,10 +291,10 @@ Satırların sırası sizde farklı olabilir.
 ```bash
 docker ps --format '{{.Names}}  {{.Status}}' | grep -E 'fleet-server-lab|agent-fleet-lab'
 docker inspect -f '{{.Name}} restart={{.RestartCount}}' fleet-server-lab agent-fleet-lab
-docker logs fleet-server-lab 2>&1 | grep -oE 'security_exception: unable to authenticate|timed out waiting for Fleet Server to start' | sort -u
+docker logs fleet-server-lab 2>&1 | grep -oE 'security_exception: unable to authenticate|timed out waiting for Fleet Server to start' | sort -u | grep . || echo "hata yok"
 ```
 
-Sağlıklı durumda iki `restart` de 0'dır ve son komut hiçbir satır basmaz. Sorunlu durumda `fleet-server-lab` birkaç saniyedir açıktır (`Up 11 seconds`), ajan ise dakikalardır; `restart`
+Sağlıklı durumda iki `restart` de 0'dır ve son satır `hata yok` yazar. Sorunlu durumda `fleet-server-lab` birkaç saniyedir açıktır (`Up 11 seconds`), ajan ise dakikalardır; `restart`
 sayısı 0'dan büyüktür ve log'da iki ifade görünür:
 
 ```text
@@ -311,6 +313,7 @@ timed out waiting for Fleet Server to start
 
 **2. Çözüm: yeni service token'ı doğrudan `.env`'ye yazın.** Değer ekrana basılmaz, kopyalama hatası olmaz:
 
+<!-- runner:skip -->
 ```bash
 T=$(curl -s -u elastic:'DevOps2026!' -H 'kbn-xsrf: true' -X POST http://127.0.0.1:5601/api/fleet/service_tokens | jq -r .value)
 sed -i "s|^FLEET_SERVER_SERVICE_TOKEN=.*|FLEET_SERVER_SERVICE_TOKEN=$T|" .env
@@ -456,7 +459,7 @@ Beklenen çıktı:
 ```bash
 POL=$(curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agent_policies?perPage=50' | jq -r '.items[] | select(.name == "Lab Linux sunucu") | .id')
 curl -s -u elastic:'DevOps2026!' "http://127.0.0.1:5601/api/fleet/agent_policies/$POL" | jq '.item.revision'
-timeout 120 bash -c "until [ \"\$(curl -s -u 'elastic:DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq '[.items[] | select(.policy_id == \"$POL\") | .policy_revision][0]')\" = 3 ]; do printf .; sleep 2; done"; echo
+POL="$POL" timeout 120 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:5601/api/fleet/agents?perPage=50" | jq --arg p "$POL" "[.items[] | select(.policy_id == \$p) | .policy_revision][0]")" = 3 ]; do printf .; sleep 2; done'; echo
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:5601/api/fleet/agents?perPage=50' | jq --arg p "$POL" '[.items[] | select(.policy_id == $p) | .policy_revision][0]'
 ```
 
