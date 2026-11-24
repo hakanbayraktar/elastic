@@ -107,7 +107,7 @@ Beklenen çıktı:
 ```
 
 **Tarihler kaydırılır:** veri yükleme gününe göre 10 gün geriye, 20 gün ileriye yayılır. **Last 30 days** yalnız
-geçmiş kısmı gösterir (bu koşuda 4675'in 1727'si); sayılar sizde farklıdır.
+geçmiş kısmı gösterir (bu koşuda 4675'in 1794'ü); sayılar sizde farklıdır.
 
 ### 2. Discover'da gezinin
 
@@ -152,7 +152,7 @@ Aynı yöntemle birkaç soru daha (zaman aralığı yine **Last 30 days**):
 | Hafta sonu siparişleri | `day_of_week : (Saturday or Sunday)` | 575 |
 | Men's Clothing içermeyen siparişler | `not category.keyword : "Men's Clothing"` | 975 |
 
-Ana sorgu bu koşuda **180** document buldu.
+Ana sorgu bu koşuda **186** document buldu.
 
 - **Metin field'ı** (`products.product_name`) kelimelere bölünür; `jacket` adında geçen ürünleri bulur.
   **`keyword` field'ı** (`category.keyword`) bölünmez; değer birebir yazılır.
@@ -173,13 +173,29 @@ Filtreler çubuğun altında birer etiket olur. Document sayısını Adım 3'tek
 
 | Yol | Koşul | Document (bu koşuda) |
 |---|---|---:|
-| KQL (Adım 3) | `taxful_total_price > 100` | 180 |
-| Filtre | `taxful_total_price: ≥ $100` | 196 |
+| KQL (Adım 3) | `taxful_total_price > 100` | 186 |
+| Filtre | `taxful_total_price: ≥ $100` | 202 |
 
 - **Fark neden?** Tutarı tam 100 olan siparişler: **is between** alt sınırı dahil eder (`>= 100`), KQL'deki `> 100` etmez.
-- **Etiket menüsü:** filtreyi geçici kapatın (**Temporarily disable**) ya da tersine çevirin (**Exclude results**):
 
 ![Filtre etiketleri: iki filtre ve document sayısı](../../assets/screenshots/LAB-04/06-filtre-etiket.png)
+
+**Etiket menüsü.** Filtreyi silmeden değiştirmek için `customer_gender: FEMALE` etiketine tıklayın; bir menü açılır:
+
+![Etiket menüsü: 1 Exclude results, 2 Temporarily disable, 3 Pin across all apps](../../assets/screenshots/LAB-04/06b-filtre-menu.png)
+
+| Menü | Ne olur | Document (bu koşuda) | Geri almak |
+|---|---|---:|---|
+| **Exclude results** (1) | Koşul tersine döner, etiket `NOT customer_gender: FEMALE` olur | 167 | **Include results** |
+| **Temporarily disable** (2) | Etiket üstü çizili kalır, yalnız tutar filtresi çalışır | 369 | **Re-enable** |
+| **Pin across all apps** (3) | Filtre başka uygulamalarda da durur | 202 | **Unpin** |
+
+- **Sayıların toplamı:** kadın 202 + kadın olmayan 167 = 369, yani cinsiyet filtresi kapalıyken gelen sayı.
+- **Pin'i deneyin:** sol menüden **Dashboards › Create dashboard**. Pinli filtre yeni panonun üstünde de durur (4).
+  Adres çubuğuna yeni adres yazarak giderseniz pin taşınmaz; sol menüden geçin. Sonra Discover'a dönüp (tarayıcının
+  geri düğmesi) **Unpin** deyin; filtre yeniden yalnız bu aramanın olur.
+
+![Pinli filtre yeni panoda: 4 customer_gender: FEMALE](../../assets/screenshots/LAB-04/06c-filtre-pin-pano.png)
 
 ### 5. Aramayı kaydedin
 

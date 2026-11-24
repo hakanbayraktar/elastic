@@ -115,6 +115,62 @@ def discover(page):
         (("testsubj", "discoverQueryHits"), None, "down"),
     ])
 
+    # Adim 4 devam: etiket menusu (Exclude, Temporarily disable, Pin); sonunda iki filtre eski haline doner
+    rozet = '[data-test-subj*="filter-key-customer_gender"]'
+    def menu():
+        page.keyboard.press("Escape"); time.sleep(0.5)
+        page.locator(rozet).first.click(); time.sleep(1.5)
+    def degisince(eski):
+        for _ in range(30):
+            if sayi(page) != eski and not page.get_by_role("button", name="Cancel").count():
+                break
+            time.sleep(1)
+        return sayi(page)
+    menu()
+    k.shoot(page, LAB, "06b-filtre-menu", [
+        (("testsubj", "negateFilter"), 1, "right"),
+        (("testsubj", "disableFilter"), 2, "right"),
+        (("testsubj", "pinFilter"), 3, "right"),
+    ])
+    page.locator('[data-test-subj="negateFilter"]').first.click(); k.settle(page, 3)
+    haric = degisince(fsay)
+    menu()
+    geri = page.locator('[data-test-subj="negateFilter"]').first.inner_text().strip()
+    print(f"EXCLUDE sayi={haric} geri_alma_dugmesi={geri!r} rozet={page.locator(rozet).first.inner_text()!r}")
+    page.locator('[data-test-subj="negateFilter"]').first.click(); k.settle(page, 3)
+    degisince(haric)
+    menu()
+    page.locator('[data-test-subj="disableFilter"]').first.click(); k.settle(page, 3)
+    kapali = degisince(fsay)
+    menu()
+    geri = page.locator('[data-test-subj="disableFilter"]').first.inner_text().strip()
+    print(f"DISABLE sayi={kapali} geri_alma_dugmesi={geri!r}")
+    page.locator('[data-test-subj="disableFilter"]').first.click(); k.settle(page, 3)
+    print("geri alindi:", degisince(kapali))
+    menu()
+    page.locator('[data-test-subj="pinFilter"]').first.click(); k.settle(page, 3)
+    # Pinli filtre uygulama icinde gezinince tasinir; sayfayi yeniden yuklemek (goto) onu dusurur.
+    page.keyboard.press("Escape"); time.sleep(0.5)
+    page.locator('[data-test-subj="toggleNavButton"]').first.click(); time.sleep(2)
+    page.locator('nav [data-test-subj="collapsibleNavAppLink"]:has(span:text-is("Dashboards"))').first.click(); k.settle(page, 5)
+    yeni = page.locator('[data-test-subj="dashboardListingCreateButton"], [data-test-subj="createDashboardPromptButton"]').first
+    yeni.click(); k.settle(page, 6)
+    page.mouse.move(800, 60); time.sleep(1)
+    print("panoda pinli rozet:", page.locator(rozet).count(), page.locator(rozet).first.get_attribute("data-test-subj")[-40:])
+    k.shoot(page, LAB, "06c-filtre-pin-pano", [(("css", rozet), 4, "down")])
+    for _ in range(4):
+        if "/app/discover" in page.url:
+            break
+        page.go_back(); k.settle(page, 4)
+    k.settle(page, 4)
+    menu()
+    geri = page.locator('[data-test-subj="pinFilter"]').first.inner_text().strip()
+    print(f"PIN geri_alma_dugmesi={geri!r}")
+    page.locator('[data-test-subj="pinFilter"]').first.click(); k.settle(page, 4)
+    page.keyboard.press("Escape"); time.sleep(0.5)
+    print("son durum:", sayi(page), [page.locator('[data-test-subj^="filter-badge"]').nth(i).get_attribute("data-test-subj").split(" filter-id")[0][-60:]
+                                    for i in range(page.locator('[data-test-subj^="filter-badge"]').count())])
+
     # Adim 5: kaydet
     page.locator('[data-test-subj="discoverSaveButton"]').first.click(); time.sleep(2)
     page.locator('[data-test-subj="savedObjectTitle"]').fill("Kadın 100 dolar üstü siparişler")

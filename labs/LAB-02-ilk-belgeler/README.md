@@ -137,6 +137,42 @@ PUT /belge-loglar-000001
 {"acknowledged": true, "shards_acknowledged": true, "index": "belge-loglar-000001"}
 ```
 
+**Oluşan index ne aldı?** Şablondan gelen ayarlar: shard ve replica sayısı, bağlı politika ve yazma adı:
+
+```http
+GET /belge-loglar-000001/_settings?filter_path=*.settings.index.number_of_shards,*.settings.index.number_of_replicas,*.settings.index.lifecycle
+```
+
+```json
+{
+  "belge-loglar-000001": {
+    "settings": {
+      "index": {
+        "lifecycle": {
+          "name": "belge-shard-1gb",
+          "rollover_alias": "belge-loglar"
+        },
+        "number_of_shards": "1",
+        "number_of_replicas": "0"
+      }
+    }
+  }
+}
+```
+
+Oluşan shard ve diskte kapladığı yer (index henüz boş):
+
+```http
+GET _cat/shards/belge-loglar-000001?v&h=index,shard,prirep,state,docs,store
+```
+
+```text
+index               shard prirep state   docs store
+belge-loglar-000001 0     p      STARTED    0  227b
+```
+
+`prirep` sütunundaki `p` primary demektir; `STARTED` shard'ın yazmaya hazır olduğunu gösterir.
+
 Bir log yazın; alias onu `belge-loglar-000001`'e koyar:
 
 ```http
@@ -184,7 +220,7 @@ belge-loglar-000002 0     p         0  227b
 ```
 
 - **`000001`:** sınırı (1 KB) aştı, artık yazılmaz; verisi yerinde kalır.
-- **`000002`:** yeni yazma index'i; `belge-loglar` adına yazılan her şey buraya gider. `store` sizde biraz farklı olabilir.
+- **`000002`:** yeni yazma index'i; `belge-loglar` adına yazılan her şey buraya gider. `store` sizde farklı olabilir: yeni document diske birkaç saniyede yansır (227b ile birkaç kb arası).
 - **Arama:** `belge-loglar-*` iki index'i birden arar.
 
 </details>
