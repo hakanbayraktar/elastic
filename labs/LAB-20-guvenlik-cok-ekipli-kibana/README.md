@@ -8,13 +8,14 @@
 
 ## Bu lab ne öğretiyor?
 
-Destek ve satış ekipleri aynı talep index'ini kullanıyor. Destek ekibi yalnız kendi taleplerini görmeli,
-müşterinin e-posta ve telefonunu hiç görmemeli; web formu talep ekleyebilmeli ama okuyamamalı. Herkese
-`elastic` kullanıcısını vermek bunların hiçbirini sağlamaz.
+Destek ve satış ekipleri aynı talep index'ini kullanıyor. Destek ekibi yalnız kendi taleplerini görmeli, müşterinin
+e-posta ve telefonunu hiç görmemeli; web formu talep ekleyebilmeli ama okuyamamalı. Herkese `elastic` kullanıcısını
+vermek bunların hiçbirini sağlamaz. Bu labda:
 
-Bu labda en az yetkili bir rol ve kullanıcı, yalnız yazabilen bir API key, field ve satır düzeyinde
-güvenlik kuracak, rolü ekibin Kibana Space'ine bağlayacak; son adımda yalnız panoları görebilen, hiçbir şeyi
-değiştiremeyen bir rapor kullanıcısı açacağız.
+- En az yetkili bir rol ve kullanıcı, yalnız yazabilen bir API key kuracağız.
+- Field ve satır düzeyinde güvenlikle e-posta ve telefonu gizleyip yalnız destek taleplerini göstereceğiz.
+- Rolü ekibin Kibana Space'ine bağlayıp o kullanıcıyla gireceğiz.
+- Yalnız panoları görebilen, hiçbir şeyi değiştiremeyen bir rapor kullanıcısı açacağız.
 
 ![Rol, API key, FLS/DLS ve Spaces ile çok ekipli erişim](../../assets/infographics/32-guvenlik-cok-ekip.png)
 
@@ -55,15 +56,12 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ## Kavramlar: kim, neye, ne kadar?
 
-| Araç | Neyi sınırlar | Bu labda |
-|---|---|---|
-| Rol | Hangi index'te hangi işlem (`read`, `index`…) | `gvn-okuyucu`: yalnız okuma |
-| API key | Bir uygulamanın kimliği; süreli, iptal edilebilir | `gvn-form`: yalnız document ekleme |
-| FLS (field level security) | Document'in hangi field'ları görünür | e-posta ve telefon gizli |
-| DLS (document level security) | Hangi document'ler görünür | yalnız `ekip: destek` |
-| Space | Kibana'da hangi nesneler ve uygulamalar görünür | `Destek ekibi`: yalnız Discover |
-| Yerleşik rol | Hazır yetki paketi; `viewer` her şeyi okur, hiçbir şeyi değiştiremez | `gvn_izleyici` |
-| Kibana feature yetkisi | Rol hangi Kibana uygulamalarını görür | `gvn-rapor`: yalnız Dashboards |
+- **Rol:** hangi index'te hangi işlem (`read`, `index`…) yapılabileceği; burada `gvn-okuyucu` yalnız okur.
+- **API key:** bir uygulamanın kimliği; süreli ve iptal edilebilir. `gvn-form` yalnız document ekler.
+- **FLS (field level security):** document'in hangi field'larının görüneceği; e-posta ve telefon gizli.
+- **DLS (document level security):** hangi document'lerin görüneceği; yalnız `ekip: destek`.
+- **Space ve Kibana feature yetkisi:** rolün Kibana'da hangi Space'te hangi uygulamayı göreceği.
+- **Yerleşik rol:** hazır yetki paketi; `viewer` her şeyi okur, hiçbir şeyi değiştiremez.
 
 Kullanıcıya birden çok rol verilebilir; yetkiler toplanır. Bu yüzden her ekip için ayrı, dar bir rol yazılır.
 
@@ -75,6 +73,8 @@ Bu labdaki `http` blokları **Kibana › Dev Tools**'a, `bash` blokları termina
 istekleri `elastic` ile gider; başka kullanıcıyla deneme yaptığımız yerler `bash`'tir.
 
 ### 1. Veri ve en az yetkili rol
+
+**Soru: Yalnız okuyabilen bir kullanıcı nasıl açılır?**
 
 Sekiz talep yükleyin; her talepte ekip, konu, müşteri e-postası ve telefonu var:
 
@@ -150,6 +150,8 @@ Okuma çalışır; yazma ve başka index 403'tür. Rol yalnız gerekeni verir, g
 
 ### 2. Uygulama için yalnız yazabilen API key
 
+**Soru: Bir uygulamaya parola vermeden nasıl yazma izni verilir?**
+
 Web formu talep ekler ama hiçbir talebi okumamalıdır. Formun kimliği, yalnız `create_doc` yetkili ve bir saat
 geçerli bir API key'dir:
 
@@ -188,6 +190,8 @@ Beklenen çıktı:
 403 "kim olduğunu biliyorum ama yetkin yok", 401 "seni tanımıyorum" demektir.
 
 ### 3. Field ve satır düzeyinde güvenlik
+
+**Soru: Aynı index'te bazı field'ları ve bazı document'leri nasıl gizleriz?**
 
 Destek ekibinin rolü: e-posta ve telefon field'ları görünmez (`field_security`), yalnız `ekip: destek` document'leri
 görünür (`query`):
@@ -229,6 +233,8 @@ Destek kullanıcısı 9 talepten yalnız destek ekibine ait olanları görür ve
 
 ### 4. Kibana Space ve rolün Kibana yetkisi
 
+**Soru: Destek ekibi Kibana'da yalnız kendi alanını nasıl görür?**
+
 Destek ekibinin Space'ini açın. LAB-17'de Space'i arayüzden açtık; burada API ile:
 
 ```http
@@ -258,18 +264,57 @@ POST kbn:/s/gvn-destek/api/data_views/data_view
 { "data_view": { "id": "gvn-talepler", "title": "guvenlik-talepler", "name": "Destek talepleri", "timeFieldName": "@timestamp" } }
 ```
 
+<details>
+<summary><strong>Rol arayüzde nasıl görünür?</strong></summary>
+
+Rolü Dev Tools'la kurduk; Kibana'da aynı alanlar bir formdur. `elastic` ile:
+
+1. Menü, **Stack Management**, soldaki listede **Security** altında **Roles** (1):
+
+![Stack Management: 1 Roles](../../assets/screenshots/LAB-20/04a-roles-menu.png)
+
+2. Listede **gvn-destek** (1):
+
+![Roles: 1 gvn-destek](../../assets/screenshots/LAB-20/04b-roles-listesi.png)
+
+3. **Index privileges**: index deseni (1), izinler (2), **Denied fields** altında gizlenen field'lar (3) ve **Granted
+   documents query** altında yalnız destek document'lerini bırakan sorgu (4):
+
+![Rol: 1 index, 2 izinler, 3 gizli field'lar, 4 document sorgusu](../../assets/screenshots/LAB-20/04c-rol-index.png)
+
+4. Aşağıda **Kibana** bölümü: Space `Destek ekibi` (1), yetki **Custom** (2); kalemle açınca yalnız Discover'ın
+   okunabildiği görünür. Değiştirmeden **Cancel** ile çıkın:
+
+![Rol: 1 Space, 2 Kibana yetkisi](../../assets/screenshots/LAB-20/04d-rol-kibana.png)
+
+</details>
+
 ### 5. Destek kullanıcısıyla Kibana'ya girin
 
-Tarayıcıda gizli (incognito) bir pencere açıp Kibana'ya `gvn_destek` / `Guvenlik2026!` ile girin. Kullanıcı
-doğrudan `Destek ekibi` Space'ine düşer (1): erişebildiği tek Space budur, menüde yalnız Discover vardır.
-Discover'da `Destek talepleri` data view'ını (2) seçin ve zaman aralığını **Last 30 days** yapın:
+**Soru: Destek kullanıcısı Kibana'da neyi görür?**
 
-![Destek kullanıcısı: 1 Destek ekibi Space'i, 2 Destek talepleri data view'ı, 3 document sayısı 6, 4 e-posta ve telefon olmayan field listesi](../../assets/screenshots/LAB-20/01-destek-discover.png)
+1. Tarayıcıda gizli (incognito) bir pencere açıp Kibana adresine gidin. **Username** (1) `gvn_destek`, **Password** (2)
+   `Guvenlik2026!`, **Log in** (3):
 
-Document sayısı (3) 6'dır: yalnız destek ekibinin talepleri. Field listesinde (4) `musteri_email` ve `telefon`
-yoktur; Kibana da Elasticsearch'teki rolün izin verdiğinden fazlasını göremez.
+![Giriş: 1 Username, 2 Password, 3 Log in](../../assets/screenshots/LAB-20/05a-giris.png)
+
+2. Kullanıcı doğrudan `Destek ekibi` Space'ine düşer: sol üstteki simge **De** (1), erişebildiği tek Space budur.
+   Menüyü açın: yalnız **Discover** (2) vardır. Ona tıklayın:
+
+![Destek menüsü: 1 Space, 2 Discover](../../assets/screenshots/LAB-20/05b-destek-menu.png)
+
+3. Space'teki tek data view `Destek talepleri` seçili gelir. Zaman kutusuna (1) tıklayıp **Last 30 days**'i (2) seçin:
+
+![Zaman: 1 zaman kutusu, 2 Last 30 days](../../assets/screenshots/LAB-20/05d-zaman.png)
+
+4. Document sayısı 6'dır (1): yalnız destek ekibinin talepleri. Field listesinde (2) `musteri_email` ve `telefon`
+   yoktur; Kibana da Elasticsearch'teki rolün izin verdiğinden fazlasını göremez:
+
+![Destek sonucu: 1 document sayısı 6, 2 field listesi](../../assets/screenshots/LAB-20/05e-destek-sonuc.png)
 
 ### 6. Yalnız rapor gören kullanıcı: `viewer` ve pano rolü
+
+**Soru: Yönetim panoları görsün ama hiçbir şeyi değiştiremesin; nasıl?**
 
 Yönetime panoları göstermek istiyoruz, ama kimse bir şey değiştirmemeli. İki yol var: yerleşik `viewer` rolü
 ya da yalnız Dashboards uygulamasını açan dar bir rol:
@@ -311,25 +356,44 @@ gvn_rapor: okuma 4675 yazma 403 pano 403
 
 İki kullanıcı da veriyi okur; document yazamaz, pano açamaz (403).
 
-Gizli pencerede `gvn_izleyici` / `Guvenlik2026!` ile girin. Bütün Space'leri okuyabildiği için önce Space seçim
-ekranı gelir; **Default**'u seçin ve **Dashboards › [eCommerce] Revenue Dashboard**'u açın:
+**viewer ile giriş.** Yeni bir gizli pencerede `gvn_izleyici` / `Guvenlik2026!` ile girin (Adım 5'in 1. maddesi).
 
-![viewer: 1 menüde bütün uygulamalar, 2 yalnız Share ve Export; Edit yok](../../assets/screenshots/LAB-20/02-izleyici-pano.png)
+1. `viewer` bütün Space'leri okuyabildiği için önce Space seçim ekranı gelir. **Default**'u (1) seçin:
 
-Pano açılır ama **Edit** düğmesi yoktur (2). Menüde (1) Discover, Maps, Machine Learning, Dev Tools ve Stack
-Management de vardır; `viewer` hepsini salt okunur açar. Yalnız rapor gösterilecekse bu fazladır.
+![Space seçimi: 1 Default](../../assets/screenshots/LAB-20/06a-space-secim.png)
 
-Aynı panoyu `gvn_rapor` ile açın. Kullanıcı doğrudan Home'a düşer (tek Space'i Default):
+2. Menüyü açın (1): Discover, Dashboards, Maps, Machine Learning, Observability… hepsi vardır; `viewer` hepsini salt
+   okunur açar. Yalnız rapor gösterilecekse bu fazladır:
 
-![gvn-rapor: 3 menüde yalnız Dashboards, 4 Share ve Export; Edit yok](../../assets/screenshots/LAB-20/03-rapor-pano.png)
+![viewer menüsü: 1 bütün uygulamalar](../../assets/screenshots/LAB-20/06b-izleyici-menu.png)
 
-Menüde (3) yalnız Dashboards vardır. Adres çubuğuna `/app/dev_tools` yazarsanız Kibana sayfayı açmaz:
+3. **Dashboards**'u açın. Listede çok pano olduğu için arama kutusuna (1) `Revenue` yazıp Enter'a basın,
+   **[eCommerce] Revenue Dashboard**'a (2) tıklayın:
 
-![gvn-rapor: 5 Dev Tools için yetki yok](../../assets/screenshots/LAB-20/04-rapor-devtools.png)
+![Dashboards: 1 arama, 2 pano](../../assets/screenshots/LAB-20/06c-pano-ara.png)
 
-Stack Management adresi (`/app/management`) de `Application not found` verir. Yalnız rapor gösterilecek
-kullanıcıya `viewer` yerine böyle dar bir rol verilir: Kibana'da hangi uygulamayı göreceğini rolün `kibana`
-bölümü, hangi veriyi okuyacağını `elasticsearch` bölümü belirler.
+4. Pano açılır. Sağ üstte yalnız **Share** (1) ve **Export** (2) vardır; **Edit** düğmesi yoktur:
+
+![viewer: 1 Share, 2 Export; Edit yok](../../assets/screenshots/LAB-20/06c-izleyici-pano.png)
+
+**gvn_rapor ile giriş.** Yeni bir gizli pencerede `gvn_rapor` / `Guvenlik2026!` ile girin. Tek Space'i Default
+olduğu için doğrudan Home'a düşer.
+
+1. Menüyü açın: yalnız **Dashboards** (1) vardır:
+
+![gvn-rapor menüsü: 1 yalnız Dashboards](../../assets/screenshots/LAB-20/06d-rapor-menu.png)
+
+2. Aynı panoyu açın (3. maddedeki gibi). Yine yalnız **Share** ve **Export** (1) vardır:
+
+![gvn-rapor: 1 Export; Edit yok](../../assets/screenshots/LAB-20/06e-rapor-pano.png)
+
+3. Adres çubuğunda adresin sonunu `/app/dev_tools` yapın: Kibana sayfayı açmaz (1). `/app/management` da
+   `Application not found` verir:
+
+![gvn-rapor: 1 Dev Tools için yetki yok](../../assets/screenshots/LAB-20/06f-devtools-yok.png)
+
+Yalnız rapor gösterilecek kullanıcıya `viewer` yerine böyle dar bir rol verilir: Kibana'da hangi uygulamayı
+göreceğini rolün `kibana` bölümü, hangi veriyi okuyacağını `elasticsearch` bölümü belirler.
 
 ---
 
