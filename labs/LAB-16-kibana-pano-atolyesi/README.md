@@ -8,12 +8,16 @@
 
 ## Bu lab ne öğretiyor?
 
-Gerçek bir panoda aynı grafik birden çok panoda kullanılır, her panel ayrı bir soruya cevap verir ve pano tek
-tıkla süzülür. Bir grafiği her panoda yeniden çizmek, birinde düzeltip ötekinde unutmak demektir.
+Bir grafiği her panoda yeniden çizmek, birinde düzeltip ötekinde unutmak demektir. Bu labda bir mağazanın 7 günlük
+web sunucusu loglarıyla:
 
-Bu labda bir mağazanın 7 günlük web sunucusu loglarından dört grafik kurup **Visualize library**'ye
-kaydedecek, bunları bir panoda birleştirecek ve panoyu tek tıkla süzeceğiz. Logda bir arıza saklı: iki gün önce
-14:00-16:00 arasında ödeme sayfası 500 döndü. Her tıklama aşağıda kırmızı kutu ve numarayla gösterilir.
+- **Lens** ile dört grafik kurup her birinin hangi aggregation'la çalıştığını göreceğiz.
+- Grafikleri **Visualize library**'ye kaydedip bir panoda birleştireceğiz.
+- Panoyu bir **Control** ile tek tıkla filtreleyeceğiz.
+- Panoyu zaman aralığıyla kaydedip paylaşacak ve dışa aktaracağız.
+
+Logda bir arıza saklı: iki gün önce 14:00-16:00 arasında ödeme sayfası 500 döndü. Her tıklama kırmızı kutu ve
+numarayla gösterilir.
 
 ---
 
@@ -43,25 +47,19 @@ Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 
 ## Kavramlar: Lens ve aggregation
 
-Kibana'daki her grafik arka planda bir Elasticsearch aggregation'ıdır. Lens'te yatay eksen ya da satırlar
-**bucket** (grupla), dikey eksen ya da değerler **metric** (hesapla) aggregation'ıdır:
-
-| Lens'te | Aggregation | Bu labdaki soru |
-|---|---|---|
-| `@timestamp` yatay eksende | `date_histogram` | Trafik saatlere göre nasıl değişiyor? |
-| Breakdown / satırlar: `url.path`, ülke | `terms` | Hangi sayfa, hangi ülke? |
-| Count of records | Bucket'ın document sayısı (`doc_count`) | Kaç istek? |
-| Median, Average, Percentile | `percentiles`, `avg` | Yanıt süresi ne kadar? |
-| Formula | Birden çok metric'in hesabı | Hata oranı yüzde kaç? |
-
-**Visualize library**: kaydedilmiş grafiklerin ortak deposu. Library'deki grafik panoya *bağlı* eklenir;
-Library'de değiştirildiğinde onu kullanan bütün panolarda değişir.
+- **Aggregation:** Kibana'daki her grafik arka planda bir Elasticsearch aggregation'ıdır.
+- **Bucket:** gruplama; yatay eksen, satırlar ve Breakdown (`@timestamp` → `date_histogram`, sayfa ya da ülke → `terms`).
+- **Metric:** her grupta yapılan hesap; dikey eksen ve değerler (Count of records, Median, Percentile).
+- **Formula:** birden çok metric'le hesap; bu labda 5xx hata oranı.
+- **Visualize library:** kaydedilmiş grafiklerin ortak deposu; Library'deki grafik değişince onu kullanan bütün panolar değişir.
 
 ---
 
 ## Adım Adım Uygulama Rehberi
 
 ### 1. Örnek veri
+
+**Soru: Grafikler hangi veriden çizilecek?**
 
 Betik, son 7 güne yayılmış 6000 erişim olayını `pano-apache` index'ine yazar (sabit tohum: sayılar her
 seferinde aynıdır; tarihler labı yaptığınız güne göre kayar):
@@ -87,6 +85,8 @@ POST kbn:/api/data_views/data_view
 ```
 
 ### 2. Visualize library'yi açın
+
+**Soru: Yeni bir grafiğe nereden başlanır?**
 
 1. Sol üstteki menü düğmesine (1) tıklayın, **Analytics** altında **Visualize library**'yi (2) seçin:
 
@@ -121,7 +121,7 @@ Metrics › Count): Lens'in arka planda yaptığını açıkça gösterir. **TSV
 
 ### 3. İlk Lens grafiği: zaman içinde istekler
 
-Soru: trafik saatlere göre nasıl değişiyor, hatalar ne zaman artıyor?
+**Soru: Trafik saatlere göre nasıl değişiyor, hatalar ne zaman artıyor?**
 
 1. Sol üstteki **Data view** kutusuna (1) tıklayın, listeden **Apache erişim logları**'nı (2) seçin:
 
@@ -179,6 +179,8 @@ Soru: trafik saatlere göre nasıl değişiyor, hatalar ne zaman artıyor?
 
 ### 4. Üç soru, üç aggregation
 
+**Soru: Hangi ülke ne kadar bekliyor, hangi sayfa ne zaman yoğun, hata oranı kaç?**
+
 Her grafik için yeni bir Lens açın: **Visualize library › Create visualization › Visualization** (Adım 2).
 Data view `Apache erişim logları`, zaman **Last 7 days** olmalı (Adım 3'ün 1-2. maddesi). Her birini Adım 3'ün
 9. maddesindeki gibi **Add to library** ile kaydedin.
@@ -211,7 +213,7 @@ Data view `Apache erişim logları`, zaman **Last 7 days** olmalı (Adım 3'ün 
 ![Grafik türü: 1 kutu, 2 arama, 3 Heat map](../../assets/screenshots/LAB-16/04e-heatmap-turu.png)
 
 2. `@timestamp` ve `url.path` field'larını **⊕** ile ekleyin. Zaman yatay eksene (1), sayfa dikey eksene (2) girer;
-   her hücre bir saat aralığındaki istek sayısıdır, koyu hücre yoğun demektir (3). Kaydedin: `Sayfa ve saat yoğunluğu`.
+   her hücre 3 saatlik bir aralıktaki istek sayısıdır (`@timestamp per 3 hours`); renk ölçeğinde mavi az, kırmızı yoğun demektir (3). Kaydedin: `Sayfa ve saat yoğunluğu`.
 
 ![Heat map: 1 yatay eksen, 2 dikey eksen, 3 hücreler](../../assets/screenshots/LAB-16/04f-heatmap.png)
 
@@ -234,12 +236,15 @@ count(kql='http.response.status_class : "5xx"') / count() * 100
 
 ![Formula: 1 sekme, 2 formül kutusu, 3 Name](../../assets/screenshots/LAB-16/04i-formula.png)
 
-4. `count(kql=...)` yalnız sorguya uyan document'leri sayar; toplama bölünüp 100 ile çarpılınca yüzde olur (1):
+4. **Name** panelde sayının üstündeki etikettir; kaydederken verilen **Title** ise grafiğin Library'deki adıdır.
+   `count(kql=...)` yalnız sorguya uyan document'leri sayar; toplama bölünüp 100 ile çarpılınca yüzde olur (1):
    6000 isteğin 59'u 5xx, yani yaklaşık 0,98. Kaydedin: `Hata oranı (5xx, %)`.
 
 ![Metric sonucu: 1 hata oranı](../../assets/screenshots/LAB-16/04j-metric-sonuc.png)
 
 ### 5. Pano: Library'den arayarak eklemek
+
+**Soru: Dört grafiği tek ekranda nasıl birleştiririz?**
 
 1. Menü düğmesi, **Analytics › Dashboards** (1):
 
@@ -277,7 +282,9 @@ Paneller Library'ye bağlıdır: Library'deki grafik değişirse bu pano da değ
 **Unlink from library** onu bu panoya özel bir kopyaya çevirir. Library büyüdükçe arama, listeyi sayfa sayfa
 gezmekten hızlıdır.
 
-### 6. Control: panoyu tek tıkla süzmek
+### 6. Control: panoyu tek tıkla filtrelemek
+
+**Soru: Bütün panelleri aynı anda tek bir ülkeye nasıl indiririz?**
 
 1. Sağ üstte **Add**, açılan panelde **Controls** altında **Control** (1):
 
@@ -298,9 +305,10 @@ gezmekten hızlıdır.
 
 5. Control'de `Germany` yazar (1); dört panel aynı anda yalnız Almanya'dan gelen istekleri gösterir, tabloda tek
    satır kalır (2). Control panonun her paneline aynı filtreyi uygular. Seçimi kaldırmak için listeyi açıp
-   işareti kaldırın. Sayısal field'da (ör. `response_time_ms`) **Range slider** aynı işi aralıkla yapar.
+   işareti kaldırın. Sayısal field'da (ör. `response_time_ms`) **Control type** listesinde Options list'in yanındaki **Range slider**
+   aynı işi aralıkla yapar (Adım 6'nın 2. maddesindeki görüntü).
 
-![Süzülmüş pano: 1 Germany, 2 tek satırlı tablo](../../assets/screenshots/LAB-16/06e-pano-suzuldu.png)
+![Filtrelenmiş pano: 1 Germany, 2 tek satırlı tablo](../../assets/screenshots/LAB-16/06e-pano-suzuldu.png)
 
 6. Kaydettikten sonra pano düzenleme modunda kalır. Açılır listeyi (1) açıp **Germany** işaretini kaldırın, sonra
    sağ üstte **Exit edit** (2). Pano kayıtlı hâline (filtresiz) döner ve okuma modunda açılır:
@@ -308,6 +316,8 @@ gezmekten hızlıdır.
 ![Düzenlemeden çıkış: 1 açılır liste, 2 Exit edit](../../assets/screenshots/LAB-16/06f-exit-edit.png)
 
 ### 7. Panoyu kaydetmek, paylaşmak ve dışa aktarmak
+
+**Soru: Panoyu açan başkası aynı şeyi görür mü?**
 
 **Zaman kaydı.** Panoyu başka biri açınca hangi zaman aralığı gelir? Yeni bir gizli pencerede Kibana'ya girip
 **Dashboards** listesinden `Apache atölye`'yi açın: zaman aralığı **Last 15 minutes** gelir ve paneller
