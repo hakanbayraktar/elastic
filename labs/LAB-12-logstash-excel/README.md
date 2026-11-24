@@ -30,7 +30,7 @@ cd ~/elastic/labs/LAB-12-logstash-excel
 
 ---
 
-## Kavramlar: Türkçe Excel'in tuzakları
+## Kavramlar: Türkçe Excel için ipuçları
 
 | Excel'de | CSV'de | Elasticsearch'e olduğu gibi giderse | Logstash'te çözüm |
 |---|---|---|---|
@@ -108,7 +108,7 @@ F-2026-1002;22.01.2026;Çınar Eğitim;Muğla;Bluetooth Hoparlör;8;899,90;7.199
 25
 ```
 
-Tuzakların hepsi burada: `;` ayırıcı, `28.499,90`, `09.01.2026` ve başlık satırı. 25 satırın 24'ü fatura.
+Dikkat edilecek her şey bu satırlarda: `;` ayırıcı, `28.499,90`, `09.01.2026` ve başlık satırı. 25 satırın 24'ü fatura.
 
 <details>
 <summary><strong>Excel'den kaydettiğiniz dosyayı kullanmak</strong></summary>

@@ -33,7 +33,7 @@
   <rect x="360" y="270" rx="14" width="260" height="330" class="card"/>
   <rect x="360" y="270" rx="14" width="260" height="56" fill="#0b6e99"/><rect x="360" y="306" width="260" height="20" fill="#0b6e99"/>
   <text x="385" y="308" class="head">WHERE</text>
-  <text x="385" y="370" class="body">Satırları süzer:</text>
+  <text x="385" y="370" class="body">Satırları filtreler:</text>
   <text x="385" y="398" class="body">kadın müşteri ve</text>
   <text x="385" y="426" class="body">100 dolar üstü.</text>
   <text x="385" y="480" class="big">daha az satır</text>
@@ -76,7 +76,7 @@
 
   <rect x="820" y="650" rx="14" width="720" height="290" class="card"/>
   <rect x="820" y="650" rx="14" width="720" height="56" fill="#bd271e"/><rect x="820" y="686" width="720" height="20" fill="#bd271e"/>
-  <text x="845" y="688" class="head">Tuzak: == ve çok değerli field</text>
+  <text x="845" y="688" class="head">İpucu: == ve çok değerli field</text>
   <text x="845" y="750" class="body">category bir siparişte birden çok değer taşır.</text>
   <text x="845" y="782" class="body">== çok değerli field'da null üretir; satır sessizce düşer.</text>
   <text x="845" y="830" class="mono">MATCH_PHRASE(category, "Women's Clothing")</text>

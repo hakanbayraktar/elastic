@@ -10,7 +10,7 @@
 
 - ES|QL: soruyu soldan sağa okunan bir pipeline olarak yazmak
 - Filtrelemek, gruplamak, yeni sütun hesaplamak (`WHERE`, `STATS`, `EVAL`)
-- Çok değerli field'ın sessizce yanlış sonuç verdiği tuzak
+- Çok değerli field'ın sessizce yanlış sonuç vermesi
 - Discover'da ES|QL ve sonucu panoya eklemek
 - Aynı soru SQL ile; SQL'in arkasındaki Query DSL
 
@@ -97,7 +97,7 @@ Beklenen çıktı:
 469
 ```
 
-### 2. Tuzak: çok değerli field
+### 2. Çok değerli field: sessiz yanlış sonuç
 
 **Soru: Bir field birden çok değer taşırsa ne olur?** Bir sipariş birden çok kategoriye ait olabilir; `category`
 çok değerlidir:
@@ -171,7 +171,7 @@ Beklenen çıktı:
 1136           |92.85          |Women's Shoes
 ```
 
-**Gruplamada da aynı tuzak:** `category.keyword` çok değerli; iki kategorili sipariş iki gruba birden sayılır, grupların
+**Gruplamada da aynı sorun:** `category.keyword` çok değerli; iki kategorili sipariş iki gruba birden sayılır, grupların
 toplamı 4675'ten büyük çıkar.
 
 **`EVAL`:** yeni sütun üretir, sonra onunla gruplanır. `CASE(koşul, değer, koşul, değer, aksi)` ilk tutan koşulun

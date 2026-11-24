@@ -396,7 +396,7 @@ Beklenen çıktı:
 Aynı istek index için de çalışır (`HEAD /belge-urunler`): index'i açmadan önce varlığını kontrol etmek
 için kullanılır.
 
-**Yalnız document: `_source`.** Adımın başındaki `GET _doc` isteğinde yanıtı `filter_path` ile kısalttık. Süzülmemiş yanıtta ürünün yanında
+**Yalnız document: `_source`.** Adımın başındaki `GET _doc` isteğinde yanıtı `filter_path` ile kısalttık. Filtrelenmemiş yanıtta ürünün yanında
 `_index`, `_id`, `_version`, `_seq_no` gibi Elasticsearch'ün kendi bilgileri de gelir. Ürün sayfası yalnız ürünü
 gösterecekse bu bilgilere ihtiyaç yoktur; `_source` adresi yalnız sizin gönderdiğiniz JSON'u döndürür:
 

@@ -109,7 +109,7 @@ Node bir Docker container'ıdır; ilk kurulumda node image'ı da çekilir.
 ### 2. Ana cluster tarafı: data stream şablonu, adres ve parola
 
 Logların yazılacağı `k8s-pod-logs` data stream'inin şablonu: tek node için replica 0; `message` dışındaki metin field'ları
-(`kubernetes.namespace`, `kubernetes.pod.name`…) `keyword` olur, böylece sayılabilir ve süzülebilir. Kibana › Dev Tools'a
+(`kubernetes.namespace`, `kubernetes.pod.name`…) `keyword` olur, böylece sayılabilir ve filtrelenebilir. Kibana › Dev Tools'a
 yapıştırın:
 
 ```http
@@ -206,7 +206,7 @@ logging / filebeat
 DaemonSet node'daki **bütün** container'ları okur: demo uygulamanın yanında `kube-system`'deki `etcd`,
 `kube-apiserver`, `coredns` gibi bileşenler ve Filebeat'in kendisi de gelir. Sayılar zamanla artar, liste aynıdır.
 Kibana › Discover'da `k8s-pod-logs` için bir data view açıp `kubernetes.container.name : "payment-worker"` ile
-süzebilirsiniz.
+filtreleyebilirsiniz.
 
 ### 5. Önce ve sonra: çok satırlı hata
 

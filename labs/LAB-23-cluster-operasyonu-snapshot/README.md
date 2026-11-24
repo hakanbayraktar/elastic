@@ -159,7 +159,7 @@ gerekeni taşımak bu yüzden daha güvenlidir.
 
 **Soru: Snapshot'ı her gece kendiliğinden nasıl alırız?**
 
-Her gece 01:30'da `cluster-*` index'lerinin snapshot'ını alan bir politika kurun. Saklama kuralı: 30 günden eskiler
+Her gece 01:30 UTC'de (Türkiye saatiyle 04:30) `cluster-*` index'lerinin snapshot'ını alan bir politika kurun. Saklama kuralı: 30 günden eskiler
 silinir, ama her zaman en az 1, en çok 2 snapshot kalır (laboratuvarda farkı görmek için küçük tutuldu):
 
 ```bash

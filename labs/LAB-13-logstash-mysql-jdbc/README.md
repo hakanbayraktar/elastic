@@ -292,7 +292,7 @@ kullanılır.
 ### 6. Aktarılan veride arama, aggregation ve ES|QL
 
 Lab başındaki soru: Antalya'daki müşterilerin kulaklık siparişleri. `urun` bir `text` field'ı olduğu için
-"kulaklık" kelimesi "Kablosuz Kulaklık"ı bulur; `il` ise tam değerle süzülür:
+"kulaklık" kelimesi "Kablosuz Kulaklık"ı bulur; `il` ise tam değerle filtrelenir:
 
 ```http
 GET /mysql-siparisler/_search?filter_path=hits.total.value,hits.hits._source.siparis_id
