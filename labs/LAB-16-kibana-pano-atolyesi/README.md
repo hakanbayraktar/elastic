@@ -340,8 +340,10 @@ pencerenizde:
 
 ![Pano: 1 Save, 2 Exit edit](../../assets/screenshots/LAB-16/07d-save-exit.png)
 
-Gizli pencerede panoyu yeniden açın: bu kez **Last 7 days** gelir ve paneller veriyle dolar. Aynı anahtar ilk
-kaydetme penceresinde de vardır (Adım 6'nın 3. maddesi).
+Gizli pencerede panoyu yeniden açın: bu kez zaman seçicisinde **Last 7 days** (1) gelir ve paneller veriyle dolar. Aynı
+anahtar ilk kaydetme penceresinde de vardır (Adım 6'nın 3. maddesi).
+
+![Yeniden açılış: 1 kayıtlı zaman aralığı](../../assets/screenshots/LAB-16/07e-yeniden-acilis.png)
 
 **Share.** Sağ üstte **Share**:
 

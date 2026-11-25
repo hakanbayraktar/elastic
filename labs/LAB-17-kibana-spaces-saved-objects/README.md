@@ -269,7 +269,9 @@ Adım 4'teki `export.ndjson` aynı zamanda bir yedektir. Pazarlama Space'inde de
 ![Import: 1 aynı dosya, 2 Automatically overwrite conflicts, 3 Import](../../assets/screenshots/LAB-17/07d-geri-yukle.png)
 
 Sonuç `5 objects imported`, `1 new`, `4 overwritten` der: silinen harita yeni olarak geldi, öteki dördü dosyadaki
-hâline döndü. Panoyu yeniden açın; bütün paneller veriyle gelir.
+hâline döndü. Panoyu yeniden açın; bütün paneller veriyle gelir, harita paneli (1) yeniden doludur:
+
+![Pano: 1 geri yüklenen harita paneli](../../assets/screenshots/LAB-17/07e-geri-pano.png)
 
 - **Request action on conflict** seçilirse var olan her nesne için tek tek sorulur.
 - Önemli panoları değiştirmeden önce Export ile dosyaya alın.

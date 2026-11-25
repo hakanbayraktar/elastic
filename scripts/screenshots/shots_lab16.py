@@ -350,13 +350,29 @@ def kaydet(page):
     k.shoot(page, "sunum", "lab16-pano-export", [])
 
 
+def yeniden(page):
+    """Adim 7: panoyu yeni (gizli pencere gibi temiz) oturumda yeniden acmak; yalniz okuma."""
+    ctx = page.context.browser.new_context(viewport={"width": 1600, "height": 900}, device_scale_factor=k.SCALE)
+    p2 = ctx.new_page(); k.login(p2)
+    p2.goto(k.BASE + "/app/dashboards", wait_until="domcontentloaded"); k.settle(p2, 6)
+    if not p2.locator('[data-test-subj="tableListSearchBox"]').count():
+        p2.locator('[data-test-subj="breadcrumbs"] a:has-text("Dashboards")').first.click(); k.settle(p2, 5)
+    p2.locator('[data-test-subj="tableListSearchBox"]').first.fill("Apache atölye"); p2.keyboard.press("Enter"); k.settle(p2, 4)
+    p2.locator('[data-test-subj="dashboardListingTitleLink-Apache-atölye"]').first.click(); k.settle(p2, 12)
+    p2.mouse.move(800, 60); time.sleep(1)
+    print("zaman:", p2.locator('[data-test-subj="dateRangePickerControlButton"], [data-test-subj="superDatePickerShowDatesButton"]').first.inner_text(),
+          "| panel:", p2.locator('[data-test-subj="dashboardPanel"]').count(), "| hata:", p2.locator('[data-test-subj="embeddableError"]').count())
+    shot(p2, "07e-yeniden-acilis", [(("css", '[data-test-subj="dateRangePickerControlButton"], [data-test-subj="superDatePickerShowDatesButton"]'), 1, "down")])
+    ctx.close()
+
+
 if __name__ == "__main__":
     with sync_playwright() as pw:
         br = pw.chromium.launch(channel="chrome")
         page = br.new_page(viewport={"width": 1600, "height": 900}, device_scale_factor=k.SCALE)
         k.login(page)
         for parca in sys.argv[1:]:
-            {"lens": lens, "agg": agg, "pano": pano, "kaydet": kaydet}[parca](page)
+            {"lens": lens, "agg": agg, "pano": pano, "kaydet": kaydet, "yeniden": yeniden}[parca](page)
         br.close()
     print("HATALI GORUNTU:", HATA if HATA else "yok")
     sys.exit(1 if HATA else 0)

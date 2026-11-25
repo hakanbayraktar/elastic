@@ -252,6 +252,19 @@ def geri(page):
     print("hatali panel (geri sonrasi):", page.locator('[data-test-subj="embeddableError"], [data-test-subj="embeddableStackError"], [data-test-subj="embeddablePanelError"]').count())
 
 
+def geri_bak(page):
+    """Kutunun son adimi: geri yuklemeden sonra panoyu acmak; yalniz okuma."""
+    page.goto(k.BASE + "/s/pazarlama/app/dashboards", wait_until="domcontentloaded"); k.settle(page, 6)
+    page.get_by_text(PANO, exact=True).first.click(); k.settle(page, 14)
+    hata = '[data-test-subj="embeddableError"], [data-test-subj="embeddableStackError"], [data-test-subj="embeddablePanelError"]'
+    harita = page.locator('[data-test-subj="dashboardPanel"]').filter(has=page.locator('[data-test-subj="mapContainer"], .mapboxgl-canvas, .maplibregl-canvas')).first
+    print("hatali panel:", page.locator(hata).count(), "| harita paneli:", harita.count())
+    harita.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(4)
+    harita.evaluate("e => e.setAttribute('data-isaret', 'harita')")
+    page.mouse.move(800, 60); time.sleep(1)
+    shot(page, "07e-geri-pano", [(("css", '[data-isaret="harita"]'), 1, "ic")], scroll_to=("css", '[data-isaret="harita"]'))
+
+
 if __name__ == "__main__":
     with sync_playwright() as pw:
         br = pw.chromium.launch(channel="chrome")
@@ -259,7 +272,7 @@ if __name__ == "__main__":
         k.login(page)
         for parca in sys.argv[1:]:
             {"olustur": olustur, "ozellik": ozellik, "kopya": kopya, "export": export, "import": import_,
-             "dogrula": dogrula, "sil": sil, "geri": geri}[parca](page)
+             "dogrula": dogrula, "sil": sil, "geri": geri, "geri_bak": geri_bak}[parca](page)
         br.close()
     print("HATALI GORUNTU:", HATA if HATA else "yok")
     sys.exit(1 if HATA else 0)
