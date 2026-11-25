@@ -225,8 +225,17 @@ politikanın aldığı snapshot'lara dokunur.
 <details>
 <summary><strong>Snapshot'lar Kibana'da nerede? (LAB-19'un isteğe bağlı Kibana'sı)</strong></summary>
 
-LAB-19'daki "Bu cluster'a Kibana bağlamak" kutusunu yaptıysanız aynı bilgiler o Kibana'da görünür
-(`https://<host>-kibana3.devopsatolyesi.com`, `elastic` / `DevOps2026!`); değiştirmeden bakın:
+LAB-19'daki "Bu cluster'a Kibana bağlamak" kutusunu yaptıysanız aynı bilgiler o Kibana'da görünür (`elastic` /
+`DevOps2026!`); adresi sunucuda hesaplayın ve değiştirmeden bakın:
+
+```bash
+IP=$(curl -s https://api.ipify.org); H=$(hostname -s)
+echo "Kibana (3-node): http://$IP:15608   https://$H-kibana3.devopsatolyesi.com"
+```
+
+```text
+Kibana (3-node): http://<IP>:15608   https://<host>-kibana3.devopsatolyesi.com
+```
 
 1. Menü, **Stack Management**, soldaki listede **Data** altında **Snapshot and Restore** (1):
 

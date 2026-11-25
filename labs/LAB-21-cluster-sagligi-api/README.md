@@ -29,6 +29,19 @@ yerleşemediğini gösterir; red'de bir index'in verisine erişilemez. Bu labda:
 cd ~/elastic/labs/LAB-21-cluster-sagligi-api
 ```
 
+Kibana adresini sunucuda hesaplayın (Adım 3'teki Index Management kutusu için):
+
+```bash
+IP=$(curl -s https://api.ipify.org); H=$(hostname -s)
+echo "Kibana: http://$IP:5601   https://$H-kibana.devopsatolyesi.com"
+```
+
+Beklenen çıktı:
+
+```text
+Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
+```
+
 Adım 2'deki senaryo, örnek e-ticaret verisinin bir replica istemesine dayanır (önceki lablar ve bu labın Adım 2'si
 replica'yı 0 yapar). Başlamadan replica sayısını 1 yapın:
 
