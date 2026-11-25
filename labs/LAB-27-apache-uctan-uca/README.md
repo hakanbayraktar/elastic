@@ -58,9 +58,8 @@ geoip { source => "[source][ip]" target => "[source]" }
 elasticsearch { index => "apache-web-%{+yyyy.MM.dd}" }
 ```
 
-- Apache'nin log biçimi (`apache/conf`) istemci IP'sinin yanına `X-Forwarded-For` başlığını da yazar.
-  Site bir yük dengeleyicinin arkasındaysa gerçek ziyaretçi IP'si bu başlıktadır; Logstash varsa onu
-  `source.ip` yapar.
+- Apache log satırına `X-Forwarded-For` başlığını da yazar; yük dengeleyici arkasında gerçek ziyaretçi IP'si
+  budur. Logstash varsa onu `source.ip` yapar.
 - `geoip`: IP'den `source.geo.country_name`, `city_name` ve haritada kullanılan `source.geo.location`
   (`geo_point`) üretir. Özel ağ IP'lerinin (10.x, 172.x, 192.168.x) konumu yoktur.
 - `apache-web-*` index'leri `elastic/apache-index-template.json` şablonuyla tek shard ve 0 replica açılır.
@@ -71,9 +70,8 @@ elasticsearch { index => "apache-web-%{+yyyy.MM.dd}" }
 
 ### 1. Yığını başlatın
 
-İlk çalıştırmada image'lar indirilir (toplam yaklaşık 3 GB) ve Apache image'ı derlenir; bağlantıya göre birkaç
-dakika sürebilir. Image'lar sunucuda hazırsa testte `docker compose up` 13 saniyede bitti, ilk veri 50 saniye
-sonra geldi:
+İlk çalıştırmada image'lar indirilir (yaklaşık 3 GB), birkaç dakika sürebilir. Image'lar hazırsa ilk veri
+yaklaşık 1 dakikada gelir:
 
 ```bash
 docker compose up --build -d
@@ -315,8 +313,8 @@ hayatta bir sonraki adım bu IP'yi engellemek ya da bakımdaki sayfayı düzeltm
 
 ### 5. Alarm: 5xx artınca e-posta (Mailpit)
 
-Arızayı panoya bakarak bulduk; bir dahaki sefere e-posta gelsin. Gerçek bir hesap gerektirmeyen Mailpit'le kuralı kuralım. Kibana'nın e-postayı gönderebileceği bir
-connector (Kibana › Dev Tools):
+Bir dahaki arızada e-posta gelsin. Önce e-postayı yerel Mailpit'e gönderen connector. Kibana › Dev Tools'a
+yapıştırın:
 
 ```http
 POST kbn:/api/actions/connector/apache-mailpit
@@ -340,13 +338,9 @@ POST kbn:/api/actions/connector/apache-mailpit
 
 </details>
 
-Her dakika çalışan ve son 2 dakikada 40'tan fazla 5xx görünce alarm açan kural. Yalnız Apache'nin kendi
-kayıtları (`event.dataset: apache.access`) sayılır; trafik üretecinin kendi kayıtları (`apache.traffic`) aynı
-isteği ikinci kez yazdığı için dışarıda kalır. Trafik üreteci kendi başına dakikada 2-7 hata üretir (testte 2 dakikada en çok 10); eşik
-bunun belirgin biçimde üstünde olduğu için alarm yalnız gerçek bir artışta açılır, 60 istekli arıza ise eşiği
-her zaman aşar. Pencere 2 dakikadır, çünkü loglar Elasticsearch'e birkaç saniye geç ulaşır;
-1 dakikalık pencerede iki çalışmanın arasına düşen hatalar hiç sayılmaz.
-`notify_when: onActionGroupChange` alarm açıldığında bir kez mesaj gönderir, alarm sürdükçe tekrarlamaz:
+Kural her dakika çalışır, son 2 dakikada 40'tan fazla 5xx görünce alarm açar. Yalnız Apache kayıtları
+(`event.dataset: apache.access`) sayılır. Trafik üreteci 2 dakikada en çok 10 hata üretir; 60 istekli arıza eşiği her
+zaman aşar. `notify_when: onActionGroupChange` açılışta bir kez mesaj gönderir. Kibana › Dev Tools'a yapıştırın:
 
 ```http
 POST kbn:/api/alerting/rule/apache-5xx
@@ -395,8 +389,8 @@ requests=60 concurrency=8 ip=195.175.39.39 elapsed_seconds=0.44 statuses={503: 6
 {"Subject":"[ALARM] Apache 5xx artışı: 65 adet 5xx","To":["operasyon@lab.local"],"From":"alarm@lab.local"}
 ```
 
-Kural dakikada bir çalıştığı için e-posta testte yaklaşık 1 dakikada geldi. Sayı sizde farklıdır: 60 arıza isteğine trafik üretecinin arada ürettiği hatalar da eklenir. Mailpit
-arayüzü yalnız sunucudan açılır. Tünel komutunu sunucuda hesaplayın:
+E-posta yaklaşık 1 dakikada gelir; sayı sizde farklıdır. Mailpit arayüzü yalnız sunucudan açılır; tünel komutunu
+sunucuda hesaplayın:
 
 ```bash
 IP=$(curl -s https://api.ipify.org); echo "Kendi bilgisayarınızda: ssh -f -N -L 8025:127.0.0.1:8025 $(whoami)@$IP"
@@ -417,8 +411,8 @@ Yazdırılan komutu kendi bilgisayarınızın terminalinde çalıştırın, sonr
 <details>
 <summary><strong>İsteğe bağlı: gerçek e-posta (Resend) ve Slack, hesabınız varsa</strong></summary>
 
-Gerçek kanallar için iki gizli bilgi gerekir: Resend API
-anahtarı ve Slack webhook adresi.
+İki gizli bilgi gerekir: Resend API anahtarı ve Slack webhook adresi. İkisi de parola gibidir; repoya ve ekran
+görüntüsüne yazmayın.
 
 <details>
 <summary><strong>Resend anahtarı ve Slack webhook nasıl alınır?</strong></summary>
@@ -434,9 +428,7 @@ anahtarı ve Slack webhook adresi.
 
 </details>
 
-İkisi de parola gibidir: bilen herkes sizin adınıza e-posta ya da mesaj gönderir; repoya ya da ekran görüntüsüne
-yazmayın. Kendi değerlerinizi terminale verin (tırnaklar kalsın). Sonraki komutları aynı terminalde çalıştırın;
-terminali kapatırsanız bu üç satırı yeniden yapıştırın:
+Değerleri terminale verin (tırnaklar kalsın; terminali kapatırsanız yeniden yapıştırın):
 
 <!-- runner:skip -->
 ```bash
@@ -462,9 +454,7 @@ Beklenen çıktı:
 <details>
 <summary><strong>Connector kurulumu yarıda kaldıysa</strong></summary>
 
-Değişkenler tanımlanmadan komut çalıştırılırsa ya da iki komuttan biri hata verirse connector'lardan biri
-kurulur, diğeri kurulmaz. Aynı bloğu yeniden çalıştırmak çözmez: kurulmuş olan için Kibana `409 Conflict`
-döndürür, çünkü o id zaten vardır. İkisini de silip yeniden kurun:
+Komutlardan biri hata verdiyse aynı bloğu yeniden çalıştırmak `409 Conflict` verir. İkisini silip yeniden kurun:
 
 ```bash
 ./scripts/kbn.sh DELETE /api/actions/connector/apache-eposta; echo " apache-eposta silindi"
@@ -484,9 +474,7 @@ Beklenen çıktı:
 
 </details>
 
-Kibana gizli bilgileri şifreli saklar; connector listesi onları bir daha göstermez. Bağlantıyı kural
-beklemeden deneyin; e-posta kutunuza ve Slack kanalınıza birer test mesajı düşer. Yeni bir terminal
-açtıysanız önce üç `export` satırını yeniden yapıştırın; `ALARM_TO` boşsa e-posta testi `error` döner:
+Bağlantıyı deneyin; e-posta kutunuza ve Slack kanalınıza birer test mesajı düşer:
 
 ```bash
 ./scripts/kbn.sh POST /api/actions/connector/apache-eposta/_execute "{\"params\":{\"to\":[\"$ALARM_TO\"],\"subject\":\"LAB-27 e-posta testi\",\"message\":\"Kibana connector testi\"}}" | jq -c '{status, connector_id}'
@@ -500,7 +488,7 @@ Beklenen çıktı:
 {"status":"ok","connector_id":"apache-slack"}
 ```
 
-Kurala iki aksiyonu da ekleyin. Kural güncellemesi bütün tanımı ister; en kısa yol kuralı yeniden kurmaktır:
+Kuralı iki aksiyonla yeniden kurun:
 
 ```bash
 ./scripts/kbn.sh DELETE /api/alerting/rule/apache-5xx; echo
@@ -513,8 +501,7 @@ Beklenen çıktı:
 {"id":"apache-5xx","actions":["apache-mailpit","apache-eposta","apache-slack"]}
 ```
 
-Kural yeni kurulduğu için alarm durumu sıfırdır. Arızayı hemen tekrar üretin; kural bir sonraki kontrolde
-alarmı açar ve üç kanala birer mesaj gider:
+Arızayı tekrar üretin; alarm açılınca üç kanala birer mesaj gider:
 
 ```bash
 python3 scripts/generate_burst.py --path /cgi-bin/unavailable.sh --requests 60
@@ -528,13 +515,12 @@ requests=60 concurrency=8 ip=195.175.39.39 elapsed_seconds=0.34 statuses={503: 6
 . alarm acildi
 ```
 
-Testte alarm 10 saniye içinde açıldı: önceki arıza 2 dakikalık pencerede hâlâ duruyorsa kural ilk kontrolde açar, durmuyorsa en geç 1 dakika sürer. E-posta kutunuza ve Slack kanalınıza `[ALARM] Apache 5xx artışı` mesajı düşer. Kibana'da **Stack Management ›
-Connectors** listesinde bu labın üç connector'ı görünür (başka labların connector'ları da listede olabilir):
+E-posta kutunuza ve Slack kanalınıza `[ALARM] Apache 5xx artışı` mesajı düşer. **Stack Management › Connectors**
+listesinde üç connector görünür:
 
 ![Connector'lar: 1 Mailpit, 2 gerçek e-posta, 3 Slack](../../assets/screenshots/LAB-27/05-connectorlar.png)
 
-Gerçek kanallara sonradan gereksiz mesaj gitmesin diye denemeden sonra kuralı kapatın. Kural silinmez;
-Stack Management › Rules'tan yeniden açılabilir:
+Gerçek kanallara gereksiz mesaj gitmesin diye kuralı kapatın (silinmez):
 
 ```bash
 ./scripts/kbn.sh POST /api/alerting/rule/apache-5xx/_disable; echo " kural kapatildi"
@@ -569,8 +555,7 @@ Hesap parolanız kullanılmaz.
 
    ![PDF paneli: 1 Export PDF](../../assets/screenshots/LAB-27/06b-generate-pdf.png)
 
-3. Rapor arka planda tarayıcıyla çizilir. Menüden **Management › Stack Management**'ı açın, soldaki listede
-   **Reporting**'e (1) tıklayın:
+3. Menüden **Management › Stack Management**, soldaki listede **Reporting** (1):
 
    ![Stack Management: 1 Reporting](../../assets/screenshots/LAB-27/06c-reporting-menu.png)
 
@@ -578,7 +563,7 @@ Hesap parolanız kullanılmaz.
 
    ![Reporting: 1 tamamlanan PDF](../../assets/screenshots/LAB-27/06d-reporting-pdf.png)
 
-Raporun durumu ve boyutu Kibana'nın rapor kaydında da görülür:
+Raporun durumu komutla:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -H 'Content-Type: application/json' 'http://127.0.0.1:9200/.kibana-reporting*/_search?expand_wildcards=all' \
@@ -597,10 +582,8 @@ Beklenen çıktı:
 <details>
 <summary><strong>İsteğe bağlı: ML ile anomali tespiti ve SLO</strong></summary>
 
-Sabit eşik "40'tan fazla 5xx" gibi önceden bilinen bir koşulu yakalar. Machine learning ise her IP'nin olağan
-istek sayısını kendisi öğrenir ve bir IP'den beklenmedik çok istek gelince anomali işaretler. SLO de hizmetin
-hedefini (örneğin isteklerin %99,9'u 5xx olmasın) ve bu hedeften ne kadar pay kaldığını izler. İkisi de ücretli
-özelliktir; trial lisansla çalışır:
+Machine learning her IP'nin olağan istek sayısını öğrenir, beklenmedik artışta anomali işaretler. SLO hizmetin
+hedefini (ör. isteklerin %99,9'u 5xx olmasın) izler:
 
 ```bash
 python3 scripts/provision_insights.py
@@ -622,14 +605,12 @@ Kibana'da menüden **Analytics › Machine Learning**, **Anomaly Detection › J
 
 ![Anomaly Detection Jobs: 1 apache-ip-istek-anomali](../../assets/screenshots/LAB-27/06e-ml-isi.png)
 
-Menüden **Observability › SLOs**: iki hedef (1, 2) ve şu anki değerleri. Erişilebilirlik hedefi arıza testleri yüzünden
-ihlal edilmiş (Violated) görünebilir. Kurulumdan hemen sonra ikisi de **No data** görünür; değerler SLO veriyi
-işledikçe gelir:
+Menüden **Observability › SLOs**: iki hedef (1, 2). Kurulumdan hemen sonra **No data**, arızalardan sonra
+**Violated** görünebilir:
 
 ![SLOs: 1 erişilebilirlik, 2 gecikme](../../assets/screenshots/LAB-27/06f-slolar.png)
 
-İş 5 dakikalık bucket'larla öğrendiği için anlamlı sonuç birkaç saat veri biriktikten sonra gelir. Temizlik ikisini
-de siler.
+Anlamlı ML sonucu birkaç saat veri biriktikten sonra gelir.
 
 </details>
 
