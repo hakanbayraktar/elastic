@@ -230,7 +230,7 @@ def ajanlar(page):
     menu(page, "Fleet")
     page.locator('[data-test-subj="fleet-agents-tab"]').first.click(); k.settle(page, 8)
     print("ajanlar:", page.locator("tbody").first.inner_text().replace("\n", " ")[:200])
-    shot(page, "03a-fleet-agents", [(("css", 'tr:has-text("linux-agent-01")'), 1, "down"), (("css", 'tr:has-text("fleet-server")'), 2, "down")])
+    shot(page, "03a-fleet-agents", [(("css", 'tbody a:text-is("linux-agent-01")'), 1, "right"), (("css", 'tbody a:text-is("fleet-server")'), 2, "right")])
 
 
 # ------------------------------------------------------------------ Adim 5: Period 10s -> 30s
@@ -343,8 +343,8 @@ def pano(page):
     med.click(); time.sleep(2)
     page.locator('[data-test-subj="lns-indexPatternDimension-average"]').first.click(); k.settle(page, 3)
     page.locator('[data-test-subj="name-input"]').first.fill("Sunucu CPU (%)"); time.sleep(2)
-    shot(page, "07g-average", [(("testsubj", "lns-indexPatternDimension-average"), 1, "left"), (("testsubj", "name-input"), 2, "left"),
-                               (("testsubj", "lns-indexPattern-dimensionContainerClose"), 3, "up")], scroll_to=("testsubj", "name-input"))
+    shot(page, "07g-average", [(("testsubj", "lns-indexPatternDimension-average"), 1, "left"), (("testsubj", "name-input"), 2, "up"),
+                               (("testsubj", "lns-indexPattern-dimensionContainerClose"), 3, "left")], scroll_to=("testsubj", "name-input"))
     page.locator('[data-test-subj="lns-indexPattern-dimensionContainerClose"]').first.click(); time.sleep(2)
     shot(page, "07h-save-return", [(("testsubj", "lnsApp_saveAndReturnButton"), 1, "down")])
     page.locator('[data-test-subj="lnsApp_saveAndReturnButton"]').first.click(); k.settle(page, 8)

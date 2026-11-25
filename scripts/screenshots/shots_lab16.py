@@ -251,10 +251,10 @@ def pano(page):
     k.settle(page, 5)
     page.mouse.move(800, 60); time.sleep(1)
     print("panel sayisi:", page.locator('[data-test-subj="dashboardPanel"]').count())
-    shot(page, "05f-dort-panel", [(("css", '[data-test-subj^="embeddablePanelHeading-Zaman"]'), 1, "right"),
-                                  (("css", '[data-test-subj^="embeddablePanelHeading-Ülke"]'), 2, "right"),
-                                  (("css", '[data-test-subj^="embeddablePanelHeading-Sayfa"]'), 3, "right"),
-                                  (("css", '[data-test-subj^="embeddablePanelHeading-Hata"]'), 4, "right")])
+    shot(page, "05f-dort-panel", [(("css", '[data-test-subj^="embeddablePanelHeading-Zaman"]'), 1, "ic"),
+                                  (("css", '[data-test-subj^="embeddablePanelHeading-Ülke"]'), 2, "ic"),
+                                  (("css", '[data-test-subj^="embeddablePanelHeading-Sayfa"]'), 3, "ic"),
+                                  (("css", '[data-test-subj^="embeddablePanelHeading-Hata"]'), 4, "ic")])
     # panel tasima / boyutlandirma
     p0 = page.locator('[data-test-subj="dashboardPanel"]').nth(0)
     p0.hover(); time.sleep(1.5)

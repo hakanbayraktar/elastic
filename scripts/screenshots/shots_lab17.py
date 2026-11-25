@@ -231,7 +231,7 @@ def sil(page):
     page.get_by_text(PANO, exact=True).first.click(); k.settle(page, 12)
     hata = '[data-test-subj="embeddableError"], [data-test-subj="embeddableStackError"], [data-test-subj="embeddablePanelError"]'
     print("hatali panel:", page.locator(hata).count())
-    shot(page, "07c-eksik-panel", [(("css", hata), 1, "left")])
+    shot(page, "07c-eksik-panel", [(("css", hata), 1, None)])
 
 
 def geri(page):

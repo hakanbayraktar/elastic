@@ -71,7 +71,7 @@ def pano(page):
     ara = page.locator('[data-test-subj="tableListSearchBox"]').first
     ara.fill("Grok"); page.keyboard.press("Enter"); k.settle(page, 4)
     link = '[data-test-subj="dashboardListingTitleLink-Logstash-Grok-Ayrıştırma-ve-Log-Analizi"]'
-    shot(page, "06b-pano-ara", [(("testsubj", "tableListSearchBox"), 1, "down"), (("css", link), 2, "right")])
+    shot(page, "06b-pano-ara", [(("testsubj", "tableListSearchBox"), 1, "left"), (("css", link), 2, "left")])
     page.locator(link).first.click(); k.settle(page, 10)
     page.mouse.move(800, 60); time.sleep(1)
     shot(page, "06c-grok-pano", [(("text", "Ayrıştırılamayan Olay (Karantina)", True), 1, "right"),

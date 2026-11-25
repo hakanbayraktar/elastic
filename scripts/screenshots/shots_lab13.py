@@ -122,7 +122,7 @@ def kibana(page):
     except Exception:
         pass
     page.mouse.move(800, 60); time.sleep(1)
-    shot(page, "07g-pano", [(("css", '[data-test-subj="dashboardPanel"]'), 1, None)])
+    shot(page, "07g-pano", [(("css", '[data-test-subj="dashboardPanel"]'), 1, "ic")])
 
 
 if __name__ == "__main__":
