@@ -16,8 +16,7 @@ web sunucusu loglarıyla:
 - Panoyu bir **Control** ile tek tıkla filtreleyeceğiz.
 - Panoyu zaman aralığıyla kaydedip paylaşacak ve dışa aktaracağız.
 
-Logda bir arıza saklı: iki gün önce 14:00-16:00 arasında ödeme sayfası 500 döndü. Her tıklama kırmızı kutu ve
-numarayla gösterilir.
+Logda bir arıza saklı: iki gün önce 14:00-16:00 arasında ödeme sayfası 500 döndü.
 
 ---
 
@@ -84,6 +83,9 @@ POST kbn:/api/data_views/data_view
 { "data_view": { "id": "pano-apache", "title": "pano-apache", "name": "Apache erişim logları", "timeFieldName": "@timestamp" } }
 ```
 
+Yanıt `{"data_view":{"id":"pano-apache",` ile başlar. `400` ve `Duplicate data view: Apache erişim logları` gelirse
+data view zaten vardır; aynı data view'la devam edin.
+
 ### 2. Visualize library'yi açın
 
 **Soru: Yeni bir grafiğe nereden başlanır?**
@@ -103,7 +105,7 @@ POST kbn:/api/data_views/data_view
 | Seçenek | Ne zaman |
 |---|---|
 | **Visualization** (1), yani Lens | Varsayılan: tıklayarak her grafik türü; bu labın konusu |
-| **Maps** (2) | Konum field'ı (`geo_point`) olan veride harita (LAB-18) |
+| **Maps** (2) | Konum field'ı (`geo_point`) olan veride harita |
 | **Vega** | Lens'in çizemediği özel grafik, JSON ile; nadiren |
 | **Legacy** (3) | Eski editörler; eski panolarda karşınıza çıkar |
 
@@ -365,8 +367,8 @@ anahtar ilk kaydetme penceresinde de vardır (Adım 6'nın 3. maddesi).
 | **PNG reports** (3) | Panoyu tek resme çevirir |
 | **Schedule export** (4) | Raporu saatlik, günlük, haftalık ya da aylık tekrarlatır; e-posta için bir e-posta connector'ı gerekir |
 
-PDF ve PNG raporları ücretli lisans özelliğidir; LAB-01'de açtığınız deneme lisansıyla çalışır. Raporu üretip
-Reporting sayfasından indirmek LAB-18'de, panoyu başka bir Space'e taşımak LAB-17'dedir.
+PDF ve PNG raporları ücretli lisans özelliğidir; ana cluster'da açık olan 30 günlük deneme lisansıyla çalışır.
+Üretilen raporlar **Stack Management › Reporting** sayfasından indirilir.
 
 ---
 

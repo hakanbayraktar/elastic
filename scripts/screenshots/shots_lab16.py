@@ -288,7 +288,7 @@ def pano(page):
     tablo = page.locator('[data-test-subj="dashboardPanel"]:has-text("Ülke bazında")').first.inner_text()
     print("  suzulmus tablo:", tablo[:160].replace("\n", " | "))
     shot(page, "06e-pano-suzuldu", [(("css", '[data-test-subj^="optionsList-control-"]'), 1, "down"),
-                                    (("css", '[data-test-subj="dashboardPanel"]:has-text("Ülke bazında")'), 2, None)])
+                                    (("css", '[data-test-subj="dashboardPanel"]:has-text("Ülke bazında")'), 2, "ic")])
     # Adim 6 sonu: secimi kaldir, duzenleme modundan cik (Adim 7 Edit dugmesiyle baslar)
     page.locator('[data-test-subj^="optionsList-control-"]').first.click(); time.sleep(2)
     page.locator('[data-test-subj="optionsList-control-selection-Germany"]').first.click(); time.sleep(1)
