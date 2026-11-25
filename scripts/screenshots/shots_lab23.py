@@ -44,7 +44,7 @@ def snapshot(page):
     page.locator('[data-test-subj="snapshot_restore"]').first.click(); k.settle(page, 6)
     print("sekmeler:", [t.inner_text() for t in page.locator('[role="tab"]').all()])
     page.locator(sekme(page, "Snapshots")).first.click(); k.settle(page, 4)
-    shot(page, "04b-snapshots", [(("css", sekme(page, "Snapshots")), 1, "down"), (("css", 'tr:has-text("elle-1")'), 2, "left")])
+    shot(page, "04b-snapshots", [(("css", sekme(page, "Snapshots")), 1, "left"), (("css", 'tr:has-text("elle-1")'), 2, "left")])
     page.locator(sekme(page, "Repositories")).first.click(); k.settle(page, 4)
     shot(page, "04c-repositories", [(("css", sekme(page, "Repositories")), 1, "down"), (("css", 'tr:has-text("cluster-yedek")'), 2, "left")])
     page.locator(sekme(page, "Policies")).first.click(); k.settle(page, 4)
