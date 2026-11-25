@@ -114,8 +114,7 @@ Beklenen çıktı:
 anahtar uzunlugu: 60
 ```
 
-Anahtarın kendisini ekrana yazdırmıyoruz; uzunluğu üretildiğini göstermeye yeter. `app/baglan.py` cluster'a
-bağlanır, kimliğini sorar ve yetkisi olmayan bir index'e yazmayı dener:
+Anahtar ekrana yazdırılmaz. `app/baglan.py` bağlanır, kimliğini sorar ve yetkisiz bir index'e yazmayı dener:
 
 ```bash
 cd app
@@ -174,9 +173,8 @@ reddedilen: Y4 400 document_parsing_exception
 bulunamadi: 404 U9999
 ```
 
-Üç document yazıldı, iki document nedeniyle birlikte döndü; uygulama onları kaydedip düzeltebilir. Varsayılan
-`raise_on_error=True` olsaydı ilk hatada `BulkIndexError` istisnası atılırdı. Olmayan document'i okumak
-`NotFoundError` (404) verir; bu bir program hatası değil, beklenen bir durumdur ve `try/except` ile karşılanır.
+Üç document yazıldı, ikisi nedeniyle birlikte döndü. Varsayılan `raise_on_error=True` ilk hatada `BulkIndexError`
+atar. Olmayan document `NotFoundError` (404) verir ve `try/except` ile karşılanır.
 
 ### 5. Sıralama ve search_after ile sayfalama
 
@@ -225,17 +223,14 @@ kapali port : ConnectionError, tekrar deneme = 2
 
 - 1 ms'lik zaman aşımı yetişmez; istemci `max_retries=3` kadar dener ve `ConnectionTimeout` atar.
 - Kapalı porta bağlanılamaz; `max_retries=2` olan bu istemci 2 kez dener ve `ConnectionError` atar.
-- 404, 403 ve 400 tekrar denenmez: aynı istek aynı cevabı alır. Ağ hatası, 429 (cluster yoğun) ve
-  502/503/504 geçici sayılır ve tekrar denenir; zaman aşımı yalnız `retry_on_timeout=True` verildiyse
-  (varsayılanı `False`) tekrar denenir.
+- 404, 403 ve 400 tekrar denenmez: aynı istek aynı cevabı alır. Ağ hatası, 429 ve 502/503/504 tekrar denenir.
 
 ### 7. Tek document: yaz, oku, ara
 
 **Soru: Tek bir document nasıl yazılır, id ile okunur ve aranır?**
 
-Bulk binlerce document içindir; uygulamanın çoğu işi tek document'tir (bir sipariş açmak, bir ürünü kaydetmek).
-`app/tek.py` üç ürünü `es.index` ile tek tek yazar, birini `es.get` ile id'siyle okur ve `match` sorgusuyla arar.
-Ürünler Adım 3-6'daki sayıları bozmasın diye ayrı bir `py-tek` index'ine gider (API key `py-*` için yetkilidir):
+`app/tek.py` üç ürünü `es.index` ile tek tek yazar, birini `es.get` ile id'siyle okur ve `match` ile arar. Ürünler
+ayrı bir `py-tek` index'ine gider:
 
 ```bash
 cd app
@@ -255,16 +250,10 @@ match  : 2 sonuc
   Kablolu Kulaklık       399.90  skor 0.50
 ```
 
-- Betik önce index'i kendisi açar (`es.indices.create`, `mappings` ve replica 0). Mapping'i API key'in `index`
-  yetkisine bıraktırmak çalışır ama client bir uyarı verir: otomatik mapping güncellemesi bir sonraki major sürümde
-  açık yetki isteyecek. `create_index` yetkisi index'i açmaya yeter.
-- `es.index` document'i verilen id ile yazar. Sonuç `created`'dır; aynı id'yle tekrar yazarsanız `updated` olur ve
-  `_version` artar (document yerine yenisi konur).
-- `es.get` id ile okur: `found` ve `_source` gelir. Id ile okuma refresh'i beklemez; document yazıldığı anda
-  görünür. Olmayan id `NotFoundError` (404) verir (Adım 4).
-- `es.search` ile `match` sorgusu metni analyzer'dan geçirip eşleştirir: `kulaklık` iki ürünü bulur (üçüncüsü
-  eşleşmez); ikisinde de kelime bir kez geçtiği için puanları aynıdır. Sonuç `hits` içindedir; her isabetin `_source`'u (ürünün kendisi) ve `_score`'u (eşleşme puanı) vardır.
-  Arama yalnız refresh'ten sonra görür; `refresh="wait_for"` bunu bekletir (LAB-07'de gördüğümüz gibi).
+- `es.index` verilen id ile yazar: `created`; aynı id'yle tekrar yazılırsa `updated` olur ve `_version` artar.
+- `es.get` id ile okur ve refresh beklemez; document yazıldığı anda görünür.
+- `match` metni analyzer'dan geçirir: `kulaklık` iki ürünü bulur. Arama yalnız refresh'ten sonra görür;
+  `refresh="wait_for"` bunu bekletir.
 
 ---
 
