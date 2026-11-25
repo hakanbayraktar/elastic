@@ -419,7 +419,7 @@ Saldırganın root girişine izin verdiğini varsayın:
 echo "PermitRootLogin yes" >> izlenen/sshd_config
 timeout 240 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:9200/.alerts-security.alerts-default/_count" -H "Content-Type: application/json" -d "{\"query\":{\"term\":{\"kibana.alert.rule.rule_id\":\"siem-lab-config-changed\"}}}" | jq .count)" -ge 1 ]; do printf .; sleep 5; done'; echo
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/siem-fim-*/_search?size=1&sort=@timestamp:desc&filter_path=hits.hits._source' -H 'Content-Type: application/json' \
-  -d '{"_source": ["event.action", "file.path"], "query": {"term": {"file.path": "/izlenen/sshd_config"}}}' | jq -c '.hits.hits[0]._source'
+  -d '{"_source": ["event.action", "file.path"], "query": {"term": {"file.path": "/izlenen/sshd_config"}}}' | jq -S -c '.hits.hits[0]._source'
 ```
 
 Beklenen çıktı:
