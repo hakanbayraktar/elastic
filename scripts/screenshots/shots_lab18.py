@@ -80,7 +80,7 @@ def harita(page):
                                      (("role", "button", "Add and close", True), 2, "up")])
     page.get_by_role("button", name="Add and close", exact=True).first.click(); k.settle(page, 8)
     page.mouse.move(700, 450); time.sleep(1)
-    shot(page, "02g-harita", [(("testsubj", "mapLayerTOC"), 1, "down"), (("testsubj", "mapContainer"), 2, None)])
+    shot(page, "02g-harita", [(("testsubj", "mapLayerTOC"), 1, "left"), (("testsubj", "mapContainer"), 2, None)])  # 2: harita alani; numara kutunun icinde
     page.locator('[data-test-subj="mapSaveButton"]').first.click(); time.sleep(2)
     page.locator('[data-test-subj="savedObjectTitle"]').fill("Ziyaretçi haritası")
     try:
@@ -98,6 +98,11 @@ def harita(page):
 
 def aktif(page):
     yonetim(page, "triggersActions")
+    if not page.locator('[data-test-subj="rulesList"]').count():   # 9.5: liste ilk giriste bos kalabiliyor
+        page.locator('[role="tab"]:has-text("Logs")').first.click(); k.settle(page, 4)
+        page.locator('[role="tab"]:has-text("Rules")').first.click(); k.settle(page, 8)
+    ara = page.locator('[data-test-subj="ruleSearchField"]').first
+    ara.fill("Ödeme"); ara.press("Enter"); k.settle(page, 4)   # listede baska labların kurallari da var
     satir = 'a:has-text("Ödeme 5xx patlaması"), button:has-text("Ödeme 5xx patlaması")'
     page.locator(satir).first.click(); k.settle(page, 6)
     url = page.url

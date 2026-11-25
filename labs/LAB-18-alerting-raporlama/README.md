@@ -301,7 +301,9 @@ Beklenen çıktı:
 ```
 
 Kural bir sonraki çalışmasında (en çok 1 dakika) eşiği aşan sayıyı gördü ve aksiyon document'i yazdı. Zaman
-sizde farklıdır. **Stack Management › Rules › Ödeme 5xx patlaması** sayfasında **Active now** kutusunda 1 görünür (1):
+sizde farklıdır. **Stack Management › Rules › Ödeme 5xx patlaması** sayfasında **Active now** kutusunda 1 görünür (1).
+Rules listesi boş açılırsa **Logs** sekmesine tıklayıp **Rules** sekmesine dönün; arama kutusuna `Ödeme` yazmak kuralı
+öteki labların kuralları arasında bulur:
 
 ![Kural ayrıntısı: 1 Active now](../../assets/screenshots/LAB-18/05a-kural-aktif.png)
 
@@ -387,12 +389,16 @@ http.response.status_class : "5xx"
 
 ![Reporting: 1 Alarm panosu PDF raporu](../../assets/screenshots/LAB-18/06l-reporting-pdf.png)
 
-<details>
-<summary><strong>Slack ve e-posta: hesap, anahtar ve connector</strong></summary>
+### 7. Gerçek kanallar: Slack ve e-posta
 
-Alarmı Slack kanalına ya da e-postaya göndermek için iki gizli bilgi gerekir: Slack webhook adresi ve Resend API
-anahtarı. İkisi de parola gibidir; bilen herkes sizin adınıza mesaj ya da e-posta gönderir. Repoya, ekran görüntüsüne
-ve sohbete yazılmaz; yalnız Kibana'nın connector formuna yapıştırılır.
+**Soru: Alarm ekibin kanalına ve e-postasına nasıl gider?**
+
+Bu adım bir Slack çalışma alanınız ve bir Resend hesabınız varsa yapılır; yoksa alarm akışını 5. adımda görmüş
+olmanız yeterlidir. İki gizli bilgi gerekir: Slack webhook adresi ve Resend API anahtarı. İkisi de parola gibidir;
+bilen herkes sizin adınıza mesaj ya da e-posta gönderir. Komuta, repoya, ekran görüntüsüne ve sohbete yazılmaz.
+
+<details>
+<summary><strong>Slack webhook adresi ve Resend anahtarı nasıl alınır?</strong></summary>
 
 **Slack: kanal için Incoming Webhook**
 
@@ -459,7 +465,58 @@ ve sohbete yazılmaz; yalnız Kibana'nın connector formuna yapıştırılır.
 Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adresine gönderir ve gönderen
 `onboarding@resend.dev` olur; deneme için yeterlidir.
 
-**Kibana: iki connector**
+</details>
+
+**Gizli dosya.** Değerleri yalnız sizin okuyabildiğiniz bir dosyaya koyun. Önce dosyayı yalnız size açık oluşturun
+(var olan dosyaya dokunmaz):
+
+```bash
+[ -e ~/.lab18-gizli ] || install -m 600 /dev/null ~/.lab18-gizli
+chmod 600 ~/.lab18-gizli; stat -L -c %A ~/.lab18-gizli
+```
+
+Beklenen çıktı:
+
+```text
+-rw-------
+```
+
+Bir metin editörüyle (`nano ~/.lab18-gizli`) üç satırı yazın; alıcı Resend hesabınızın e-posta adresidir:
+
+```text
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+RESEND_API_KEY=re_...
+ALARM_TO=<Resend hesabınızın e-posta adresi>
+```
+
+**Connector'lar.** Değerleri ortama alıp iki connector'ı kurun. Anahtar komut satırına yazılmaz: `jq` JSON'u ortam
+değişkeninden (`$ENV`) üretir, `scripts/kbn.sh` onu standart girdiden Kibana API'sine gönderir; sondaki `unset`
+anahtarları shell'den siler:
+
+```bash
+set -a; . ~/.lab18-gizli; set +a
+jq -n '{name:"alarm-slack", connector_type_id:".slack", secrets:{webhookUrl:$ENV.SLACK_WEBHOOK_URL}}' | ./scripts/kbn.sh POST /api/actions/connector/alarm-slack @- | jq -c '{id, connector_type_id}'
+jq -n '{name:"alarm-eposta", connector_type_id:".email", config:{service:"other", host:"smtp.resend.com", port:587, secure:false, from:"onboarding@resend.dev", hasAuth:true}, secrets:{user:"resend", password:$ENV.RESEND_API_KEY}}' | ./scripts/kbn.sh POST /api/actions/connector/alarm-eposta @- | jq -c '{id, connector_type_id}'
+unset SLACK_WEBHOOK_URL RESEND_API_KEY
+```
+
+Beklenen çıktı:
+
+```text
+{"id":"alarm-slack","connector_type_id":".slack"}
+{"id":"alarm-eposta","connector_type_id":".email"}
+```
+
+- **Port 587, `secure: false`:** bağlantı yine şifrelidir. Kibana önce normal bağlanır, sunucu izin verince bağlantıyı
+  TLS'e yükseltir (STARTTLS). `secure: true` "baştan TLS" demektir ve yalnız port 465 içindir; 587'de açılırsa bağlantı
+  kurulamaz. Kural kısaca: 587 → kapalı, 465 → açık.
+- **Gönderen `onboarding@resend.dev`:** doğrulanmış alan adınız yoksa Resend yalnız hesabınızın adresine gönderir.
+
+<details>
+<summary><strong>Komut yerine arayüzden kurmak isterseniz</strong></summary>
+
+**İkisinden birini yapın:** connector'ları komutla kurduysanız bu kutuyu atlayın. **Connector ID** alanına adla aynı
+değeri (`alarm-slack`, `alarm-eposta`) yazın; aşağıdaki kural komutu connector'ları bu kimlikle bulur.
 
 1. **Stack Management › Connectors**'ta **Create connector** (1):
 
@@ -499,11 +556,74 @@ Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adr
 6. Kaydedince açılan **Test** sekmesinde: Slack'te bir mesaj yazıp **Run**, mesaj kanala düşer; Email'de **To**
    alanına Resend hesabınızın e-posta adresini yazıp **Run**.
 
-Kurala ikinci bir action olarak eklenir; mesajda aynı değişkenler kullanılır
-(`{{rule.name}}`, `{{context.value}}`, `{{context.link}}`). Linklerin dolu gelmesi için Kibana'da
-`server.publicBaseUrl` tanımlı olmalıdır; yoksa `{{context.link}}` boş gelir.
+6. Kaydedince açılan **Test** sekmesinde: Slack'te bir mesaj yazıp **Run**, mesaj kanala düşer; Email'de **To**
+   alanına Resend hesabınızın e-posta adresini, **Subject** ve **Message** yazıp **Run**.
 
 </details>
+
+**Bağlantıyı deneyin.** Kural beklemeden Slack kanalınıza ve e-posta kutunuza birer test mesajı düşer. İlk satır alıcı
+adresini dosyadan okur:
+
+```bash
+ALARM_TO=$(sed -n 's/^ALARM_TO=//p' ~/.lab18-gizli)
+./scripts/kbn.sh POST /api/actions/connector/alarm-slack/_execute '{"params":{"message":"LAB-18 Slack testi"}}' | jq -c '{status, connector_id}'
+./scripts/kbn.sh POST /api/actions/connector/alarm-eposta/_execute "{\"params\":{\"to\":[\"$ALARM_TO\"],\"subject\":\"LAB-18 e-posta testi\",\"message\":\"Kibana connector testi\"}}" | jq -c '{status, connector_id}'
+```
+
+Beklenen çıktı:
+
+```text
+{"status":"ok","connector_id":"alarm-slack"}
+{"status":"ok","connector_id":"alarm-eposta"}
+```
+
+`"status":"error"` gelirse: Slack'te webhook adresi eksik kopyalanmıştır; e-postada anahtar, port/secure eşleşmesi ya
+da `ALARM_TO`'nun Resend hesabınızın adresi olmaması.
+
+**Kurala ekleyin.** Kural tanımı bütün olarak gönderilir; en kısa yol kuralı Slack ve e-posta aksiyonlarıyla yeniden
+kurmaktır (`scripts/kural.jq`, Adım 4'teki tanım + iki aksiyon). Sonra arızayı yeniden üretin:
+
+```bash
+ALARM_TO=$(sed -n 's/^ALARM_TO=//p' ~/.lab18-gizli)
+./scripts/kbn.sh DELETE /api/alerting/rule/alarm-5xx; echo
+jq -n --arg to "$ALARM_TO" -f scripts/kural.jq | ./scripts/kbn.sh POST /api/alerting/rule/alarm-5xx @- | jq -c '{id, actions: [.actions[].id]}'
+python3 scripts/veri_uret.py --ariza
+timeout 180 bash -c 'until curl -s -u elastic:"DevOps2026!" -H "kbn-xsrf: true" http://127.0.0.1:5601/api/alerting/rule/alarm-5xx | jq -e ".last_run.alerts_count.active == 1" >/dev/null; do printf .; sleep 10; done'; echo " alarm acildi"
+```
+
+Beklenen çıktı:
+
+```text
+
+{"id":"alarm-5xx","actions":["alarm-gecmisi-yaz","alarm-slack","alarm-eposta"]}
+[+] 40 adet 500 olayi yazildi (/odeme, son 1 dakika) -> alarm-apache
+. alarm acildi
+```
+
+Slack kanalınıza ve e-posta kutunuza `[ALARM] Ödeme 5xx patlaması` mesajı düşer. Mesajlarda `{{context.link}}`
+kullanılırsa linkin dolu gelmesi için Kibana'da `server.publicBaseUrl` tanımlı olmalıdır.
+
+<details>
+<summary><strong>Aksiyonları arayüzden eklemek isterseniz</strong></summary>
+
+**Stack Management › Rules › Ödeme 5xx patlaması**, sağ üstteki **⋮ › Edit rule**. **Actions** bölümünde **Add action**
+ile **alarm-slack**'i seçip **Message**'a, yeniden **Add action** ile **alarm-eposta**'yı seçip **To**, **Subject**,
+**Message**'a yazın (Adım 4'teki kutunun 8-10. görüntüleri aynı ekranlardır); **Save**. Kural kimliği değişmez.
+
+</details>
+
+Gerçek kanallara gereksiz mesaj gitmesin diye denemeden sonra kuralı kapatın; kural silinmez, Rules sayfasından
+yeniden açılır:
+
+```bash
+./scripts/kbn.sh POST /api/alerting/rule/alarm-5xx/_disable; echo " kural kapatildi"
+```
+
+Beklenen çıktı:
+
+```text
+ kural kapatildi
+```
 
 ---
 
@@ -511,8 +631,9 @@ Kurala ikinci bir action olarak eklenir; mesajda aynı değişkenler kullanılı
 
 Yalnız bu labın kuralını (arayüzden kurulduysa adıyla bulunur), connector'larını (`alarm-gecmisi-yaz`; kurduysanız
 `alarm-slack` ve `alarm-eposta`), `alarm-apache` ve `alarm-gecmisi` index'lerini, şablonunu, data view'ını, haritasını
-ve panosunu siler; ana cluster'a dokunmaz. Reporting listesindeki rapor Kibana'nın kendi kaydıdır
-ve kalır:
+ve panosunu siler; ana cluster'a dokunmaz. Reporting listesindeki rapor Kibana'nın kendi kaydıdır ve kalır;
+`~/.lab18-gizli` dosyanıza da dokunmaz (işiniz bitince `rm ~/.lab18-gizli` ile silebilirsiniz). 7. adımı yaptıysanız
+çıktıda iki `connector ... -> 204` satırı daha görünür:
 
 ```bash
 ./teardown.sh
