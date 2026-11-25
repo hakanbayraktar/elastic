@@ -2,19 +2,19 @@
 
 | Kullanılan Araçlar | Açık / Kullanılan Portlar |
 |---|---|
-| Apache, Filebeat, Logstash (grok, GeoIP), Metricbeat, Kibana (pano, Maps, Alerting, Reporting), Mailpit, Resend, Slack | `8088` (Apache, dışarıdan), `127.0.0.1:8025` (Mailpit arayüzü), 9200 / 5601 (ana cluster) |
+| Apache, Filebeat, Logstash (grok, GeoIP), Metricbeat, Kibana (pano, Maps, Discover ES\|QL, Alerting), Mailpit; isteğe bağlı Resend, Slack, Reporting | `8088` (Apache, dışarıdan), `127.0.0.1:8025` (Mailpit arayüzü), 9200 / 5601 (ana cluster) |
 
 ---
 
 ## Bu lab ne öğretiyor?
 
-Önceki lablarda her parçayı ayrı ayrı kurduk. Gerçek bir web sitesinde ise hepsi birbirine bağlıdır:
-Apache bir istek alır, Filebeat log satırını Logstash'e taşır, Logstash satırı field'lara ayırıp IP'den
-ülkeyi bulur, Kibana panoda ve haritada gösterir. Hata oranı artınca da kimse panoya bakmadan e-posta
-ve Slack mesajı gelir; yönetime giden rapor PDF olarak hazırlanır.
+Önceki lablarda her parçayı ayrı ayrı kurduk. Gerçek bir web sitesinde hepsi birbirine bağlıdır: Apache bir
+istek alır, Filebeat log satırını Logstash'e taşır, Logstash satırı field'lara ayırıp IP'den ülkeyi bulur,
+Kibana panoda ve haritada gösterir. Bir gün hata sayısı artar; panodan arızayı görür, ES|QL ile hangi endpoint'in,
+hangi IP'nin ve hangi ülkenin sorumlu olduğunu bulursunuz.
 
-Bu labda bu zincirin tamamını tek seferde kuracak, bir arızayı kendimiz üretip alarmın Mailpit'e,
-gerçek e-posta kutusuna ve Slack kanalına geldiğini görecek, sonunda panoyu PDF rapor olarak alacağız.
+Bu labda zinciri tek seferde kuracak, panoyu ve haritayı açacak, bir arızayı kendimiz üretip kök nedenini
+bulacak ve aynı arıza tekrar edince e-posta gelmesini sağlayacağız.
 
 ![Apache uçtan uca: Apache, Filebeat, Logstash, Elasticsearch, Kibana, alarm ve rapor](../../assets/infographics/21-apache-uctan-uca.png)
 
@@ -22,8 +22,7 @@ gerçek e-posta kutusuna ve Slack kanalına geldiğini görecek, sonunda panoyu 
 
 ## Ön Koşullar
 
-- Önce kurulu olmalı: LAB-01 ana cluster'ı ve trial lisans. E-posta/Slack connector'ları ve PDF rapor ücretli
-  özelliklerdir.
+- Önce kurulu olmalı: LAB-01 ana cluster'ı ve trial lisans. E-posta connector'ı (5. adım) ücretli bir özelliktir.
 - Önceki labları atladıysanız da bu lab çalışır; LAB-01 dışında hiçbir labın verisini kullanmaz.
 - `8088` ve `127.0.0.1:8025` boş olmalı. Yedi container birlikte yaklaşık 2 GB RAM kullanır.
 
@@ -72,6 +71,10 @@ elasticsearch { index => "apache-web-%{+yyyy.MM.dd}" }
 
 ### 1. Yığını başlatın
 
+İlk çalıştırmada image'lar indirilir (toplam yaklaşık 3 GB) ve Apache image'ı derlenir; bağlantıya göre birkaç
+dakika sürebilir. Image'lar sunucuda hazırsa testte `docker compose up` 13 saniyede bitti, ilk veri 50 saniye
+sonra geldi:
+
 ```bash
 docker compose up --build -d
 timeout 240 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:9200/apache-web-*/_count" 2>/dev/null | jq .count 2>/dev/null)" -gt 20 ] 2>/dev/null; do printf .; sleep 5; done'; echo " veri akiyor"
@@ -79,16 +82,16 @@ docker compose ps --format '{{.Name}}\t{{.Status}}'
 ```
 
 <details>
-<summary><strong>Çıktının tamamı (7 satır)</strong></summary>
+<summary><strong>Çıktının sonu (7 satır; üstünde image derleme ve container başlatma satırları vardır)</strong></summary>
 
 ```text
-........... veri akiyor
-apache-web-observability-apache-1	Up About a minute
-apache-web-observability-filebeat-1	Up About a minute
-apache-web-observability-logstash-1	Up About a minute
-apache-web-observability-metricbeat-1	Up 56 seconds
-apache-web-observability-traffic-generator-1	Up About a minute
-mailpit-apache-lab	Up About a minute (healthy)
+....... veri akiyor
+apache-web-observability-apache-1	Up 41 seconds
+apache-web-observability-filebeat-1	Up 38 seconds
+apache-web-observability-logstash-1	Up 39 seconds
+apache-web-observability-metricbeat-1	Up 35 seconds
+apache-web-observability-traffic-generator-1	Up 40 seconds
+mailpit-apache-lab	Up 40 seconds (healthy)
 ```
 
 </details>
@@ -146,6 +149,34 @@ Ham satırdaki Docker ağ adresi (`172.23.0.1`) ve tarih sizde farklıdır.
 | `172.x... 5.9.0.1 apache-yolculuk` | `source.ip: 5.9.0.1` (Docker ağının IP'si değil) | grok + `X-Forwarded-For` kuralı |
 | (yok) | `ulke`, `sehir`, `konum` | `geoip` |
 | `"GET /products/sku-100 HTTP/1.1" 404` | `method`, `url.path`, `durum` (sayı) | grok + `convert` |
+
+<details>
+<summary><strong>Veri gelmiyorsa: zincir nerede koptu?</strong></summary>
+
+Halkaları sırayla sayın: Apache'nin yazdığı satır, Logstash'in aldığı (`in`) ve gönderdiği (`out`) olay,
+Elasticsearch'teki document:
+
+```bash
+docker compose exec -T apache sh -c 'wc -l < /usr/local/apache2/logs/access_log'
+docker compose exec -T logstash curl -s localhost:9600/_node/stats/pipelines/main | jq -c '.pipelines.main.events | {in, out}'
+curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/apache-web-*/_count?q=event.dataset:apache.access' | jq .count
+```
+
+Beklenen çıktı (sayılar sizde farklıdır ve her saniye artar):
+
+```text
+3377
+{"in":6375,"out":6375}
+3370
+```
+
+- İlk sayı artmıyorsa Apache istek almıyordur: `docker compose ps` ile trafik üretecine bakın.
+- `in` 0 ise Filebeat Logstash'e ulaşamıyordur: `docker compose logs --tail 20 filebeat`.
+- `out`, `in`'den gerideyse Logstash Elasticsearch'e yazamıyordur: `docker compose logs --tail 20 logstash`.
+- Logstash'in sayısı Apache'ninkinden büyüktür, çünkü `error_log` ve trafik üretecinin kendi kayıtları da aynı
+  pipeline'dan geçer. Son sayı ilkine birkaç saniye geriden yetişir.
+
+</details>
 
 ### 3. Pano ve harita
 
@@ -216,9 +247,75 @@ PASS Dashboard: apache-web-operations (5 Lens panels)
 
    ![Harita kaydetme: 1 Title, 2 None, 3 Save](../../assets/screenshots/LAB-27/03j-harita-kaydet.png)
 
-### 4. Alarm: 5xx artınca e-posta (Mailpit)
+### 4. Arıza: panoda görün, ES|QL ile kök nedeni bulun
 
-Önce gerçek bir hesap gerektirmeyen Mailpit'le kuralı kuralım. Kibana'nın e-postayı gönderebileceği bir
+Bakımdaki bir sayfaya (`/cgi-bin/unavailable.sh`, 503 döner) tek bir IP'den 60 istek gönderin:
+
+```bash
+python3 scripts/generate_burst.py --path /cgi-bin/unavailable.sh --requests 60
+```
+
+Beklenen çıktı:
+
+```text
+requests=60 concurrency=8 ip=195.175.39.39 elapsed_seconds=0.31 statuses={503: 60}
+```
+
+Birkaç saniye sonra panoyu açın (3. adımdaki gibi), zaman seçicisinden **Last 15 minutes**'ı seçin. **5xx istek
+sayısı** paneli (1) birden yükselir. Pano "ne oldu" sorusunu cevaplar; "kim, nereden" sorusu için ES|QL'e geçin:
+
+![Pano: 1 5xx istek sayısı yükselmiş](../../assets/screenshots/LAB-27/04a-pano-ariza.png)
+
+Son 10 dakikadaki 5xx'leri endpoint, IP ve ülkeye göre sayan sorgu. İki yol var, birini seçin: komut yolu terminalde,
+arayüz yolu Discover'da aynı tabloyu verir.
+
+**Komut yolu.**
+
+```bash
+Q='FROM apache-web-* | WHERE @timestamp > NOW() - 10 minutes AND event.dataset == "apache.access" AND http.response.status_code >= 500 | STATS istek = COUNT(*) BY url.path, source.ip, source.geo.country_name | SORT istek DESC | LIMIT 3'
+jq -n --arg q "$Q" '{query: $q}' | curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/_query?format=txt' -H 'Content-Type: application/json' -d @-
+```
+
+Beklenen çıktı:
+
+```text
+     istek     |       url.path        |   source.ip   |source.geo.country_name
+---------------+-----------------------+---------------+-----------------------
+62             |/cgi-bin/unavailable.sh|195.175.39.39  |Türkiye
+6              |/cgi-bin/unavailable.sh|89.160.20.128  |Sweden
+6              |/cgi-bin/unavailable.sh|5.9.0.1        |Germany
+```
+
+<details>
+<summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
+
+**Komut yolundaysanız bu adımları yapmayın;** aynı sorgu Discover'da çalışır ve aynı tabloyu verir.
+
+1. Menü düğmesine (1) tıklayın, **Analytics** altında **Discover**'ı (2) seçin:
+
+   ![Menü: 1 menü düğmesi, 2 Discover](../../assets/screenshots/LAB-27/04b-menu-discover.png)
+
+2. Sağ üstte **Query in ES|QL** (1):
+
+   ![Discover: 1 Query in ES|QL](../../assets/screenshots/LAB-27/04c-esql-dugme.png)
+
+3. Sorgu kutusundaki metni silin, aşağıdaki sorguyu yapıştırın (1), **Search** (2). Sonuç tablosu (3):
+
+   ```text
+   FROM apache-web-* | WHERE @timestamp > NOW() - 10 minutes AND event.dataset == "apache.access" AND http.response.status_code >= 500 | STATS istek = COUNT(*) BY url.path, source.ip, source.geo.country_name | SORT istek DESC | LIMIT 3
+   ```
+
+   ![Discover ES|QL: 1 sorgu, 2 Search, 3 sonuç tablosu](../../assets/screenshots/LAB-27/04d-esql-sonuc.png)
+
+</details>
+
+Sayılar ve alt satırlar sizde farklıdır. İlk satır kök nedendir: hataların çoğu tek bir IP'den (`195.175.39.39`, Türkiye) tek bir
+endpoint'e gelmiş. Alt satırlar trafik üretecinin olağan hatalarıdır: her IP'den dakikada bir iki tane. Gerçek
+hayatta bir sonraki adım bu IP'yi engellemek ya da bakımdaki sayfayı düzeltmek olurdu.
+
+### 5. Alarm: 5xx artınca e-posta (Mailpit)
+
+Arızayı panoya bakarak bulduk; bir dahaki sefere e-posta gelsin. Gerçek bir hesap gerektirmeyen Mailpit'le kuralı kuralım. Kibana'nın e-postayı gönderebileceği bir
 connector (Kibana › Dev Tools):
 
 ```http
@@ -282,7 +379,7 @@ POST kbn:/api/alerting/rule/apache-5xx
 
 </details>
 
-Arızayı üretin: bakımdaki bir sayfaya (`/cgi-bin/unavailable.sh`, 503 döner) 60 istek:
+Arızayı tekrar üretin:
 
 ```bash
 python3 scripts/generate_burst.py --path /cgi-bin/unavailable.sh --requests 60
@@ -313,17 +410,12 @@ Kendi bilgisayarınızda: ssh -f -N -L 8025:127.0.0.1:8025 student@<IP>
 
 Yazdırılan komutu kendi bilgisayarınızın terminalinde çalıştırın, sonra tarayıcıda `http://127.0.0.1:8025`:
 
-![Mailpit: 1 alarm e-postası; sağda konu ve ölçülen değer](../../assets/screenshots/LAB-27/03-mailpit.png)
+![Mailpit: 1 alarm e-postası; sağda konu ve ölçülen değer](../../assets/screenshots/LAB-27/05-mailpit.png)
 
 İşiniz bitince tüneli kapatın: `pkill -f "\-L 8025:127.0.0.1:8025"`.
 
-### 5. Gerçek e-posta (Resend) ve Slack
-
-Bu adım bir Resend hesabınız ve bir Slack çalışma alanınız varsa yapılır. Yoksa alarm akışını 4. adımda
-Mailpit ile görmüş olmanız yeterlidir; 6. adıma geçin.
-
 <details>
-<summary><strong>Resend ve Slack hesabınız varsa: adımlar</strong></summary>
+<summary><strong>İsteğe bağlı: gerçek e-posta (Resend) ve Slack, hesabınız varsa</strong></summary>
 
 Gerçek kanallar için iki gizli bilgi gerekir: Resend API
 anahtarı ve Slack webhook adresi.
@@ -439,7 +531,7 @@ requests=60 concurrency=8 ip=195.175.39.39 elapsed_seconds=0.34 statuses={503: 6
 Testte alarm 10 saniye içinde açıldı: önceki arıza 2 dakikalık pencerede hâlâ duruyorsa kural ilk kontrolde açar, durmuyorsa en geç 1 dakika sürer. E-posta kutunuza ve Slack kanalınıza `[ALARM] Apache 5xx artışı` mesajı düşer. Kibana'da **Stack Management ›
 Connectors** listesinde bu labın üç connector'ı görünür (başka labların connector'ları da listede olabilir):
 
-![Connector'lar: 1 Mailpit, 2 gerçek e-posta, 3 Slack](../../assets/screenshots/LAB-27/04-connectorlar.png)
+![Connector'lar: 1 Mailpit, 2 gerçek e-posta, 3 Slack](../../assets/screenshots/LAB-27/05-connectorlar.png)
 
 Gerçek kanallara sonradan gereksiz mesaj gitmesin diye denemeden sonra kuralı kapatın. Kural silinmez;
 Stack Management › Rules'tan yeniden açılabilir:
@@ -466,7 +558,8 @@ Hesap parolanız kullanılmaz.
 
 </details>
 
-### 6. PDF rapor
+<details>
+<summary><strong>İsteğe bağlı: PDF rapor</strong></summary>
 
 1. 3. adımdaki gibi **Apache Web Trafiği ve GeoIP** panosunu açın. Üstte **Export** (1), menüde **PDF reports** (2):
 
@@ -498,6 +591,8 @@ Beklenen çıktı:
 ```text
 {"status":"completed","output":{"content_type":"application/pdf","size":567696}}
 ```
+
+</details>
 
 <details>
 <summary><strong>İsteğe bağlı: ML ile anomali tespiti ve SLO</strong></summary>
@@ -543,8 +638,8 @@ de siler.
 ## Temizlik
 
 Yalnız bu labın container'larını ve volume'lerini, `apache-web-*` index'lerini ve şablonunu, Metricbeat'in
-data stream'ini, kuralını, üç connector'ını, data view'larını, panosunu ve haritasını siler. Ana cluster'a ve
-Reporting listesindeki PDF kaydına dokunmaz:
+data stream'ini, kuralını, connector'larını, data view'larını, panosunu ve haritasını siler. Ana cluster'a ve Reporting listesindeki PDF kaydına dokunmaz. Resend ve Slack kutusunu yapmadıysanız
+o iki connector için `404` yazar; silinecek bir şey yok demektir:
 
 ```bash
 ./teardown.sh

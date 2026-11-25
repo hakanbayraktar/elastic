@@ -2,6 +2,7 @@
 # LAB-27 temizligi: yalniz bu labin container'lari ve volume'leri, apache-web-* index'leri ve sablonu,
 # Metricbeat data stream'i ve sablonu, apache-5xx kurali, uc connector'i, data view'lari, panosu ve haritasi,
 # istege bagli ML isi ve iki SLO.
+# Kurulmamis connector'lar (Resend, Slack) 404 yazar.
 # Ana cluster'a dokunmaz.
 set -u
 cd "$(dirname "$0")"

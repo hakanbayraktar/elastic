@@ -2,9 +2,10 @@
 
     ssh -f -N -L 25601:127.0.0.1:5601 student@<sunucu>
     KB_BASE=http://127.0.0.1:25601 SUNUM_EKRAN=/yok python3 scripts/screenshots/shots_lab27.py pano harita   # Adim 3
-    ... pdf        Adim 6: PDF raporu ve Reporting
-    ... insights   Adim 6 kutusu: ML isi ve SLO'lar (provision_insights.py calismis olmali)
-Mailpit (03-mailpit) ve connector listesi (04-connectorlar) kibana_shots.py lab27_mailpit / lab27_connector ile alinir.
+    ... ariza      Adim 4: arizadan sonra pano ve Discover ES|QL (generate_burst.py calismis olmali)
+    ... pdf        PDF rapor kutusu
+    ... insights   ML/SLO kutusu (provision_insights.py calismis olmali)
+Mailpit (05-mailpit) ve connector listesi (05-connectorlar) kibana_shots.py lab27_mailpit / lab27_connector ile alinir.
 Cikti: assets/screenshots/LAB-27/<ad>.png
 """
 import os
@@ -17,6 +18,8 @@ from playwright.sync_api import sync_playwright
 LAB = "LAB-27"
 PANO = "Apache Web Trafiği ve GeoIP"
 DV = "Apache Web İstek ve Hata Logları"
+ESQL = ('FROM apache-web-* | WHERE @timestamp > NOW() - 10 minutes AND event.dataset == "apache.access" AND http.response.status_code >= 500 '
+        '| STATS istek = COUNT(*) BY url.path, source.ip, source.geo.country_name | SORT istek DESC | LIMIT 3')
 HATA = []
 SUNUM = os.environ.get("SUNUM_EKRAN", "/yok/LAB-27")
 
@@ -55,8 +58,12 @@ def zaman(page, preset, goruntu=None):
 
 def pano_ac(page, goruntu=False):
     menu(page, "Dashboards", "03a-menu-dashboards" if goruntu else None)
+    try:
+        page.wait_for_selector('[data-test-subj="tableListSearchBox"]', timeout=15000)
+    except Exception:
+        pass
     if not page.locator('[data-test-subj="tableListSearchBox"]').count():   # son acilan pano dogrudan gelebilir
-        page.locator('[data-test-subj="breadcrumbs"] a:has-text("Dashboards")').first.click(); k.settle(page, 5)
+        page.locator('[data-test-subj*="dashboardListingBreadcrumb"]').first.click(); k.settle(page, 5)
     ara = page.locator('[data-test-subj="tableListSearchBox"]').first
     ara.fill("Apache"); page.keyboard.press("Enter"); k.settle(page, 4)
     link = f'[data-test-subj="dashboardListingTitleLink-{PANO.replace(" ", "-")}"]'
@@ -103,6 +110,30 @@ def harita(page):
     print("harita kaydedildi")
 
 
+def ariza(page):
+    """Adim 4: arizadan sonra panodaki yeni panel ve Discover ES|QL ile kok neden."""
+    pano_ac(page)
+    zaman(page, "Last_15_minutes")
+    page.mouse.move(1500, 60); time.sleep(2)
+    hata = page.locator('[data-test-subj="dashboardPanel"]').filter(has=page.locator('[data-test-subj="embeddablePanelNotification-apache-web-error-count"]')).first
+    print("5xx paneli:", hata.inner_text().replace("\n", " | ")[:80])
+    hata.evaluate("e => e.setAttribute('data-isaret', 'hata')")
+    shot(page, "04a-pano-ariza", [(("css", '[data-isaret="hata"]'), 1, "left")])
+    menu(page, "Discover", "04b-menu-discover")
+    btn = page.locator('[data-test-subj="select-text-based-language-btn"]').first
+    if "ES|QL" in (btn.inner_text() or "") and "Classic" not in (btn.inner_text() or ""):
+        shot(page, "04c-esql-dugme", [(("testsubj", "select-text-based-language-btn"), 1, "down")])
+        btn.click(); k.settle(page, 5)
+    ed = page.locator('[data-test-subj="ESQLEditor"] .monaco-editor').first
+    ed.click(); page.keyboard.press("ControlOrMeta+A"); page.keyboard.press("Delete")
+    page.keyboard.type(ESQL); time.sleep(1); page.keyboard.press("Escape")
+    page.locator('[data-test-subj="querySubmitButton"]').first.click(); k.settle(page, 8)
+    page.mouse.move(1500, 850); time.sleep(1)
+    tablo = '[data-test-subj="discoverDocTable"], [data-test-subj="docTable"], .euiDataGrid'
+    shot(page, "04d-esql-sonuc", [(("testsubj", "ESQLEditor"), 1, "down"), (("testsubj", "querySubmitButton"), 2, "down"),
+                                  (("css", tablo), 3, "up")])
+
+
 def pdf(page):
     pano_ac(page)
     page.locator('[data-test-subj="exportTopNavButton"]').first.click(); time.sleep(2)
@@ -143,7 +174,7 @@ if __name__ == "__main__":
         page = br.new_page(viewport={"width": 1600, "height": 900}, device_scale_factor=k.SCALE)
         k.login(page)
         for parca in sys.argv[1:]:
-            {"pano": pano, "harita": harita, "pdf": pdf, "insights": insights}[parca](page)
+            {"pano": pano, "harita": harita, "ariza": ariza, "pdf": pdf, "insights": insights}[parca](page)
         br.close()
     print("HATALI GORUNTU:", HATA if HATA else "yok")
     sys.exit(1 if HATA else 0)

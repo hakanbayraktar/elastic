@@ -757,13 +757,13 @@ def lab27(page, parca="hepsi"):
         try:
             page.goto("http://127.0.0.1:8025/", wait_until="domcontentloaded"); time.sleep(3)
             page.get_by_text("[ALARM]", exact=False).first.click(); time.sleep(3)
-            shoot(page, lab, "03-mailpit", [(("text", "[ALARM]", False), 1, "down")])
+            shoot(page, lab, "05-mailpit", [(("text", "[ALARM]", False), 1, "down")])
         except Exception as e:
             print("HATA mailpit", str(e)[:150])
     # 4) connector listesi
     if parca in ("hepsi", "connector"):
         page.goto(BASE + "/app/management/insightsAndAlerting/triggersActionsConnectors/connectors", wait_until="domcontentloaded"); settle(page, 6)
-        shoot(page, lab, "04-connectorlar", [
+        shoot(page, lab, "05-connectorlar", [
             (("text", "apache-mailpit", True), 1, "right"),
             (("text", "apache-eposta", True), 2, "right"),
             (("text", "apache-slack", True), 3, "right"),
