@@ -133,7 +133,7 @@ curl: (52) Empty reply from server
 curl -sS https://127.0.0.1:19208/
 ```
 
-Beklenen çıktı:
+Beklenen çıktı (ilk satır):
 
 ```text
 curl: (60) SSL certificate problem: unable to get local issuer certificate
