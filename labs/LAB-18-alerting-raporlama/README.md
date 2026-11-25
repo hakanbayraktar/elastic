@@ -20,16 +20,8 @@ saatler sonra görür. "Sorun nerede?" sorusu da çoğu zaman bir konum sorusudu
 
 ## Ön Koşullar
 
-- LAB-01 ana cluster'ı çalışıyor ve trial lisans açık (raporlama için). LAB-16'yı atladıysanız da lab çalışır;
-  veri bu labın kendi betiğiyle gelir.
-- LAB-01'deki lisans adımını atladıysanız lisans `basic` kalır; deneme lisansını açın (cluster başına bir kez açılır):
-
-```bash
-curl -s -u elastic:'DevOps2026!' http://127.0.0.1:9200/_license | jq -r '.license.type'
-curl -s -X POST -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/_license/start_trial?acknowledge=true'; echo
-```
-
-  İlk satır `trial` ise lisans zaten açıktır; ikinci komut o durumda `"trial_was_started":false,"error_message":"Operation failed: Trial was already activated."` döner, sorun değildir. `basic` ise `{"acknowledged":true,"trial_was_started":true,"type":"trial"}` döner.
+- LAB-01 ana cluster'ı çalışıyor ve trial lisans açık. Önceki labları atladıysanız da lab çalışır; veri bu labın
+  kendi betiğiyle gelir.
 
 ```bash
 cd ~/elastic/labs/LAB-18-alerting-raporlama
@@ -151,11 +143,9 @@ uzaklığa göre halkalara ayırır. 50-500 km halkası Ankara ve İzmir'dir.
 
 **Soru: Alarm açılınca kayıt nereye düşsün?**
 
-**İki yol var, birini seçin.** Connector'ı (bu adım), kuralı (Adım 4) ve Slack/e-posta kanallarını (Adım 7) ya
-**komut yolu** (Kibana › Dev Tools ve terminal) ya da **arayüz yolu** (Kibana formları) ile kurarsınız. Lab boyunca
-seçtiğiniz yolla devam edin; öteki yolun bloklarını ve kutularını yalnız okuyun, uygulamayın. İkisini birden yaparsanız
-aynı connector iki kez kurulmaya çalışılır ya da iki ayrı kural oluşur. Arızayı üreten, alarmı izleyen ve kuralı
-kapatan terminal komutları (Adım 5 ve 7) iki yolda da ortaktır.
+**İki yol var, birini seçin:** komut yolu (Dev Tools ve terminal) ya da arayüz yolu (Kibana formları). Adım 3, 4 ve
+7'de seçtiğiniz yolla devam edin; ikisini birden yaparsanız connector ve kural iki kez kurulur. Adım 5'in komutları
+iki yolda da ortaktır.
 
 **Komut yolu.** Alarm geçmişini tutacak Index connector'ı kurun. Kibana › Dev Tools'a yapıştırın:
 
@@ -171,9 +161,8 @@ POST kbn:/api/actions/connector/alarm-gecmisi-yaz
 <details>
 <summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
 
-**Komut yolundaysanız bu adımları yapmayın;** connector Dev Tools isteğiyle kuruldu. Arayüz yolundaysanız yukarıdaki
-Dev Tools isteğini çalıştırmayın, aşağıdaki adımları yapın. **Connector ID** mutlaka `alarm-gecmisi-yaz` olmalı:
-kural connector'ı bu kimlikle bulur.
+**Komut yolundaysanız bu adımları yapmayın.** **Connector ID** mutlaka `alarm-gecmisi-yaz` olmalı; kural
+connector'ı bu kimlikle bulur.
 
 1. Menüden **Management › Stack Management**'ı açın, soldaki listede **Connectors**'a (1) tıklayın:
 
@@ -192,17 +181,13 @@ kural connector'ı bu kimlikle bulur.
 
    ![Index connector: 1 ad, 2 ID, 3 index, 4 Save](../../assets/screenshots/LAB-18/03d-index-connector.png)
 
-Arayüz formunda `refresh` seçeneği yoktur: alarm document'i yaklaşık bir saniye sonra aramaya girer, Adım 5'in
-sonucu değişmez.
-
 </details>
 
 ### 4. Kural: 5 dakikada 10'dan fazla 5xx
 
 **Soru: Kibana "çok fazla hata var" kararını nasıl verir?**
 
-**Komut yolu.** Tek istek her seferinde aynı kuralı kurar ve alanları tek bakışta gösterir. Arayüz yolundaysanız bu
-isteği çalıştırmayın; adımlar bu adımın sonundaki **Arayüz yolu** kutusundadır. Kibana › Dev Tools'a yapıştırın:
+**Komut yolu.** Kibana › Dev Tools'a yapıştırın:
 
 ```http
 POST kbn:/api/alerting/rule/alarm-5xx
@@ -232,8 +217,7 @@ POST kbn:/api/alerting/rule/alarm-5xx
 <details>
 <summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
 
-**Komut yolundaysanız bu adımları yapmayın;** kural Dev Tools isteğiyle kuruldu. Arayüz kuralın kimliğini kendisi
-üretir (`alarm-5xx` olmaz); sonraki ortak komutlar kuralı adıyla bulduğu için sorun değildir.
+**Komut yolundaysanız bu adımları yapmayın.** Arayüz kurala kendi kimliğini verir; sonraki komutlar kuralı adıyla bulur.
 
 1. Menüden **Management › Stack Management**'ı açın, **Alerts and Insights** altında **Rules**'a (1) tıklayın:
 
@@ -296,7 +280,7 @@ POST kbn:/api/alerting/rule/alarm-5xx
 
 **Soru: Arıza olunca alarm gerçekten açılıyor ve kapanıyor mu?**
 
-Bu adımın komutları iki yolda da çalıştırılır. Betik ödeme sayfasına son bir dakika içinde 40 tane 500 yazar:
+İki yolda da çalıştırın. Betik ödeme sayfasına son bir dakikada 40 tane 500 yazar:
 
 ```bash
 python3 scripts/veri_uret.py --ariza
@@ -312,15 +296,12 @@ Beklenen çıktı:
 {"kural":"Ödeme 5xx patlaması","adet":"40","kosul":"Number of matching documents is greater than 10","zaman":"2026-11-21T18:09:42.867Z"}
 ```
 
-Kural bir sonraki çalışmasında (en çok 1 dakika) eşiği aşan sayıyı gördü ve aksiyon document'i yazdı. Zaman
-sizde farklıdır. Arayüzde görmek için **Stack Management › Rules** sayfasını açın. Liste boş gelirse sayfayı yenileyin
-(F5). Tablonun üstündeki **Search** kutusuna `Ödeme` yazıp Enter'a basın, **Ödeme 5xx patlaması**'na tıklayın; öteki
-labların kuralları da listede olabilir. Kural sayfasında **Active now** kutusunda 1 görünür (1):
+Alarm en çok 1 dakikada açılır. Arayüzde: **Stack Management › Rules**, **Search** kutusuna `Ödeme`, **Ödeme 5xx
+patlaması**; **Active now** 1 görünür (1). Liste boş gelirse sayfayı yenileyin (F5):
 
 ![Kural ayrıntısı: 1 Active now](../../assets/screenshots/LAB-18/05a-kural-aktif.png)
 
-5 dakikalık pencere arızayı geride bırakınca alarm kendiliğinden kapanır. Kural adıyla bulunur; arayüzden kurulduysa
-kimliği farklıdır ama komut yine onu izler:
+5 dakikalık pencere arızayı geride bırakınca alarm kendiliğinden kapanır:
 
 ```bash
 ID=$(./scripts/kbn.sh GET '/api/alerting/rules/_find?search_fields=name&search=%22%C3%96deme%205xx%20patlamas%C4%B1%22' | jq -r '.data[] | select(.name == "Ödeme 5xx patlaması") | .id')
@@ -335,8 +316,7 @@ Beklenen çıktı:
 {"new":0,"ignored":0,"recovered":1,"active":0}
 ```
 
-Ölçülen: arızadan sonra alarm yaklaşık 1 dakikada açıldı, 5 dakikalık pencere geçince 5-6 dakikada kapandı.
-`notify_when: onActionGroupChange` olduğu için açılışta bir document yazıldı; her dakika tekrar yazılmadı.
+Testte alarm 1 dakikada açıldı, 5-6 dakikada kapandı. Açılışta tek document yazıldı, her dakika tekrar yazılmadı.
 
 ### 6. Rapor: CSV ve PDF
 
@@ -357,12 +337,11 @@ http.response.status_class : "5xx"
 
 ![Discover menüsü: 1 ⋮, 2 Export tab results](../../assets/screenshots/LAB-18/06b-menu-export.png)
 
-3. **CSV** (1) raporu hemen üretir; **Schedule export** (2) aynı raporu belirli aralıkla e-postayla gönderir (e-posta
-   connector'ı gerekir). **CSV**'ye tıklayın:
+3. **CSV** (1). **Schedule export** (2) aynı raporu belirli aralıkla e-postayla gönderir:
 
 ![Export: 1 CSV, 2 Schedule export](../../assets/screenshots/LAB-18/06c-csv.png)
 
-4. Sağdaki panelde **Generate CSV** (1). **Post URL** aynı raporu betikten üretmek içindir:
+4. Sağdaki panelde **Generate CSV** (1):
 
 ![Export paneli: 1 Generate CSV](../../assets/screenshots/LAB-18/06d-generate-csv.png)
 
@@ -370,12 +349,12 @@ http.response.status_class : "5xx"
 
 ![Stack Management: 1 Reporting](../../assets/screenshots/LAB-18/06e-reporting-menu.png)
 
-6. Rapor satırı (1) **Done, warnings detected** der; sağdaki indirme simgesiyle indirilir. Uyarının sebebi: sütun adı
-   `@timestamp` `@` ile başlar, Excel böyle başlayan hücreyi formül sanabileceği için Kibana raporu işaretler:
+6. Rapor satırı (1) **Done, warnings detected** der (sütun adı `@timestamp` `@` ile başlıyor); indirme simgesiyle
+   indirilir:
 
 ![Reporting: 1 CSV raporu](../../assets/screenshots/LAB-18/06f-reporting-csv.png)
 
-**PDF: panonun çıktısı.** Yöneticiye giden rapor genelde panonun PDF'idir (deneme lisansı gerekir; LAB-01'de açıldı).
+**PDF: panonun çıktısı.**
 
 1. Menüden **Dashboards › Create dashboard**, zaman **Last 7 days**, sağ üstte **Add**. Açılan panelde **From library**
    (1), arama kutusuna (2) `Ziyaretçi` yazıp Enter, **Ziyaretçi haritası** (3); sonra paneli **×** ile kapatın:
@@ -394,12 +373,12 @@ http.response.status_class : "5xx"
 
 ![Export menüsü: 1 Export, 2 PDF reports](../../assets/screenshots/LAB-18/06j-export-pdf.png)
 
-5. Sağdaki panelde **Export PDF** (1). **Print format** açılırsa çok sayfalı çıktı üretir:
+5. Sağdaki panelde **Export PDF** (1):
 
 ![PDF paneli: 1 Export PDF](../../assets/screenshots/LAB-18/06k-generate-pdf.png)
 
-6. PDF arka planda bir tarayıcıyla çizilir; bu sunucuda birkaç dakikada hazırlandı. **Stack Management › Reporting**'de
-   **Alarm panosu** satırı (1) **Done** olur, türü **PDF**; satır sonundaki menüden **Download report** ile indirilir:
+6. Birkaç dakika sonra **Stack Management › Reporting**'de **Alarm panosu** satırı (1) **Done** olur; satır sonundaki
+   menüden **Download report** ile indirilir:
 
 ![Reporting: 1 Alarm panosu PDF raporu](../../assets/screenshots/LAB-18/06l-reporting-pdf.png)
 
@@ -407,10 +386,8 @@ http.response.status_class : "5xx"
 
 **Soru: Alarm ekibin kanalına ve e-postasına nasıl gider?**
 
-Bu adım bir Slack çalışma alanınız ve bir Resend hesabınız varsa yapılır; yoksa alarm akışını 5. adımda görmüş
-olmanız yeterlidir. İki gizli bilgi gerekir: Slack webhook adresi ve Resend API anahtarı. İkisi de parola gibidir;
-bilen herkes sizin adınıza mesaj ya da e-posta gönderir. Repoya, ekran görüntüsüne ve sohbete yazılmaz. Herkes
-kendi webhook'unu ve anahtarını üretir; hesap açma adımları aşağıdaki kutudadır.
+Slack çalışma alanınız ve Resend hesabınız varsa yapın; yoksa 5. adım yeterli. Webhook adresi ve API anahtarı parola
+gibidir: repoya ve ekran görüntüsüne yazmayın.
 
 <details>
 <summary><strong>Slack webhook adresi ve Resend anahtarı nasıl alınır?</strong></summary>
@@ -463,8 +440,7 @@ kendi webhook'unu ve anahtarını üretir; hesap açma adımları aşağıdaki k
 
    ![Resend: 1 API keys, 2 Create API key](../../assets/screenshots/LAB-18/18-resend-api-keys.png)
 
-2. **Name** (1) `Kibana Alarm`; **Permission** listesinde **Sending access** (2). E-posta göndermek için yeterlidir;
-   Full access anahtar sızarsa hesabın tamamını açar:
+2. **Name** (1) `Kibana Alarm`; **Permission** listesinde **Sending access** (2), yalnız gönderme yetkisi:
 
    ![Resend: 1 Name, 2 Sending access](../../assets/screenshots/LAB-18/19a-resend-ad-izin.png)
 
@@ -482,14 +458,9 @@ Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adr
 
 </details>
 
-Connector'ları, bağlantı testini ve kurala eklemeyi Adım 3'te seçtiğiniz yolla yapın. **Komut yolu** hemen aşağıda;
-**arayüz yolu** ondan sonraki açılır kutuda. Arızayı üretme ve kuralı kapatma komutları en sonda, iki yolda da ortak.
-
 #### Komut yolu (arayüz yolundaysanız bu bölümü yalnız okuyun)
 
-**Değerleri terminale verin.** Slack'ten kopyaladığınız webhook adresini, Resend anahtarını ve Resend hesabınızın
-e-posta adresini kendi değerlerinizle yazın (tırnaklar kalsın). Sonraki komutları aynı terminalde çalıştırın;
-terminali kapatırsanız bu üç satırı yeniden yapıştırın:
+**Değerleri terminale verin** (tırnaklar kalsın; terminali kapatırsanız yeniden yapıştırın):
 
 <!-- runner:skip -->
 ```bash
@@ -512,10 +483,7 @@ Beklenen çıktı:
 {"id":"alarm-eposta","connector_type_id":".email"}
 ```
 
-- **Port 587, `secure: false`:** bağlantı yine şifrelidir. Kibana önce normal bağlanır, sunucu izin verince bağlantıyı
-  TLS'e yükseltir (STARTTLS). `secure: true` "baştan TLS" demektir ve yalnız port 465 içindir; 587'de açılırsa bağlantı
-  kurulamaz. Kural kısaca: 587 → kapalı, 465 → açık.
-- **Gönderen `onboarding@resend.dev`:** doğrulanmış alan adınız yoksa Resend yalnız hesabınızın adresine gönderir.
+Port 587 ile `secure: false` doğrudur: bağlantı STARTTLS ile şifrelenir; `secure: true` yalnız 465 içindir.
 
 **Bağlantıyı deneyin.** Kural beklemeden Slack kanalınıza ve e-posta kutunuza birer test mesajı düşer:
 
@@ -531,12 +499,9 @@ Beklenen çıktı:
 {"status":"ok","connector_id":"alarm-eposta"}
 ```
 
-`"status":"error"` gelirse: Slack'te webhook adresi eksik kopyalanmıştır; e-postada anahtar, port/secure eşleşmesi ya
-da `ALARM_TO`'nun Resend hesabınızın adresi olmaması.
+`"status":"error"` gelirse webhook adresini, anahtarı ve `ALARM_TO`'yu kontrol edin.
 
-**Kurala ekleyin.** Kural tanımı bütün olarak gönderilir; en kısa yol kuralı Slack ve e-posta aksiyonlarıyla yeniden
-kurmaktır (`scripts/kural.jq`, Adım 4'teki tanım + iki aksiyon). Bu komut kimliği `alarm-5xx` olan, yani Dev Tools'la
-kurulan kuralı değiştirir; arayüz yolundaysanız çalıştırmayın, ikinci bir kural oluşur:
+**Kurala ekleyin.** Kural iki aksiyonla yeniden kurulur (`scripts/kural.jq`):
 
 ```bash
 ./scripts/kbn.sh DELETE /api/alerting/rule/alarm-5xx; echo
@@ -553,8 +518,7 @@ Beklenen çıktı:
 <details>
 <summary><strong>Arayüz yolu: connector'lar, test ve kurala ekleme</strong> (komut yolundaysanız yalnız okuyun)</summary>
 
-**Komut yolundaysanız bu adımları yapmayın;** connector'lar ve aksiyonlar komutlarla kuruldu. Arayüz yolundaysanız
-yukarıdaki komut yolu bloklarını çalıştırmayın; değerleri terminale değil formlara yapıştırırsınız.
+**Komut yolundaysanız bu adımları yapmayın.**
 
 **A. Slack connector'ı ve testi**
 
@@ -595,14 +559,10 @@ yukarıdaki komut yolu bloklarını çalıştırmayın; değerleri terminale de�
    | 6 | Secure | **kapalı** bırakın |
    | 7 | Username / Password | `resend` / Resend API anahtarı |
 
-   **Secure neden kapalı?** Bağlantı yine şifrelidir. Port 587'de Kibana önce normal bağlanır, sunucu izin verince
-   bağlantıyı TLS'e yükseltir (STARTTLS). **Secure** anahtarı ise "baştan TLS ile bağlan" demektir ve yalnız port
-   465 içindir. 587'de Secure'ü açarsanız bağlantı kurulamaz, test e-postası gitmez. Kural kısaca:
-   587 → Secure kapalı, 465 → Secure açık.
+   587'de Secure açık olursa bağlantı kurulamaz; Secure yalnız 465 içindir.
 
 7. **Test** sekmesinde **To** (1) kutusuna Resend hesabınızın e-posta adresini yazıp Enter'a basın, **Run** (2).
-   **Test was successful** (3) görünür. E-posta testinin konusu ve metni sabittir ("This is a test email from
-   Kibana"); Subject ve Message alanı yoktur. **×** ile kapatın:
+   **Test was successful** (3) görünür. **×** ile kapatın:
 
    ![E-posta testi: 1 To, 2 Run, 3 Test was successful; adres karartıldı](../../assets/screenshots/LAB-18/14b-eposta-test.png)
 
@@ -640,7 +600,7 @@ yukarıdaki komut yolu bloklarını çalıştırmayın; değerleri terminale de�
 
 #### İki yolda da: arızayı yeniden üretin ve kuralı kapatın
 
-Arızayı yeniden üretin; kural bir sonraki kontrolde alarmı açar. Kural adıyla bulunur, yani iki yolda da çalışır:
+Arızayı yeniden üretin; kural bir sonraki kontrolde alarmı açar:
 
 ```bash
 python3 scripts/veri_uret.py --ariza
@@ -655,11 +615,9 @@ Beklenen çıktı:
 ..... alarm acildi
 ```
 
-Slack kanalınıza ve e-posta kutunuza `[ALARM] Ödeme 5xx patlaması` mesajı düşer. Mesajlarda `{{context.link}}`
-kullanılırsa linkin dolu gelmesi için Kibana'da `server.publicBaseUrl` tanımlı olmalıdır.
+Slack kanalınıza ve e-posta kutunuza `[ALARM] Ödeme 5xx patlaması` mesajı düşer.
 
-Gerçek kanallara gereksiz mesaj gitmesin diye denemeden sonra kuralı kapatın; kural silinmez, Rules sayfasından
-yeniden açılır:
+Gerçek kanallara gereksiz mesaj gitmesin diye kuralı kapatın (silinmez):
 
 ```bash
 ./scripts/kbn.sh GET '/api/alerting/rules/_find?search_fields=name&search=%22%C3%96deme%205xx%20patlamas%C4%B1%22' \
@@ -677,10 +635,8 @@ kural kapatildi: alarm-5xx
 
 ## Temizlik
 
-Yalnız bu labın kuralını (arayüzden kurulduysa adıyla bulunur), connector'larını (`alarm-gecmisi-yaz`; kurduysanız
-`alarm-slack` ve `alarm-eposta`), `alarm-apache` ve `alarm-gecmisi` index'lerini, şablonunu, data view'ını, haritasını
-ve panosunu siler; ana cluster'a dokunmaz. Reporting listesindeki rapor Kibana'nın kendi kaydıdır ve kalır. 7. adımı
-yaptıysanız çıktıda iki `connector ... -> 204` satırı daha görünür:
+Yalnız bu labın kuralını, connector'larını, index'lerini, şablonlarını, data view'ını, haritasını ve panosunu siler;
+ana cluster'a dokunmaz. 7. adımı yaptıysanız iki `connector ... -> 204` satırı daha görünür:
 
 ```bash
 ./teardown.sh
@@ -698,7 +654,7 @@ sablon alarm-apache -> 200
 sablon alarm-gecmisi -> 200
 ```
 
-`2`, Adım 2'deki harita ve Adım 6'daki `Alarm panosu`'dur; yapmadığınız adımın nesnesi sayılmaz. Kuralı arayüzden kurduysanız ilk satır `kural alarm-5xx -> 404` olur, altında kuralın kendi kimliğiyle bir `-> 204` satırı gelir.
+Kuralı arayüzden kurduysanız ilk satır `-> 404` olur, altında kuralın kendi kimliğiyle `-> 204` gelir.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.

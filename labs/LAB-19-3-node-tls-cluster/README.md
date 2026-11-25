@@ -38,9 +38,7 @@ free -g | sed -n 2p
 Mem:              15           5           8           0           2          10
 ```
 
-Satırdaki sayılar GB'dir: toplam, kullanılan, boş, paylaşılan, önbellek ve en sonda **kullanılabilir** bellek.
-Bakacağınız sayı en sondakidir (burada `10`); en az `5` olmalı. Daha küçükse önce çalışan öteki labları durdurun
-(lab dizininde `docker compose stop`; veriler silinmez).
+En sondaki sayı (kullanılabilir bellek, GB) en az `5` olmalı; değilse öteki labları `docker compose stop` ile durdurun.
 
 ---
 
@@ -70,13 +68,10 @@ Bakacağınız sayı en sondakidir (burada `10`); en az `5` olmalı. Daha küç�
 - `node.roles`: es-a ve es-b bu satırla açılır; es-c'ye ayrıca `ingest` rolü verildi. Ingest pipeline'lar yalnız
   ingest rolündeki node'da çalışır.
 - `discovery.seed_hosts`: node açılınca cluster'ı bulmak için hangi adreslere soracağı.
-- `cluster.initial_master_nodes`: yalnız ilk açılışta, hangi node'ların ilk master seçimine katılacağı. Cluster
-  kurulduktan sonra kullanılmaz. Üretimde ilk kurulumdan sonra bu satır config'ten kaldırılır: verisi silinmiş bir
-  node bu ayarla yeniden açılırsa ayrı, ikinci bir cluster kurabilir. Labda compose dosyası tek seferlik kurulum
-  için olduğundan satır yerinde kalır.
+- `cluster.initial_master_nodes`: yalnız ilk açılışta ilk master seçimine katılacak node'lar. Üretimde kurulumdan
+  sonra kaldırılır; verisi silinmiş bir node bu ayarla açılırsa ikinci bir cluster kurabilir.
 - `transport.ssl` (9300) node'lar arası, `http.ssl` (9200) istemci trafiğini şifreler. `verification_mode: certificate`
-  karşı node'un sertifikasının lab CA'sıyla imzalandığını doğrular, adına bakmaz; `full` ikisine de bakar. Sertifikalar `setup`
-  servisinin `elasticsearch-certutil` ile ürettiği lab CA'sıyla imzalıdır.
+  sertifikanın lab CA'sıyla imzalandığına bakar, adına bakmaz; `full` ikisine de bakar.
 
 `starter/instances.yml` her node sertifikasının hangi adlara (`es-a`, `localhost`, `127.0.0.1`) geçerli olduğunu
 söyler; istemci başka bir adla bağlanırsa sertifika reddedilir.
@@ -106,8 +101,7 @@ Beklenen çıktı:
  Container elastic-cluster-es-a-1 Healthy
 ```
 
-Önce `setup` servisi sertifikaları üretip kapanır (`Exited` normaldir), sonra üç node açılır. `--wait` hepsi
-sağlıklı olana kadar bekler; yaklaşık 2 dakika sürer.
+`setup` sertifikaları üretip kapanır (`Exited` normaldir), sonra üç node açılır; yaklaşık 2 dakika sürer.
 
 ### 2. TLS'i üç denemeyle kanıtlayın
 
@@ -153,10 +147,8 @@ curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" 'https://127.0.0.1
 {"cluster_name":"elastic-cluster","status":"green","number_of_nodes":3}
 ```
 
-Node TLS dışındaki bağlantıya cevap vermez. Bağlantı şifreli olsa da curl, sertifikayı kimin imzaladığını bilmeden
-reddeder; `-k` ile bu kontrolü kapatmak "kim olduğunu bilmediğim bir sunucuya parola gönder" demektir. CA ile
-bağlantı kurulur ve üç node aynı cluster'dadır. `wait_for_status=green`: node'lar açıldıktan sonra iç index'lerin
-replica'ları birkaç saniye yerleşir; istek green olana kadar (en çok 60 sn) bekler.
+Düz HTTP'ye cevap yok; CA'sız HTTPS'te curl sertifikayı kimin imzaladığını bilmediği için reddeder (`-k` bu
+kontrolü kapatır, kullanmayın). CA ile bağlanılır ve üç node aynı cluster'dadır.
 
 ### 3. Node'lar, roller ve master
 
@@ -177,9 +169,8 @@ es-c himrs     -         384mb
 
 - `node.role`: `m` master-eligible, `h` hot data, `s` content data, `r` remote cluster client; `es-c`'deki `i`
   ingest pipeline çalıştırabildiğini gösterir.
-- `master` sütunundaki `*` seçilmiş master'dır; hangi node'un seçildiği her kurulumda değişebilir. Üç master-eligible node'dan ikisi ayakta oldukça yeni master
-  seçilebilir; tek node kalırsa cluster isteklere `master_not_discovered_exception` ile cevap verir. İki ayrı
-  master oluşması (split brain) böyle engellenir.
+- `*` seçilmiş master'dır (sizde başka node olabilir). Üç node'dan ikisi ayaktayken master seçilir; tek node kalırsa
+  `master_not_discovered_exception` gelir. Split brain böyle engellenir.
 
 ### 4. Shard ve replica dağılımı
 
@@ -210,8 +201,8 @@ Beklenen çıktı:
 2 r STARTED es-a
 ```
 
-Her shard numarasının bir `p` (primary) ve bir `r` (replica) kopyası var ve ikisi hiçbir zaman aynı node'da değil.
-Hangi kopyanın hangi node'a düştüğü sizde farklı olabilir. Replica sayısı canlı değişir, primary sayısı değişmez:
+Her shard'ın bir `p` (primary) ve bir `r` (replica) kopyası var, ikisi hiç aynı node'da değil (yerleşim sizde farklı
+olabilir). Replica sayısı canlı değişir, primary sayısı değişmez:
 
 ```bash
 curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" -X PUT 'https://127.0.0.1:19208/cluster-urunler/_settings' \
@@ -230,8 +221,8 @@ curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" -X PUT 'https://12
 {"acknowledged":true}
 ```
 
-2 replica ile her shard'ın üç kopyası üç ayrı node'dadır (3 × 3 = 9 aktif shard). Primary sayısını değiştirmek
-için yeni bir index açılıp `_reindex` yapılır; `_split` katlarına, `_shrink` bölenlerine indirip çıkarabilir. Adım 5 için replica sayısı 1'e geri alındı.
+2 replica ile 3 × 3 = 9 aktif shard. Primary sayısı yeni index + `_reindex` ile (ya da `_split`/`_shrink`) değişir.
+Replica sayısı Adım 5 için 1'e geri alındı.
 
 ### 5. Gerçek node kaybı
 
@@ -256,8 +247,8 @@ Beklenen çıktı:
 - Kalan iki node quorum'u sağladı; cluster cevap veriyor.
 - `yellow` ama `unassigned_primary_shards: 0`: `es-b`'deki primary'lerin yerine öteki node'lardaki replica'lar
   primary oldu. Altı document'in hepsi okunuyor.
-- Elasticsearch giden node'un geri gelmesini bir dakika bekler (`index.unassigned.node_left.delayed_timeout`);
-  sonra eksik replica'ları kalan node'lara kurar ve cluster iki node'la da green olabilir.
+- Giden node bir dakika beklenir (`index.unassigned.node_left.delayed_timeout`), sonra eksik replica'lar kalan
+  node'lara kurulur.
 
 Node'u geri getirin:
 
@@ -274,8 +265,7 @@ Beklenen çıktı:
 {"status":"green","number_of_nodes":3}
 ```
 
-`es-b` diskteki eski kopyalarını yeniden kullanır; yalnız aradaki fark kopyalanır. Green olması yaklaşık 45 saniye
-sürer. `setup` servisi de yeniden başlar; sertifikalar zaten olduğu için hiçbir şey üretmeden kapanır.
+`es-b` diskteki kopyalarını yeniden kullanır, yalnız aradaki fark kopyalanır; green yaklaşık 45 saniye sürer.
 
 ### 6. Yük dengeleme: aramalar node'lara nasıl dağılır?
 
@@ -295,11 +285,9 @@ curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" "$OLCUM" | jq -c -
 {"es-a":57,"es-c":31,"es-b":2}
 ```
 
-İsteği alan node koordinatör olur: aramayı index'in üç shard'ına dağıtır ve sonuçları birleştirir. Her shard için
-primary ya da replica kopyalarından birini seçer (adaptive replica selection: o an en hızlı cevap veren). Toplam her
-zaman 90'dır (30 arama × 3 shard); dağılım her ölçümde değişir. Az önce yeniden başlatılan `es-b`'nin payı çoğu zaman
-küçük çıkar, çünkü cache'i soğuk, cevabı yavaştır; bu testte bir koşuda 30/30/30 eşit de dağıldı. Üretimde istemci de istekleri birden çok node'a (ya da önündeki bir load
-balancer'a) gönderir; tek bir node'un adresi tek arıza noktası olur.
+İsteği alan node koordinatör olur: aramayı üç shard'a dağıtır, her shard için o an en hızlı cevap veren kopyayı
+seçer (adaptive replica selection). Toplam her zaman 90'dır (30 × 3), dağılım her ölçümde değişir. Üretimde istemci
+istekleri birden çok node'a ya da bir load balancer'a gönderir; tek node adresi tek arıza noktasıdır.
 
 <details>
 <summary><strong>Uygulamadan TLS ile bağlanmak: Python <code>ca_certs</code></strong></summary>
