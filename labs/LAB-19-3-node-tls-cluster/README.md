@@ -359,7 +359,9 @@ Kibana yaklaşık 1,5 dakikada açılır ve sertifikayı paylaşılan `certs` vo
    GET _cat/nodes?v&h=name,ip,node.role,master
    ```
 
-   ![Console: 1 çalıştır, 2 üç node](../../assets/screenshots/LAB-19/07c-cat-nodes.png) Native (APT ve systemd) kurulum ve dedicated rollü (`master`/`data`/`ingest`) Compose dosyası:
+   ![Console: 1 çalıştır, 2 üç node](../../assets/screenshots/LAB-19/07c-cat-nodes.png)
+
+Native (APT ve systemd) kurulum ve dedicated rollü (`master`/`data`/`ingest`) Compose dosyası:
 [Ubuntu 24.04'te 3-node kurulum](docs/UBUNTU-24-04-3NODE-CLUSTER-SETUP.md),
 [rol tabanlı Compose](docs/DOCKER-COMPOSE-ROLES-VS-SINGLE-NODE.md).
 
