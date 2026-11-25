@@ -153,7 +153,13 @@ uzaklığa göre halkalara ayırır. 50-500 km halkası Ankara ve İzmir'dir.
 
 **Soru: Alarm açılınca kayıt nereye düşsün?**
 
-Alarm geçmişini tutacak Index connector'ı kurun. Kibana › Dev Tools'a yapıştırın:
+**İki yol var, birini seçin.** Connector'ı (bu adım), kuralı (Adım 4) ve Slack/e-posta kanallarını (Adım 7) ya
+**komut yolu** (Kibana › Dev Tools ve terminal) ya da **arayüz yolu** (Kibana formları) ile kurarsınız. Lab boyunca
+seçtiğiniz yolla devam edin; öteki yolun bloklarını ve kutularını yalnız okuyun, uygulamayın. İkisini birden yaparsanız
+aynı connector iki kez kurulmaya çalışılır ya da iki ayrı kural oluşur. Arızayı üreten, alarmı izleyen ve kuralı
+kapatan terminal komutları (Adım 5 ve 7) iki yolda da ortaktır.
+
+**Komut yolu.** Alarm geçmişini tutacak Index connector'ı kurun. Kibana › Dev Tools'a yapıştırın:
 
 ```http
 POST kbn:/api/actions/connector/alarm-gecmisi-yaz
@@ -165,10 +171,11 @@ POST kbn:/api/actions/connector/alarm-gecmisi-yaz
 ```
 
 <details>
-<summary><strong>Dev Tools yerine arayüzden yapmak isterseniz</strong></summary>
+<summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
 
-**İkisinden birini yapın:** Dev Tools isteğini çalıştırdıysanız connector zaten var, bu kutuyu atlayın.
-**Connector ID** mutlaka `alarm-gecmisi-yaz` olmalı: Adım 4'teki kural connector'ı bu kimlikle bulur.
+**Komut yolundaysanız bu adımları yapmayın;** connector Dev Tools isteğiyle kuruldu. Arayüz yolundaysanız yukarıdaki
+Dev Tools isteğini çalıştırmayın, aşağıdaki adımları yapın. **Connector ID** mutlaka `alarm-gecmisi-yaz` olmalı:
+kural connector'ı bu kimlikle bulur.
 
 1. Menüden **Management › Stack Management**'ı açın, soldaki listede **Connectors**'a (1) tıklayın:
 
@@ -196,8 +203,8 @@ sonucu değişmez.
 
 **Soru: Kibana "çok fazla hata var" kararını nasıl verir?**
 
-Kuralı Kibana › Dev Tools'tan kuruyoruz: tek istek her seferinde aynı kuralı kurar ve alanları tek bakışta gösterir.
-Arayüzden kurmak isterseniz adımlar bu adımın sonundaki açılır kutudadır:
+**Komut yolu.** Tek istek her seferinde aynı kuralı kurar ve alanları tek bakışta gösterir. Arayüz yolundaysanız bu
+isteği çalıştırmayın; adımlar bu adımın sonundaki **Arayüz yolu** kutusundadır. Kibana › Dev Tools'a yapıştırın:
 
 ```http
 POST kbn:/api/alerting/rule/alarm-5xx
@@ -225,11 +232,10 @@ POST kbn:/api/alerting/rule/alarm-5xx
   vermez, boş gelir.
 
 <details>
-<summary><strong>Dev Tools yerine arayüzden kurmak isterseniz</strong></summary>
+<summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
 
-**İkisinden birini yapın:** Dev Tools isteğini çalıştırdıysanız kural zaten var, bu kutuyu atlayın. Arayüz kuralın
-kimliğini kendisi üretir; Adım 5'teki kapanma komutu `alarm-5xx` kimliğini kullanır. Arayüzden kurduysanız o komut
-yerine kural sayfasındaki **Active now** sayısının 1'den 0'a düşmesini izleyin.
+**Komut yolundaysanız bu adımları yapmayın;** kural Dev Tools isteğiyle kuruldu. Arayüz kuralın kimliğini kendisi
+üretir (`alarm-5xx` olmaz); sonraki ortak komutlar kuralı adıyla bulduğu için sorun değildir.
 
 1. Menüden **Management › Stack Management**'ı açın, **Alerts and Insights** altında **Rules**'a (1) tıklayın:
 
@@ -292,7 +298,7 @@ yerine kural sayfasındaki **Active now** sayısının 1'den 0'a düşmesini izl
 
 **Soru: Arıza olunca alarm gerçekten açılıyor ve kapanıyor mu?**
 
-Betik ödeme sayfasına son bir dakika içinde 40 tane 500 yazar:
+Bu adımın komutları iki yolda da çalıştırılır. Betik ödeme sayfasına son bir dakika içinde 40 tane 500 yazar:
 
 ```bash
 python3 scripts/veri_uret.py --ariza
@@ -309,17 +315,19 @@ Beklenen çıktı:
 ```
 
 Kural bir sonraki çalışmasında (en çok 1 dakika) eşiği aşan sayıyı gördü ve aksiyon document'i yazdı. Zaman
-sizde farklıdır. **Stack Management › Rules › Ödeme 5xx patlaması** sayfasında **Active now** kutusunda 1 görünür (1).
-Rules listesi boş açılırsa **Logs** sekmesine tıklayıp **Rules** sekmesine dönün; arama kutusuna `Ödeme` yazmak kuralı
-öteki labların kuralları arasında bulur:
+sizde farklıdır. Arayüzde görmek için **Stack Management › Rules** sayfasını açın. Liste boş gelirse sayfayı yenileyin
+(F5). Tablonun üstündeki **Search** kutusuna `Ödeme` yazıp Enter'a basın, **Ödeme 5xx patlaması**'na tıklayın; öteki
+labların kuralları da listede olabilir. Kural sayfasında **Active now** kutusunda 1 görünür (1):
 
 ![Kural ayrıntısı: 1 Active now](../../assets/screenshots/LAB-18/05a-kural-aktif.png)
 
-5 dakikalık pencere arızayı geride bırakınca alarm kendiliğinden kapanır:
+5 dakikalık pencere arızayı geride bırakınca alarm kendiliğinden kapanır. Kural adıyla bulunur; arayüzden kurulduysa
+kimliği farklıdır ama komut yine onu izler:
 
 ```bash
-timeout 600 bash -c 'until curl -s -u elastic:"DevOps2026!" -H "kbn-xsrf: true" http://127.0.0.1:5601/api/alerting/rule/alarm-5xx | jq -e ".last_run.alerts_count.recovered == 1" >/dev/null; do printf .; sleep 15; done'; echo
-curl -s -u elastic:'DevOps2026!' -H 'kbn-xsrf: true' http://127.0.0.1:5601/api/alerting/rule/alarm-5xx | jq -c '.last_run.alerts_count'
+ID=$(./scripts/kbn.sh GET '/api/alerting/rules/_find?search_fields=name&search=%22%C3%96deme%205xx%20patlamas%C4%B1%22' | jq -r '.data[] | select(.name == "Ödeme 5xx patlaması") | .id')
+ID="$ID" timeout 600 bash -c 'until ./scripts/kbn.sh GET "/api/alerting/rule/$ID" | jq -e ".last_run.alerts_count.recovered == 1" >/dev/null; do printf .; sleep 15; done'; echo
+./scripts/kbn.sh GET "/api/alerting/rule/$ID" | jq -c '.last_run.alerts_count'
 ```
 
 Beklenen çıktı:
@@ -403,7 +411,8 @@ http.response.status_class : "5xx"
 
 Bu adım bir Slack çalışma alanınız ve bir Resend hesabınız varsa yapılır; yoksa alarm akışını 5. adımda görmüş
 olmanız yeterlidir. İki gizli bilgi gerekir: Slack webhook adresi ve Resend API anahtarı. İkisi de parola gibidir;
-bilen herkes sizin adınıza mesaj ya da e-posta gönderir. Komuta, repoya, ekran görüntüsüne ve sohbete yazılmaz.
+bilen herkes sizin adınıza mesaj ya da e-posta gönderir. Repoya, ekran görüntüsüne ve sohbete yazılmaz. Herkes
+kendi webhook'unu ve anahtarını üretir; hesap açma adımları aşağıdaki kutudadır.
 
 <details>
 <summary><strong>Slack webhook adresi ve Resend anahtarı nasıl alınır?</strong></summary>
@@ -475,6 +484,11 @@ Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adr
 
 </details>
 
+Connector'ları, bağlantı testini ve kurala eklemeyi Adım 3'te seçtiğiniz yolla yapın. **Komut yolu** hemen aşağıda;
+**arayüz yolu** ondan sonraki açılır kutuda. Arızayı üretme ve kuralı kapatma komutları en sonda, iki yolda da ortak.
+
+#### Komut yolu (arayüz yolundaysanız bu bölümü yalnız okuyun)
+
 **Değerleri terminale verin.** Slack'ten kopyaladığınız webhook adresini, Resend anahtarını ve Resend hesabınızın
 e-posta adresini kendi değerlerinizle yazın (tırnaklar kalsın). Sonraki komutları aynı terminalde çalıştırın;
 terminali kapatırsanız bu üç satırı yeniden yapıştırın:
@@ -505,55 +519,6 @@ Beklenen çıktı:
   kurulamaz. Kural kısaca: 587 → kapalı, 465 → açık.
 - **Gönderen `onboarding@resend.dev`:** doğrulanmış alan adınız yoksa Resend yalnız hesabınızın adresine gönderir.
 
-<details>
-<summary><strong>Komut yerine arayüzden kurmak isterseniz</strong></summary>
-
-**İkisinden birini yapın:** connector'ları komutla kurduysanız bu kutuyu atlayın. **Connector ID** alanına adla aynı
-değeri (`alarm-slack`, `alarm-eposta`) yazın; aşağıdaki kural komutu connector'ları bu kimlikle bulur.
-
-1. **Stack Management › Connectors**'ta **Create connector** (1):
-
-   ![Connectors: 1 Create connector](../../assets/screenshots/LAB-18/12-connectors-list.png)
-
-2. Arama kutusuna `Slack` yazın ve **Slack** kartını (2) seçin. Slack (v2) değil; webhook ile çalışan sürüm budur:
-
-   ![Connector türü: 2 Slack](../../assets/screenshots/LAB-18/13a-connector-select-slack.png)
-
-3. **Webhook** sekmesinde **Connector name** (3) `alarm-slack`, **Webhook URL** (4) Slack'ten kopyaladığınız
-   adres, **Save** (5):
-
-   ![Slack connector: 3 Connector name, 4 Webhook URL, 5 Save](../../assets/screenshots/LAB-18/13-connector-create-slack.png)
-
-4. Yeniden **Create connector**; arama kutusuna `Email` yazın ve **Email** kartını (1) seçin:
-
-   ![Connector türü: 1 Email](../../assets/screenshots/LAB-18/14a-connector-select-email.png)
-
-5. Formu doldurun ve **Save** (8):
-
-   ![Email connector: 2 ad, 3 Sender, 4 Service, 5 Host ve Port, 6 Secure kapalı, 7 Username ve Password, 8 Save](../../assets/screenshots/LAB-18/14-connector-email-resend.png)
-
-   | No | Alan | Değer |
-   |---|---|---|
-   | 2 | Connector name | `alarm-eposta` |
-   | 3 | Sender | `onboarding@resend.dev` |
-   | 4 | Service | `Other` |
-   | 5 | Host / Port | `smtp.resend.com` / `587` |
-   | 6 | Secure | **kapalı** bırakın |
-   | 7 | Username / Password | `resend` / Resend API anahtarı |
-
-   **Secure neden kapalı?** Bağlantı yine şifrelidir. Port 587'de Kibana önce normal bağlanır, sunucu izin verince
-   bağlantıyı TLS'e yükseltir (STARTTLS). **Secure** anahtarı ise "baştan TLS ile bağlan" demektir ve yalnız port
-   465 içindir. 587'de Secure'ü açarsanız bağlantı kurulamaz, test e-postası gitmez. Kural kısaca:
-   587 → Secure kapalı, 465 → Secure açık.
-
-6. Kaydedince açılan **Test** sekmesinde: Slack'te bir mesaj yazıp **Run**, mesaj kanala düşer; Email'de **To**
-   alanına Resend hesabınızın e-posta adresini yazıp **Run**.
-
-6. Kaydedince açılan **Test** sekmesinde: Slack'te bir mesaj yazıp **Run**, mesaj kanala düşer; Email'de **To**
-   alanına Resend hesabınızın e-posta adresini yazıp **Run**. E-posta testinin konusu ve metni sabittir ("This is a test email from Kibana"); Subject ve Message alanı yoktur.
-
-</details>
-
 **Bağlantıyı deneyin.** Kural beklemeden Slack kanalınıza ve e-posta kutunuza birer test mesajı düşer:
 
 ```bash
@@ -572,13 +537,12 @@ Beklenen çıktı:
 da `ALARM_TO`'nun Resend hesabınızın adresi olmaması.
 
 **Kurala ekleyin.** Kural tanımı bütün olarak gönderilir; en kısa yol kuralı Slack ve e-posta aksiyonlarıyla yeniden
-kurmaktır (`scripts/kural.jq`, Adım 4'teki tanım + iki aksiyon). Sonra arızayı yeniden üretin:
+kurmaktır (`scripts/kural.jq`, Adım 4'teki tanım + iki aksiyon). Bu komut kimliği `alarm-5xx` olan, yani Dev Tools'la
+kurulan kuralı değiştirir; arayüz yolundaysanız çalıştırmayın, ikinci bir kural oluşur:
 
 ```bash
 ./scripts/kbn.sh DELETE /api/alerting/rule/alarm-5xx; echo
 jq -n --arg to "$ALARM_TO" -f scripts/kural.jq | ./scripts/kbn.sh POST /api/alerting/rule/alarm-5xx @- | jq -c '{id, actions: [.actions[].id]}'
-python3 scripts/veri_uret.py --ariza
-timeout 180 bash -c 'until curl -s -u elastic:"DevOps2026!" -H "kbn-xsrf: true" http://127.0.0.1:5601/api/alerting/rule/alarm-5xx | jq -e ".last_run.alerts_count.active == 1" >/dev/null; do printf .; sleep 10; done'; echo " alarm acildi"
 ```
 
 Beklenen çıktı:
@@ -586,24 +550,118 @@ Beklenen çıktı:
 ```text
 
 {"id":"alarm-5xx","actions":["alarm-gecmisi-yaz","alarm-slack","alarm-eposta"]}
+```
+
+<details>
+<summary><strong>Arayüz yolu: connector'lar, test ve kurala ekleme</strong> (komut yolundaysanız yalnız okuyun)</summary>
+
+**Komut yolundaysanız bu adımları yapmayın;** connector'lar ve aksiyonlar komutlarla kuruldu. Arayüz yolundaysanız
+yukarıdaki komut yolu bloklarını çalıştırmayın; değerleri terminale değil formlara yapıştırırsınız.
+
+**A. Slack connector'ı ve testi**
+
+1. **Stack Management › Connectors**'ta **Create connector** (1):
+
+   ![Connectors: 1 Create connector](../../assets/screenshots/LAB-18/12-connectors-list.png)
+
+2. Arama kutusuna `Slack` yazın ve **Slack** kartını (2) seçin. Slack (v2) değil; webhook ile çalışan sürüm budur:
+
+   ![Connector türü: 2 Slack](../../assets/screenshots/LAB-18/13a-connector-select-slack.png)
+
+3. **Webhook** sekmesinde **Connector name** (3) `alarm-slack`, **Webhook URL** (4) Slack'ten kopyaladığınız adres.
+   **Save & test** (5); connector kaydedilir ve **Test** sekmesi açılır:
+
+   ![Slack connector: 3 Connector name, 4 Webhook URL, 5 Save & test](../../assets/screenshots/LAB-18/13-connector-create-slack.png)
+
+4. **Message** (1) kutusuna `LAB-18 Slack testi` yazın, **Run** (2). **Test was successful** (3) görünür ve mesaj
+   kanala düşer. Sağ üstteki **×** ile kapatın:
+
+   ![Slack testi: 1 Message, 2 Run, 3 Test was successful](../../assets/screenshots/LAB-18/13b-slack-test.png)
+
+**B. E-posta connector'ı ve testi**
+
+5. Yeniden **Create connector**; arama kutusuna `Email` yazın ve **Email** kartını (1) seçin:
+
+   ![Connector türü: 1 Email](../../assets/screenshots/LAB-18/14a-connector-select-email.png)
+
+6. Formu doldurun ve **Save & test** (8):
+
+   ![Email connector: 2 ad, 3 Sender, 4 Service, 5 Host ve Port, 6 Secure kapalı, 7 Username ve Password, 8 Save & test](../../assets/screenshots/LAB-18/14-connector-email-resend.png)
+
+   | No | Alan | Değer |
+   |---|---|---|
+   | 2 | Connector name | `alarm-eposta` |
+   | 3 | Sender | `onboarding@resend.dev` |
+   | 4 | Service | `Other` |
+   | 5 | Host / Port | `smtp.resend.com` / `587` |
+   | 6 | Secure | **kapalı** bırakın |
+   | 7 | Username / Password | `resend` / Resend API anahtarı |
+
+   **Secure neden kapalı?** Bağlantı yine şifrelidir. Port 587'de Kibana önce normal bağlanır, sunucu izin verince
+   bağlantıyı TLS'e yükseltir (STARTTLS). **Secure** anahtarı ise "baştan TLS ile bağlan" demektir ve yalnız port
+   465 içindir. 587'de Secure'ü açarsanız bağlantı kurulamaz, test e-postası gitmez. Kural kısaca:
+   587 → Secure kapalı, 465 → Secure açık.
+
+7. **Test** sekmesinde **To** (1) kutusuna Resend hesabınızın e-posta adresini yazıp Enter'a basın, **Run** (2).
+   **Test was successful** (3) görünür. E-posta testinin konusu ve metni sabittir ("This is a test email from
+   Kibana"); Subject ve Message alanı yoktur. **×** ile kapatın:
+
+   ![E-posta testi: 1 To, 2 Run, 3 Test was successful; adres karartıldı](../../assets/screenshots/LAB-18/14b-eposta-test.png)
+
+**C. Aksiyonları kurala eklemek**
+
+8. **Stack Management › Rules**. Liste boş gelirse sayfayı yenileyin (F5). Tablonun üstündeki **Search** kutusuna (1)
+   `Ödeme` yazıp Enter'a basın, **Ödeme 5xx patlaması**'na (2) tıklayın:
+
+   ![Rules: 1 Search, 2 Ödeme 5xx patlaması](../../assets/screenshots/LAB-18/07a-rules-ara.png)
+
+9. Kural sayfasının sağ üstündeki **Actions** (1) düğmesine, açılan menüde **Edit rule**'a (2) tıklayın:
+
+   ![Kural sayfası: 1 Actions, 2 Edit rule](../../assets/screenshots/LAB-18/07b-edit-rule.png)
+
+10. **Actions** bölümünde **Add action** (1), listede **alarm-slack** (2):
+
+    ![Add action: 1 Add action, 2 alarm-slack](../../assets/screenshots/LAB-18/07c-add-slack.png)
+
+11. Slack aksiyonunun **Message** (1) kutusuna yazın:
+    `[ALARM] {{rule.name}}: son 5 dakikada {{context.value}} adet 5xx ({{context.conditions}})`
+
+    ![Slack aksiyonu: 1 Message](../../assets/screenshots/LAB-18/07d-slack-mesaj.png)
+
+12. Yeniden **Add action**, listede **alarm-eposta**. **To** (1) Resend hesabınızın adresi (yazıp Enter), **Subject** (2)
+    `[ALARM] {{rule.name}}: {{context.value}} adet 5xx`, **Message** (3) `Son 5 dakikada {{context.value}} adet 5xx.`:
+
+    ![E-posta aksiyonu: 1 To, 2 Subject, 3 Message; adres karartıldı](../../assets/screenshots/LAB-18/07e-eposta-aksiyon.png)
+
+13. Sayfanın altındaki **Save rule** (1). Sağ altta `Updated "Ödeme 5xx patlaması"` görünür; kural sayfasında
+    **Actions** listesinde alarm-gecmisi-yaz, alarm-slack ve alarm-eposta vardır:
+
+    ![Kural formu: 1 Save](../../assets/screenshots/LAB-18/07f-kural-kaydet.png)
+
+</details>
+
+#### İki yolda da: arızayı yeniden üretin ve kuralı kapatın
+
+Arızayı yeniden üretin; kural bir sonraki kontrolde alarmı açar. Kural adıyla bulunur, yani iki yolda da çalışır:
+
+```bash
+python3 scripts/veri_uret.py --ariza
+ID=$(./scripts/kbn.sh GET '/api/alerting/rules/_find?search_fields=name&search=%22%C3%96deme%205xx%20patlamas%C4%B1%22' | jq -r '.data[] | select(.name == "Ödeme 5xx patlaması") | .id')
+ID="$ID" timeout 180 bash -c 'until ./scripts/kbn.sh GET "/api/alerting/rule/$ID" | jq -e ".last_run.alerts_count.new == 1 or .last_run.alerts_count.active == 1" >/dev/null; do printf .; sleep 10; done'; echo " alarm acildi"
+```
+
+Beklenen çıktı:
+
+```text
 [+] 40 adet 500 olayi yazildi (/odeme, son 1 dakika) -> alarm-apache
-. alarm acildi
+..... alarm acildi
 ```
 
 Slack kanalınıza ve e-posta kutunuza `[ALARM] Ödeme 5xx patlaması` mesajı düşer. Mesajlarda `{{context.link}}`
 kullanılırsa linkin dolu gelmesi için Kibana'da `server.publicBaseUrl` tanımlı olmalıdır.
 
-<details>
-<summary><strong>Aksiyonları arayüzden eklemek isterseniz</strong></summary>
-
-**Stack Management › Rules › Ödeme 5xx patlaması**, sağ üstteki **⋮ › Edit rule**. **Actions** bölümünde **Add action**
-ile **alarm-slack**'i seçip **Message**'a, yeniden **Add action** ile **alarm-eposta**'yı seçip **To**, **Subject**,
-**Message**'a yazın (Adım 4'teki kutunun 8-10. görüntüleri aynı ekranlardır); **Save**. Kural kimliği değişmez.
-
-</details>
-
 Gerçek kanallara gereksiz mesaj gitmesin diye denemeden sonra kuralı kapatın; kural silinmez, Rules sayfasından
-yeniden açılır. Kural adıyla bulunur; arayüzden kurulduysa kimliği farklıdır ama komut yine onu kapatır:
+yeniden açılır:
 
 ```bash
 ./scripts/kbn.sh GET '/api/alerting/rules/_find?search_fields=name&search=%22%C3%96deme%205xx%20patlamas%C4%B1%22' \
@@ -611,7 +669,7 @@ yeniden açılır. Kural adıyla bulunur; arayüzden kurulduysa kimliği farklı
   | while read -r id; do ./scripts/kbn.sh POST "/api/alerting/rule/$id/_disable"; echo "kural kapatildi: $id"; done
 ```
 
-Beklenen çıktı (arayüzden kurduysanız kimlik rastgele bir değerdir):
+Beklenen çıktı (arayüz yolunda kimlik rastgele bir değerdir):
 
 ```text
 kural kapatildi: alarm-5xx

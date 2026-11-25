@@ -96,15 +96,26 @@ def harita(page):
 
 # ------------------------------------------------------------------ Adim 4 kutusu: kural formu (API ile kurulan kural)
 
-def aktif(page):
+SATIR = 'a:has-text("Ödeme 5xx patlaması"), button:has-text("Ödeme 5xx patlaması")'
+
+
+def kural_bul(page, goruntu=None):
+    """README: Stack Management > Rules; liste bos gelirse sayfayi yenile (F5); Search kutusuna Ödeme; kurala tikla."""
     yonetim(page, "triggersActions")
-    if not page.locator('[data-test-subj="rulesList"]').count():   # 9.5: liste ilk giriste bos kalabiliyor
-        page.locator('[role="tab"]:has-text("Logs")').first.click(); k.settle(page, 4)
-        page.locator('[role="tab"]:has-text("Rules")').first.click(); k.settle(page, 8)
     ara = page.locator('[data-test-subj="ruleSearchField"]').first
+    for i in range(3):   # 9.5: liste ilk giriste bos cizilebiliyor
+        if ara.count() and ara.is_visible():
+            break
+        print("Rules listesi bos; sayfa yenileniyor", i + 1)
+        page.reload(wait_until="domcontentloaded"); k.settle(page, 8)
     ara.fill("Ödeme"); ara.press("Enter"); k.settle(page, 4)   # listede baska labların kurallari da var
-    satir = 'a:has-text("Ödeme 5xx patlaması"), button:has-text("Ödeme 5xx patlaması")'
-    page.locator(satir).first.click(); k.settle(page, 6)
+    if goruntu:
+        shot(page, goruntu, [(("testsubj", "ruleSearchField"), 1, "down"), (("css", SATIR), 2, "right")])
+    page.locator(SATIR).first.click(); k.settle(page, 6)
+
+
+def aktif(page):
+    kural_bul(page)
     url = page.url
     for i in range(18):
         kutu = page.get_by_text("Active now", exact=True).first.locator("xpath=..").inner_text().replace("\n", " ").strip()
@@ -194,7 +205,7 @@ def isaretle(loc, ad):
 
 # ------------------------------------------------------------------ Adim 3 kutusu: Index connector arayuzde
 def baglayici_arayuz(page):
-    """Form doldurulur, KAYDEDILMEZ (connector Dev Tools ile zaten var; sunucuda hicbir sey silinmez/degismez)."""
+    """README arayuz yolu: form doldurulur ve KAYDEDILIR (komut yolu ile birlikte calistirilmaz)."""
     yonetim(page, "triggersActionsConnectors", "03a-connectors-menu")
     olustur = page.get_by_role("button", name="Create connector").first
     shot(page, "03b-create-connector", [(isaretle(olustur, "cc"), 1, "left")])
@@ -216,8 +227,8 @@ def baglayici_arayuz(page):
     shot(page, "03d-index-connector", [(("testsubj", "nameInput"), 1, "left"), (("testsubj", "connectorIdInput"), 2, "left"),
                                        (("testsubj", "connectorIndexesComboBox"), 3, "left"),
                                        (("testsubj", "create-connector-flyout-save-btn"), 4, "up")])
-    page.keyboard.press("Escape"); time.sleep(1)
-    print("connector formu kapatildi (kaydedilmedi)")
+    page.locator('[data-test-subj="create-connector-flyout-save-btn"]').first.click(); time.sleep(4)
+    print("connector kaydedildi (arayuz yolu)")
 
 
 # ------------------------------------------------------------------ Adim 4 kutusu: kurali arayuzde kurmak
@@ -291,13 +302,114 @@ def kural_arayuz(page):
     kb.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
     print("kaydet dugmesi:", kb.inner_text())
     shot(page, "04q-kaydet", [(("testsubj", "rulePageFooterSaveButton"), 1, "up")], scroll_to=("testsubj", "rulePageFooterSaveButton"))
-    page.locator('[data-test-subj="rulePageFooterCancelButton"]').first.click(); time.sleep(2)
+    kb.click(); time.sleep(4)
     try:
-        page.locator('[data-test-subj="confirmModalConfirmButton"]').first.click(timeout=3000)
+        page.locator('[data-test-subj="confirmModalConfirmButton"]').first.click(timeout=3000); time.sleep(3)
     except Exception:
         pass
-    print("kural formu kapatildi (kaydedilmedi)")
+    print("kural kaydedildi (arayuz yolu):", page.url.replace(k.BASE, "")[:90])
 
+
+
+# ------------------------------------------------------------------ Adim 7 arayuz yolu (gercekten kaydeder)
+def _gizle(page):
+    """Goruntude e-posta adresi gorunmesin: combobox ve metin kutularindaki adresleri ornek adresle degistir."""
+    page.evaluate("""() => { const r = /[\\w.+-]+@[\\w-]+\\.[\\w.]+/;
+        document.querySelectorAll('.euiComboBoxPill, .euiBadge__text').forEach(e => { if (r.test(e.textContent)) e.textContent = 'sizin@adresiniz.com'; });
+        document.querySelectorAll('input').forEach(i => { if (/@/.test(i.value) && !/resend\\.dev/.test(i.value)) i.value = 'sizin@adresiniz.com'; }); }""")
+
+
+def _baglayici_ac(page, tur, kart):
+    yonetim(page, "triggersActionsConnectors")
+    page.get_by_role("button", name="Create connector").first.click(); time.sleep(3)
+    page.locator('.euiFlyout input[type="search"], .euiFlyout [placeholder*="Search"]').first.fill(tur); time.sleep(2)
+    page.locator(kart).first.click(); time.sleep(3)
+
+
+def _test_sonuc(page):
+    page.locator('[data-test-subj="executeActionButton"]').first.click()
+    page.get_by_text("Test was successful").first.wait_for(timeout=60000); time.sleep(1)
+
+
+def kanal_arayuz(page):
+    W, KEY, TO = os.environ["SLACK_WEBHOOK_URL"], os.environ["RESEND_API_KEY"], os.environ["ALARM_TO"]
+    # A. Slack
+    _baglayici_ac(page, "Slack", '[data-test-subj=".slack-card"]')
+    page.locator('[data-test-subj="nameInput"]').fill("alarm-slack"); time.sleep(1)
+    shot(page, "13-connector-create-slack", [(("testsubj", "nameInput"), 3, "left"), (("testsubj", "slackWebhookUrlInput"), 4, "left"),
+                                              (("testsubj", "create-connector-flyout-save-test-btn"), 5, "up")])
+    page.locator('[data-test-subj="slackWebhookUrlInput"]').fill(W)
+    page.locator('[data-test-subj="create-connector-flyout-save-test-btn"]').first.click(); time.sleep(5)
+    mesaj = page.locator('.euiFlyout textarea').first
+    mesaj.fill("LAB-18 Slack testi"); time.sleep(0.5)
+    _test_sonuc(page)
+    shot(page, "13b-slack-test", [(("css", ".euiFlyout textarea"), 1, "left"), (("testsubj", "executeActionButton"), 2, "right"),
+                                   (("text", "Test was successful", True), 3, "right")])
+    print("slack testi: basarili")
+    page.keyboard.press("Escape"); time.sleep(2)
+    # B. E-posta
+    _baglayici_ac(page, "Email", '[data-test-subj=".email-card"]')
+    page.locator('[data-test-subj="nameInput"]').fill("alarm-eposta")
+    page.locator('[data-test-subj="emailFromInput"]').fill("onboarding@resend.dev")
+    page.locator('[data-test-subj="emailServiceSelectInput"]').select_option("other"); time.sleep(1)
+    page.locator('[data-test-subj="emailHostInput"]').fill("smtp.resend.com")
+    page.locator('[data-test-subj="emailPortInput"]').fill("587")
+    page.locator('[data-test-subj="emailUserInput"]').fill("resend")
+    page.locator('[data-test-subj="emailPasswordInput"]').fill(KEY); time.sleep(1)
+    shot(page, "14-connector-email-resend", [
+        (("testsubj", "nameInput"), 2, "left"), (("testsubj", "emailFromInput"), 3, "left"),
+        (("testsubj", "emailServiceSelectInput"), 4, "left"),
+        (("union", ("testsubj", "emailHostInput"), ("testsubj", "emailPortInput")), 5, "left"),
+        (("union", ("testsubj", "emailSecureSwitch"), ("text", "Secure", True)), 6, "right"),
+        (("union", ("testsubj", "emailUserInput"), ("testsubj", "emailPasswordInput")), 7, "left"),
+        (("testsubj", "create-connector-flyout-save-test-btn"), 8, "up")], scroll_to=("testsubj", "emailFromInput"))
+    page.locator('[data-test-subj="create-connector-flyout-save-test-btn"]').first.click(); time.sleep(5)
+    to = page.locator('.euiFlyout .euiFormRow:has(label:text-is("To")) input').first
+    to.click(); page.keyboard.type(TO); page.keyboard.press("Enter"); time.sleep(1)
+    _test_sonuc(page); _gizle(page)
+    shot(page, "14b-eposta-test", [(("css", '.euiFlyout .euiFormRow:has(label:text-is("To"))'), 1, "left"),
+                                    (("testsubj", "executeActionButton"), 2, "right"), (("text", "Test was successful", True), 3, "right")])
+    print("e-posta testi: basarili")
+    page.keyboard.press("Escape"); time.sleep(2)
+
+
+def aksiyon_arayuz(page):
+    TO = os.environ["ALARM_TO"]
+    kural_bul(page, "07a-rules-ara")
+    page.locator('[data-test-subj="ruleActionsButton"]').first.click(); time.sleep(2)
+    shot(page, "07b-edit-rule", [(("testsubj", "ruleActionsButton"), 1, "left"), (("text", "Edit rule", True), 2, "left")])
+    page.get_by_text("Edit rule", exact=True).first.click(); k.settle(page, 8)
+    ekle = page.locator('[data-test-subj="ruleActionsAddActionButton"]').first
+    ekle.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    ekle.click(); time.sleep(3)
+    shot(page, "07c-add-slack", [(("testsubj", "ruleActionsAddActionButton"), 1, "left"), (("text", "alarm-slack", True), 2, "left")])
+    page.get_by_text("alarm-slack", exact=True).last.click(); time.sleep(3)
+    msj = page.locator('[data-test-subj="ruleActions"] textarea').last
+    msj.fill("[ALARM] {{rule.name}}: son 5 dakikada {{context.value}} adet 5xx ({{context.conditions}})"); time.sleep(1)
+    msj.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    shot(page, "07d-slack-mesaj", [(("css", '[data-test-subj="ruleActions"] textarea >> nth=-1'), 1, "left")])
+    ekle.click(); time.sleep(3)
+    page.get_by_text("alarm-eposta", exact=True).last.click(); time.sleep(3)
+    to = page.locator('[data-test-subj="ruleActions"] .euiFormRow:has(label:text-is("To")) input').last
+    # Goruntu icin ornek adres yazilir; sayfa metnini degistirmek formun kaydini bozuyor (Save sessizce kaydetmiyor)
+    to.click(); page.keyboard.type("sizin@adresiniz.com"); page.keyboard.press("Enter"); time.sleep(1)
+    page.locator('[data-test-subj="ruleActions"] .euiFormRow:has(label:text-is("Subject")) input').last.fill("[ALARM] {{rule.name}}: {{context.value}} adet 5xx")
+    page.locator('[data-test-subj="ruleActions"] textarea').last.fill("Son 5 dakikada {{context.value}} adet 5xx."); time.sleep(1)
+    to.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    shot(page, "07e-eposta-aksiyon", [(("css", '[data-test-subj="ruleActions"] .euiFormRow:has(label:text-is("To")) >> nth=-1'), 1, "left"),
+                                       (("css", '[data-test-subj="ruleActions"] .euiFormRow:has(label:text-is("Subject")) >> nth=-1'), 2, "left"),
+                                       (("css", '[data-test-subj="ruleActions"] textarea >> nth=-1'), 3, "left")])
+    to.click(); page.keyboard.press("Backspace"); time.sleep(0.5)   # ornek adresi sil, gercek adresi yaz
+    page.keyboard.type(TO); page.keyboard.press("Enter"); time.sleep(1)
+    kb = page.locator('[data-test-subj="rulePageFooterSaveButton"]').first
+    kb.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    shot(page, "07f-kural-kaydet", [(("testsubj", "rulePageFooterSaveButton"), 1, "up")])
+    kb.click(); time.sleep(4)
+    try:
+        page.locator('[data-test-subj="confirmModalConfirmButton"]').first.click(timeout=3000); time.sleep(3)
+    except Exception:
+        pass
+    print("aksiyonlar kaydedildi:", page.url.replace(k.BASE, "")[:90])
 
 if __name__ == "__main__":
     with sync_playwright() as pw:
@@ -306,7 +418,8 @@ if __name__ == "__main__":
         k.login(page)
         for parca in sys.argv[1:]:
             {"harita": harita, "aktif": aktif, "rapor": rapor, "pdf": pdf,
-             "baglayici_arayuz": baglayici_arayuz, "kural_arayuz": kural_arayuz}[parca](page)
+             "baglayici_arayuz": baglayici_arayuz, "kural_arayuz": kural_arayuz,
+             "kanal_arayuz": kanal_arayuz, "aksiyon_arayuz": aksiyon_arayuz}[parca](page)
         br.close()
     print("HATALI GORUNTU:", HATA if HATA else "yok")
     sys.exit(1 if HATA else 0)
