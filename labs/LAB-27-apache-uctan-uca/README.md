@@ -171,15 +171,50 @@ PASS Dashboard: apache-web-operations (5 Lens panels)
 
 </details>
 
-Kibana'da **Analytics › Dashboards › Apache Web Trafiği ve GeoIP**:
+**Panoyu açın:**
 
-![Apache panosu: 1 dakikalık istek sayısı; yanında 5xx sayısı, altta en sorunlu endpoint'ler ve p95 yanıt süresi](../../assets/screenshots/LAB-27/01-pano.png)
+1. Sol üstteki menü düğmesine (1) tıklayın, **Analytics** altında **Dashboards**'u (2) seçin:
 
-Ziyaretçilerin nereden geldiğini haritada görmek için **Analytics › Maps › Create map**, **Add layer ›
-Clusters**, data view **Apache Web İstek ve Hata Logları**, **Add and close**. Haritayı `Apache ziyaretçileri`
-adıyla kaydedin; panoya **Add › From library** ile eklenebilir:
+   ![Menü: 1 menü düğmesi, 2 Dashboards](../../assets/screenshots/LAB-27/03a-menu-dashboards.png)
 
-![Harita: 1 Clusters katmanı; daireler ülkelere göre istek sayısını gösterir](../../assets/screenshots/LAB-27/02-harita.png)
+2. Arama kutusuna (1) `Apache` yazıp Enter'a basın, **Apache Web Trafiği ve GeoIP** (2) panosunu açın:
+
+   ![Dashboards: 1 arama, 2 pano](../../assets/screenshots/LAB-27/03b-pano-ara.png)
+
+3. Üstte dakikalık istek sayısı (1) ve 5xx sayısı, altta en sorunlu endpoint'ler ve p95 yanıt süresi:
+
+   ![Apache panosu: 1 istek sayısı paneli](../../assets/screenshots/LAB-27/03c-pano.png)
+
+**Ziyaretçileri haritada görün:**
+
+1. Menü düğmesine (1) tıklayın, **Analytics** altında **Maps**'i (2) seçin:
+
+   ![Menü: 1 menü düğmesi, 2 Maps](../../assets/screenshots/LAB-27/03d-menu-maps.png)
+
+2. **Create map** (1):
+
+   ![Maps: 1 Create map](../../assets/screenshots/LAB-27/03e-create-map.png)
+
+3. Zaman seçicisinden (1) **Last 1 hour**'u seçin, sonra **Add layer** (2):
+
+   ![Harita: 1 zaman, 2 Add layer](../../assets/screenshots/LAB-27/03f-add-layer.png)
+
+4. Katman türlerinden **Clusters** (1): yakın noktaları sayıyla birleştirir:
+
+   ![Katman türü: 1 Clusters](../../assets/screenshots/LAB-27/03g-clusters.png)
+
+5. **Data view** (1) listesinden **Apache Web İstek ve Hata Logları**, sonra **Add and close** (2):
+
+   ![Katman ayarı: 1 data view, 2 Add and close](../../assets/screenshots/LAB-27/03h-add-and-close.png)
+
+6. Katman listesi (1) sağda; daireler ülkelere göre istek sayısını gösterir:
+
+   ![Harita: 1 katman listesi](../../assets/screenshots/LAB-27/03i-harita.png)
+
+7. Sağ üstte **Save**. **Title** (1) `Apache ziyaretçileri`, **Add to dashboard** altında **None** (2), **Save and add to
+   library** (3). Harita panoya **Add › From library** ile eklenebilir:
+
+   ![Harita kaydetme: 1 Title, 2 None, 3 Save](../../assets/screenshots/LAB-27/03j-harita-kaydet.png)
 
 ### 4. Alarm: 5xx artınca e-posta (Mailpit)
 
@@ -453,14 +488,22 @@ Hesap parolanız kullanılmaz.
 
 ### 6. PDF rapor
 
-Panoyu açın; üst menüde **Export › PDF reports**. Açılan panelin (1) altındaki **Export PDF** (2) düğmesine basın:
+1. 3. adımdaki gibi **Apache Web Trafiği ve GeoIP** panosunu açın. Üstte **Export** (1), menüde **PDF reports** (2):
 
-![PDF: 1 Export dashboard as PDF paneli, 2 Export PDF](../../assets/screenshots/LAB-27/05-pdf-olustur.png)
+   ![Pano: 1 Export, 2 PDF reports](../../assets/screenshots/LAB-27/06a-export-pdf.png)
 
-Rapor arka planda tarayıcıyla çizilir; birkaç saniye sonra **Stack Management › Reporting**'de görünür ve
-indirilir (3):
+2. Sağdaki panelde **Export PDF** (1):
 
-![Reporting: 3 tamamlanan PDF](../../assets/screenshots/LAB-27/06-reporting.png)
+   ![PDF paneli: 1 Export PDF](../../assets/screenshots/LAB-27/06b-generate-pdf.png)
+
+3. Rapor arka planda tarayıcıyla çizilir. Menüden **Management › Stack Management**'ı açın, soldaki listede
+   **Reporting**'e (1) tıklayın:
+
+   ![Stack Management: 1 Reporting](../../assets/screenshots/LAB-27/06c-reporting-menu.png)
+
+4. Pano satırı (1) **Done** olunca satır sonundaki menüden **Download report** ile indirilir:
+
+   ![Reporting: 1 tamamlanan PDF](../../assets/screenshots/LAB-27/06d-reporting-pdf.png)
 
 Raporun durumu ve boyutu Kibana'nın rapor kaydında da görülür:
 
@@ -500,7 +543,15 @@ SLO: apache-web-gecikme-500ms
 [{"id":"apache-web-erisilebilirlik","hedef":0.999},{"id":"apache-web-gecikme-500ms","hedef":0.95}]
 ```
 
-Kibana'da **Machine Learning › Anomaly Detection › Jobs** işi, **Observability › SLOs** iki hedefi gösterir.
+Kibana'da menüden **Analytics › Machine Learning**, **Anomaly Detection › Jobs**: iş (1) açık ve veri akışı çalışıyor:
+
+![Anomaly Detection Jobs: 1 apache-ip-istek-anomali](../../assets/screenshots/LAB-27/06e-ml-isi.png)
+
+Menüden **Observability › SLOs**: iki hedef (1, 2) ve şu anki değerleri. Erişilebilirlik hedefi arıza testleri yüzünden
+ihlal edilmiş (Violated) görünebilir:
+
+![SLOs: 1 erişilebilirlik, 2 gecikme](../../assets/screenshots/LAB-27/06f-slolar.png)
+
 İş 5 dakikalık bucket'larla öğrendiği için anlamlı sonuç birkaç saat veri biriktikten sonra gelir. Temizlik ikisini
 de siler.
 

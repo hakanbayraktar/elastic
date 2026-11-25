@@ -1,0 +1,2 @@
+Kibana 9.5.5 (Elastic Stack 9.5.5) ile alindi: 2026-11-25.
+Kibana surumu degisince bu klasordeki goruntuler yeniden alinir (scripts/screenshots/shots_lab27.py; Mailpit ve connector listesi kibana_shots.py lab27_mailpit / lab27_connector).

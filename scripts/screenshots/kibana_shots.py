@@ -854,7 +854,7 @@ def lab07ek(page):
     shoot(page, lab, "11-pano-dort-panel", [(("css", '[data-test-subj="dashboardPanel"]'), 1, "right")])
 
 FLOWS = {"sunum": sunum, "lab01": lab01, "lab02": lab02, "lab04": lab04, "lab07": lab07, "lab07canli": lab07canli, "lab07runtime": lab07runtime, "lab07ek": lab07ek,
-         "lab10": lab10, "lab12_upload": lab12_upload, "lab27": lab27, "lab27_pano": lambda page: lab27(page, "pano"), "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "lab27_pdf": lambda page: lab27(page, "pdf"), "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
+         "lab10": lab10, "lab12_upload": lab12_upload, "lab27": lab27, "lab27_mailpit": lambda page: lab27(page, "mailpit"), "lab27_connector": lambda page: lab27(page, "connector"), "eski_lab04": eski_lab04, "eski_alarm": eski_alarm, "eski_fleet": eski_fleet,
          "eski_3node": eski_3node}
 
 if __name__ == "__main__":
