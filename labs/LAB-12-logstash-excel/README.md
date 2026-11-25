@@ -460,12 +460,19 @@ Elinizdeki bir CSV'yi bir kez bakmak için Elasticsearch'e koymanız gerekiyorsa
 Kibana dosyayı okur, sütunları ve tarihi tanır, index'i ve mapping'i kendisi kurar. Örnek dosya bir Spring
 Boot uygulamasının 2024 Şubat-Mart loglarıdır (2000 satır, sütunlar `event_date, log_level, logger, ...`).
 
-Yükleme tarayıcıdan yapılır; dosya kendi bilgisayarınızda olmalı. Kendi bilgisayarınızın terminalinde:
+Yükleme tarayıcıdan yapılır; dosya kendi bilgisayarınızda olmalı. İndirme komutunu sunucuda hesaplayın:
 
-<!-- runner:skip -->
 ```bash
-scp student@<sunucu-ip>:~/elastic/labs/LAB-12-logstash-excel/sample-data/uygulama-loglari.csv .
+IP=$(curl -s https://api.ipify.org); echo "Kendi bilgisayarınızda: scp $(whoami)@$IP:~/elastic/labs/LAB-12-logstash-excel/sample-data/uygulama-loglari.csv ."
 ```
+
+Beklenen çıktı:
+
+```text
+Kendi bilgisayarınızda: scp student@<IP>:~/elastic/labs/LAB-12-logstash-excel/sample-data/uygulama-loglari.csv .
+```
+
+Yazdırılan komutu kendi bilgisayarınızın terminalinde çalıştırın.
 
 1. Kibana ana sayfasında (sol üstteki **elastic** logosu) **Upload a file** (1):
 

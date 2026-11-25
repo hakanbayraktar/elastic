@@ -285,19 +285,27 @@ Beklenen çıktı:
 
 ```text
 [+] 300000 olay x 3 gecis (her gecis ayri, tek seferlik konteynerde)
-    referans (filtre yok) : 35.67 s
-    yalniz dissect        : 34.66 s
-    yalniz grok           : 39.83 s
+    referans (filtre yok) : 30.97 s
+    yalniz dissect        : 35.17 s
+    yalniz grok           : 38.12 s
 
-    grok - dissect        : +5.17 s  ->  olay basina +17.2 us ek CPU
-    dissect - referans    : -1.01 s  ->  olcum gurultusu (<1.5 s) icinde: dissect pratikte bedava
+    grok - dissect        : +2.95 s  ->  olay basina +9.8 us ek CPU
+    dissect - referans    : +4.20 s  ->  olay basina +14.0 us ek CPU
 ```
 
-Sayılar sunucuya ve koşuya göre değişir; anlamlı olan sıralamadır. Ölçüm CPU'ya duyarlıdır: başka Logstash,
-Beats ya da Elastic Agent container'ları çalışırken bir ölçümde sıralama ters çıktı (dissect 57 s, grok 44 s).
-Onları durdurduktan (`docker compose stop`) sonra üç ölçüm de aynı sonucu verdi: grok olay başına dissect'ten
-17-22 µs fazla CPU harcadı, dissect'in maliyeti ölçüm gürültüsünün altında kaldı. Saniyede birkaç yüz satırda
-bu fark hissedilmez; saniyede on binlerce satırda kaç worker gerektiğini belirler.
+Sayılar sunucuya ve koşuya göre değişir; anlamlı olan sıralamadır: grok, dissect'ten pahalıdır. Son iki satır üç
+biçimde gelir:
+
+| Fark | Betiğin yazdığı |
+|---|---|
+| ±1,5 sn içinde | `olcum gurultusu`: bu ölçümle ayırt edilemez |
+| dissect referanstan 1,5 sn'den fazla hızlı | `tekrar calistirin`: filtre eklemek hızlandıramaz, dalgalanmadır |
+| daha büyük | olay başına ek CPU (µs) |
+
+Ölçüm CPU'ya duyarlıdır: başka Logstash, Beats ya da Elastic Agent container'ları çalışırken bir ölçümde sıralama
+ters çıktı (dissect 57 s, grok 44 s); önce onları durdurun (`docker compose stop`). Ölçümlerde grok olay başına
+dissect'ten 7-28 µs fazla CPU harcadı; dissect'in referansa göre maliyeti gürültü içinde ile 14 µs arasında kaldı.
+Saniyede birkaç yüz satırda bu fark hissedilmez; saniyede on binlerce satırda kaç worker gerektiğini belirler.
 
 </details>
 
