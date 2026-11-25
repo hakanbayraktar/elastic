@@ -33,6 +33,13 @@ def login(page):
     if "space_selector" in page.url:
         page.goto(BASE + "/app/home", wait_until="domcontentloaded")
         time.sleep(3)
+    # Temiz Kibana'da ilk giriste karsilama ekrani menuyu orter; bir kez kapatilinca bir daha gelmez
+    page.goto(BASE + "/app/home", wait_until="domcontentloaded"); time.sleep(4)
+    for ad in ("Explore on my own", "Skip"):
+        try:
+            page.get_by_role("button", name=ad).first.click(timeout=2500); time.sleep(2); break
+        except Exception:
+            pass
 
 
 def settle(page, extra=3):
