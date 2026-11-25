@@ -38,7 +38,7 @@ def index_management(page):
             break
         page.get_by_role("button", name="Reload indices").first.click(); time.sleep(3)
     print("satir:", page.locator('tr:has-text("saglik-arizali")').first.inner_text().replace("\n", " | ")[:200])
-    shot(page, "03b-index-management-red", [(("testsubj", "indicesSearch"), 1, "down"), (("css", 'tr:has-text("saglik-arizali")'), 2, "left")])
+    shot(page, "03b-index-management-red", [(("testsubj", "indicesSearch"), 1, "ic"), (("css", 'tr:has-text("saglik-arizali")'), 2, "ic")])
 
 
 if __name__ == "__main__":

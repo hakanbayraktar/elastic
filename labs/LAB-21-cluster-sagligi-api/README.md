@@ -84,7 +84,8 @@ GET /_cluster/health?filter_path=status,number_of_nodes,active_shards,unassigned
 {"status": "yellow", "number_of_nodes": 1, "active_shards": 56, "unassigned_shards": 1}
 ```
 
-`active_shards` sayısı yüklü verilere göre sizde farklıdır.
+`active_shards` sayısı yüklü verilere göre sizde farklıdır. Öteki lablar da kuruluysa `unassigned_shards` 1'den
+büyük çıkar: tek node'da replica isteyen her index yellow'a bir replica ekler.
 
 `_health_report` aynı soruyu konu konu (disk, shard, master, ILM...) cevaplar. Her konunun durumunu ve
 bir cümlelik açıklamasını tek satırda görmek için:
@@ -435,7 +436,7 @@ Node'u başlatın ve cluster'a katılmasını bekleyin (`_cat/nodes` üç satır
 docker compose --env-file starter/.env -f starter/docker-compose.yml start es-b 2>&1 | grep Started
 timeout 180 bash -c 'until [ "$(curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" "https://127.0.0.1:19208/_cat/nodes?h=name" | wc -l)" = 3 ]; do printf .; sleep 3; done'; echo
 curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" 'https://127.0.0.1:19208/_cat/nodes?v&h=name,master,node.role'
-curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" 'https://127.0.0.1:19208/_cluster/health?filter_path=status,number_of_nodes,unassigned_shards'; echo
+curl -s --cacert "$CA" -u "elastic:$CLUSTER_ELASTIC_PASSWORD" 'https://127.0.0.1:19208/_cluster/health?wait_for_nodes=3&timeout=60s&filter_path=status,number_of_nodes,unassigned_shards'; echo
 ```
 
 Beklenen çıktı:
@@ -451,7 +452,9 @@ es-a *      hmrs
 {"status":"yellow","number_of_nodes":3,"unassigned_shards":35}
 ```
 
-`es-b` katıldı (üç node, `unassigned_shards` hâlâ 35) ama cluster yellow: yerleşim hâlâ kısıtlı. Ayarı `null` yaparak
+`wait_for_nodes=3`: node listede göründükten hemen sonra sağlık cevabı onu bir an daha 2 node sayabilir; bu
+parametre cevabı üçüncü node sayılana kadar bekletir. `es-b` katıldı (üç node, `unassigned_shards` hâlâ 35; sayı
+cluster'daki index'lere göre sizde farklıdır) ama cluster yellow: yerleşim hâlâ kısıtlı. Ayarı `null` yaparak
 varsayılana döndürün; replica'lar `es-b`'deki eski kopyalarından kısa sürede tamamlanır:
 
 ```bash
