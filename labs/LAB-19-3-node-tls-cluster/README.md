@@ -32,7 +32,15 @@ cd ~/elastic/labs/LAB-19-3-node-tls-cluster
 free -g | sed -n 2p
 ```
 
-`available` sütunu en az 5 olmalı.
+Örnek çıktı:
+
+```text
+Mem:              15           5           8           0           2          10
+```
+
+Satırdaki sayılar GB'dir: toplam, kullanılan, boş, paylaşılan, önbellek ve en sonda **kullanılabilir** bellek.
+Bakacağınız sayı en sondakidir (burada `10`); en az `5` olmalı. Daha küçükse önce çalışan öteki labları durdurun
+(lab dizininde `docker compose stop`; veriler silinmez).
 
 ---
 
