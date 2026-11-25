@@ -278,9 +278,10 @@ hâline döndü. Panoyu yeniden açın; bütün paneller veriyle gelir, harita p
 
 </details>
 
-<details><summary><strong>Aynı işler API ile: otomasyon</strong></summary>
+<details><summary><strong>Aynı işler API ile: otomasyon</strong> (isteğe bağlı, arayüz adımlarından sonra)</summary>
 
-Test ortamından üretime taşımayı bir betiğe koymak için aynı üç işlem API ile yapılır. Panoyu ilişkili
+Bu kutu arayüz adımlarının yerine değil, onlardan **sonra** yapılan isteğe bağlı bir alıştırmadır. Test ortamından
+üretime taşımayı bir betiğe koymak için aynı üç işlem API ile yapılır. Panoyu ilişkili
 nesneleriyle dışa aktarın, dosyadaki nesneleri sayın:
 
 ```bash

@@ -157,7 +157,11 @@ Excel'in **CSV UTF-8** seçeneğiyle kaydedilen dosyada bu iki ayar gerekmez.
 Logstash'i `elastic` ile bağlamak, parolası bir config dosyasında duran süper kullanıcı demektir.
 Bunun yerine yalnız `excel-*` index'lerine yazabilen bir rol ve kullanıcı açıyoruz.
 
-Aşağıdaki `http` blokları **Kibana › Dev Tools**'a yapıştırılır:
+**İki yol var, birini seçin.** **Komut yolu** aşağıdaki iki Dev Tools isteğidir; **arayüz yolu** ondan sonraki açılır
+kutudadır. Öteki yolu yalnız okuyun, uygulamayın; ikisini birden yaparsanız ikinci deneme "zaten var" hatası verir.
+Sonraki 403 kontrolü iki yolda aynıdır.
+
+**Komut yolu.** Aşağıdaki `http` blokları **Kibana › Dev Tools**'a yapıştırılır:
 
 ```http
 PUT /_security/role/excel-logstash-writer
@@ -190,11 +194,11 @@ PUT /_security/user/excel_logstash
 - `create_index`, `index`: index açar ve document yazar. Silme, ayar değiştirme ve başka index yok.
 
 <details>
-<summary><strong>Dev Tools yerine arayüzden yapmak isterseniz</strong></summary>
+<summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
 
-Aynı rol ve kullanıcı **Stack Management › Roles / Users** sayfalarından da açılır. **İkisinden birini yapın:**
-Dev Tools isteklerini çalıştırdıysanız bu kutuyu atlayın. Adlar ve parola birebir aynı olmalı; Logstash
-`docker-compose.yml`'deki `excel_logstash` / `Excel2026!` ile bağlanır.
+**Komut yolundaysanız bu adımları yapmayın;** rol ve kullanıcı Dev Tools istekleriyle açıldı. Arayüz yolundaysanız
+yukarıdaki iki isteği çalıştırmayın. Adlar ve parola birebir aynı olmalı; Logstash `docker-compose.yml`'deki
+`excel_logstash` / `Excel2026!` ile bağlanır.
 
 1. Sol üstteki menü düğmesine (1) tıklayın, **Management** altında **Stack Management**'ı (2) seçin:
 
@@ -232,7 +236,7 @@ Dev Tools isteklerini çalıştırdıysanız bu kutuyu atlayın. Adlar ve parola
 
 </details>
 
-Yetkinin gerçekten sınırlı olduğunu terminalde bu kullanıcıyla başka bir index'e yazarak görün:
+İki yolda da: yetkinin gerçekten sınırlı olduğunu terminalde bu kullanıcıyla başka bir index'e yazarak görün:
 
 ```bash
 curl -s -u excel_logstash:'Excel2026!' -X PUT 'http://127.0.0.1:9200/belge-deneme/_doc/1' \

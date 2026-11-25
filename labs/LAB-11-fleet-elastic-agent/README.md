@@ -97,8 +97,13 @@ Server politikasının id'si budur.
 **Soru: Ajan çalışmadan önce Fleet'te ne hazır olmalı?** Dört şey: ajanların veriyi yazacağı adres (output),
 Fleet Server ve onun service token'ı, ajanın politikası, o politikanın enrollment token'ı. Hepsi Kibana › Fleet'te.
 
+**İki yol var, birini seçin.** **Arayüz yolu** aşağıdaki 1.1-1.6 adımları ve Adım 2'dir (token'ları elle `.env`'e
+yazarsınız). **Betik yolu** tek komuttur ve ikisini birden yapar. Betik yolundaysanız 1.1-1.6'yı ve Adım 2'yi
+yapmayın, yalnız okuyun; arayüz yolundaysanız betiği çalıştırmayın. İkisini birden yaparsanız iki ayrı "Lab Linux
+sunucu" politikası açılmaya çalışılır ve `.env` yanlış token'la kalabilir. Adım 3'ten sonrası iki yolda aynıdır.
+
 <details>
-<summary><strong>Arayüz yerine betikle yapmak isterseniz</strong></summary>
+<summary><strong>Betik yolu</strong> (arayüz yolundaysanız yalnız okuyun)</summary>
 
 Betik bu adımdaki her şeyi API ile yapar ve iki token'ı `.env`'e yazar (Adım 2 de yapılmış olur). Token'lar
 ekrana basılmaz. Çalıştırdıktan sonra doğrudan Adım 3'e geçin:
@@ -118,6 +123,8 @@ enrollment token       : alindi
 ```
 
 </details>
+
+**Arayüz yolu** (betik yolundaysanız 1.1-1.6'yı ve Adım 2'yi yalnız okuyun).
 
 **1.1 Fleet'i açın.** Sol üstteki menü düğmesine (1) tıklayın, **Management** altında **Fleet**'i (2) seçin:
 

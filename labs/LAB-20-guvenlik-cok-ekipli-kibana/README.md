@@ -265,7 +265,7 @@ POST kbn:/s/gvn-destek/api/data_views/data_view
 ```
 
 <details>
-<summary><strong>Rol arayüzde nasıl görünür?</strong></summary>
+<summary><strong>Rol arayüzde nasıl görünür?</strong> (yalnız bakın, değiştirmeyin)</summary>
 
 Rolü Dev Tools'la kurduk; Kibana'da aynı alanlar bir formdur. `elastic` ile:
 
