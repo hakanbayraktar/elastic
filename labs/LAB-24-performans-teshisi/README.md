@@ -18,8 +18,6 @@ Bu labda 200 bin ürünlük bir index'te:
 - Uzun süren bir sorguyu Tasks API ile bulup iptal edeceğiz.
 - Stack Monitoring ile cluster'ı sürekli izleyeceğiz.
 
-Kibana'daki her tıklama kırmızı kutu ve numarayla gösterilir.
-
 ![Yavaş sorgu teşhisi: slow log, Profile API, Tasks](../../assets/infographics/34-performans-teshisi.png)
 
 ---
@@ -269,7 +267,7 @@ Kibana'nın "gizli sistem index'i" kabul ettiği bir index'tir.
 
    ![Menü: 1 menü düğmesi, 2 Stack Monitoring](../../assets/screenshots/LAB-24/06a-menu-stack-monitoring.png)
 
-2. İlk açılışta hazır alarm kuralları önerilir; alarmları LAB-18'de kuruyoruz. **No** (1) seçip **Continue**'ya (2)
+2. İlk açılışta hazır alarm kuralları önerilir; bu labın konusu izlemek olduğu için kurmuyoruz. **No** (1) seçip **Continue**'ya (2)
    basın (pencere gelmezse bu adımı atlayın):
 
    ![Create rules: 1 No, 2 Continue](../../assets/screenshots/LAB-24/06b-create-rules.png)
@@ -289,7 +287,7 @@ grafikleri açılır; slow log "hangi sorgu" sorusunu, bu ekran "hangi node, ne 
 
 
 Cluster'da yerleşemeyen bir replica varsa **Health** `Missing replica shards` (yellow) gösterir; Nodes sayfasındaki
-**Status** de `Yellow` olur. LAB-21'de `_cluster/health`'in söylediğiyle aynı bilgi, burada zaman içinde grafiğiyle.
+**Status** de `Yellow` olur. `_cluster/health`'in söylediğiyle aynı bilgi, burada zaman içinde grafiğiyle.
 
 ---
 
