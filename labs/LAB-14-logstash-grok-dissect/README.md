@@ -354,6 +354,9 @@ kaçırıyordur. Servis bazında hata (2) ve zaman içinde seviye dağılımı (
 <details>
 <summary><strong>"Servis bazında hata" panelini elle kurmak</strong></summary>
 
+Pano yukarıdaki betikle kuruldu. Bu kutu, panellerden birinin arayüzde nasıl çizildiğini gösterir; panoya bir şey
+eklemez, betiğin yerine geçmez.
+
 1. Menüden **Analytics › Discover**'ı açın. Sol üstteki **Data view** düğmesine (1) tıklayın, arama kutusuna (2)
    `Grok` yazın ve **Logstash Grok Logları**'nı (3) seçin:
 
@@ -368,8 +371,8 @@ kaçırıyordur. Servis bazında hata (2) ve zaman içinde seviye dağılımı (
 
 ![Discover: 1 hata sorgusu, 2 service field'ı, 3 Visualize](../../assets/screenshots/LAB-14/06f-service-visualize.png)
 
-4. Lens, sorguyu koruyarak servis başına hata sayısını çizer (1). Panoya eklemek isterseniz **Save**'e (2)
-   basın, **Add to dashboard** altında panoyu seçin:
+4. Lens, sorguyu koruyarak servis başına hata sayısını çizer (1). Aynı panel panoda zaten var; burada yalnız nasıl
+   kurulduğunu gördük. **Save**'e (2) basmadan çıkın; sayfadan ayrılırken Kibana sorarsa kaydetmeden çıkmayı seçin:
 
 ![Lens: 1 servis bazında hata sayısı, 2 Save](../../assets/screenshots/LAB-14/06g-lens-servis-hata.png)
 
@@ -553,8 +556,10 @@ e-posta yok, document yalnız etiketli. `_simulate` pipeline'ı kaydetmeden dene
 <details>
 <summary><strong>Aynı ingest pipeline'ı Kibana arayüzünden kurmak</strong></summary>
 
-Dev Tools'taki `PUT _ingest/pipeline` isteğinin arayüz karşılığı **Ingest Pipelines** sayfasıdır. Burada
-`grok-ayristir-arayuz` adıyla, adlar çakışmasın diye ayrı bir pipeline kurun.
+Bu kutu Dev Tools adımlarının yerine değil, onlardan **sonra** yapılan bir alıştırmadır: Dev Tools adımlarını
+çalıştırmış olmalısınız (`grok-varsayilan` index'i orada açılır). Dev Tools'taki `PUT _ingest/pipeline` isteğinin
+arayüz karşılığı **Ingest Pipelines** sayfasıdır. Burada `grok-ayristir-arayuz` adıyla, Dev Tools'takini bozmamak için
+ayrı bir pipeline kurun.
 
 1. Menüden **Management › Stack Management**'ı açın, soldaki listede **Ingest Pipelines**'a (1) tıklayın:
 
