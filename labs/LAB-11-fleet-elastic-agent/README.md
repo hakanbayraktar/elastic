@@ -412,6 +412,8 @@ system.auth    36765
 ["java","MainThread","pytorch_inferen","dockerd","containerd","metricbeat"]
 ```
 
+Sayılar ve süreç adları sunucuya göre değişir; iki sayının da 0'dan büyük olması yeterlidir.
+
 | | Bağlama yok (yalnız container) | Bağlamayla (bu lab) |
 |---|---|---|
 | `/var/log` | image'ın kendi dosyaları; `syslog`, `auth.log` yok | sunucunun log dizini |

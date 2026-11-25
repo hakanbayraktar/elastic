@@ -55,6 +55,28 @@ def isaretle(loc, ad):
     return ("css", f'[data-isaret="{ad}"]')
 
 
+def satir_isaretle(kod, bas, ad):
+    """Kod blogunda `bas` ile baslayan satirin ustune seffaf bir kutu koyar. Satirin span'i onceki satirin
+    sonundaki \\n ile basladigi icin kendi kutusu yarim satir yukari kayar; Range yalniz satirin metnini olcer.
+    Kutu draw()'in 6 px payi kadar iceriden baslar: komsu satirlar 20 px aralikli, cizgi onlarin ustune binmesin."""
+    kod.evaluate("""(e, a) => {
+      const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT); let n, r = null;
+      while ((n = w.nextNode())) {
+        const i = r ? 0 : n.nodeValue.indexOf(a[0]);
+        if (i < 0) continue;
+        if (!r) { r = document.createRange(); r.setStart(n, i); }
+        const j = n.nodeValue.indexOf('\\n', i);
+        if (j >= 0) { r.setEnd(n, j); break; }
+        r.setEnd(n, n.nodeValue.length);
+      }
+      const b = r.getBoundingClientRect(), d = document.createElement('div');
+      d.setAttribute('data-isaret', a[1]);
+      Object.assign(d.style, {position: 'fixed', left: (b.left - 4) + 'px', top: (b.top + 6) + 'px', width: (b.width + 8) + 'px',
+                              height: Math.max(b.height - 12, 2) + 'px', pointerEvents: 'none', zIndex: 99999});
+      document.body.appendChild(d); }""", [bas, ad])
+    return ("css", f'[data-isaret="{ad}"]')
+
+
 def onayla(page):
     try:
         page.locator('[data-test-subj="confirmModalConfirmButton"]').first.click(timeout=5000); k.settle(page, 4)
@@ -98,13 +120,10 @@ def fleet(page):
     # Goruntude token gorunmesin: metin dugumlerinde maskele
     kod.evaluate("""(e, a) => { const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
         let n; while ((n = w.nextNode())) { if (n.nodeValue.includes(a[0])) n.nodeValue = n.nodeValue.replace(a[0], a[1]); } }""", [servis, MASKE])
-    satir = kod.locator("span, div").filter(has_text=re.compile(r"^\s*--fleet-server-service-token=")).last
-    if not satir.count():
-        satir = kod
-    satir.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
-    pol = kod.locator("span, div").filter(has_text=re.compile(r"^\s*--fleet-server-policy=")).last
-    isaret = [(isaretle(satir, "token"), 1, "left")] + ([(isaretle(pol, "polid"), 2, "right")] if pol.count() else [])
-    shot(page, "01g-service-token", isaret, scroll_to=("css", '[data-isaret="token"]'))
+    kod.evaluate("e => e.scrollIntoView({block: 'center'})"); time.sleep(1)
+    isaret = [(satir_isaretle(kod, "--fleet-server-service-token=", "token"), 1, "left"),
+              (satir_isaretle(kod, "--fleet-server-policy=", "polid"), 2, "right")]
+    shot(page, "01g-service-token", isaret)
     if TOKEN_DOSYA:
         fd = os.open(TOKEN_DOSYA, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w") as f:
@@ -230,7 +249,7 @@ def ajanlar(page):
     menu(page, "Fleet")
     page.locator('[data-test-subj="fleet-agents-tab"]').first.click(); k.settle(page, 8)
     print("ajanlar:", page.locator("tbody").first.inner_text().replace("\n", " ")[:200])
-    shot(page, "03a-fleet-agents", [(("css", 'tbody a:text-is("linux-agent-01")'), 1, "right"), (("css", 'tbody a:text-is("fleet-server")'), 2, "right")])
+    shot(page, "03a-fleet-agents", [(("css", 'tbody a:text-is("linux-agent-01")'), 1, "ic"), (("css", 'tbody a:text-is("fleet-server")'), 2, "ic")])
 
 
 # ------------------------------------------------------------------ Adim 5: Period 10s -> 30s
