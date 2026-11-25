@@ -23,20 +23,12 @@ vermek bunların hiçbirini sağlamaz. Bu labda:
 
 ## Ön Koşullar
 
-- LAB-01 ana cluster'ı çalışıyor ve trial lisans açık (LAB-01 son adımı). LAB-01'i atladıysanız onun
-  Adım 1-2'sini ve trial adımını çalıştırın. Field ve satır düzeyinde güvenlik ücretli bir özelliktir.
+- LAB-01'de trial lisans açık olmalı: field ve satır düzeyinde güvenlik ücretli bir özelliktir.
 - Adım 6 LAB-04'ün eCommerce örnek verisini ve panosunu kullanır. LAB-04'ü atladıysanız onun Adım 1'ini
-  çalıştırın. Space kavramı LAB-17'dedir.
+  çalıştırın.
 
 ```bash
 cd ~/elastic/labs/LAB-20-guvenlik-cok-ekipli-kibana
-curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/_license?filter_path=license.type,license.status' | jq -c .license
-```
-
-Beklenen çıktı:
-
-```text
-{"status":"active","type":"trial"}
 ```
 
 Kibana adresini sunucuda hesaplayın:
@@ -235,7 +227,7 @@ Index'te Adım 2'deki form talebiyle birlikte 9 talep var. Destek kullanıcısı
 
 **Soru: Destek ekibi Kibana'da yalnız kendi alanını nasıl görür?**
 
-Destek ekibinin Space'ini açın. LAB-17'de Space'i arayüzden açtık; burada API ile:
+Destek ekibinin Space'ini API ile açın (Space, Kibana nesnelerini ekip ekip ayıran alandır):
 
 ```http
 POST kbn:/api/spaces/space
