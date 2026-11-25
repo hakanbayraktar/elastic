@@ -157,8 +157,8 @@ GET /_data_stream/ilm-uygulama?filter_path=data_streams.name,data_streams.genera
 {"data_streams":[{"name":"ilm-uygulama","indices":[{"index_name":".ds-ilm-uygulama-2026.11.21-000001"}],"generation":1,"ilm_policy":"ilm-politika"}]}
 ```
 
-Document'ler `ilm-uygulama` adına yazıldı ama gerçekte `.ds-ilm-uygulama-<tarih>-000001` index'inde duruyor. Addaki
-tarih index'in açıldığı gündür; sizde labı yaptığınız gün görünür.
+Document'ler `ilm-uygulama` adına yazıldı ama `.ds-ilm-uygulama-<tarih>-000001` index'inde duruyor (tarih sizde
+labı yaptığınız gündür).
 
 ### 4. Rollover: yeni arka plan index'i
 
@@ -184,8 +184,6 @@ başlar, warm ve delete fazlarının `min_age`'i bu andan itibaren işler.
 
 <details>
 <summary><strong>Politika ve data stream Kibana'da nerede?</strong> (yalnız bakın, değiştirmeyin)</summary>
-
-Politikayı Dev Tools'la kurduk; Kibana'da aynı politika ve data stream şöyle görünür (değiştirmeden bakın):
 
 1. Menü, **Stack Management**, soldaki listede **Data** altında **Index Lifecycle Policies** (1):
 
@@ -257,8 +255,7 @@ Beklenen çıktı:
 Bu koşuda rollover ilk kontrolde (10 sn), warm yaklaşık 70 sn, silme yaklaşık 3,5 dk sonra gerçekleşti;
 labın tamamı 4 dakikadan kısa sürdü.
 
-150 olay `000001` ile birlikte silindi; tek tek document silinmedi, index bütün olarak gitti. Bu, büyük veride
-`_delete_by_query`'den çok daha ucuzdur.
+150 olay `000001` ile birlikte, index bütün olarak silindi; `_delete_by_query`'den çok daha ucuzdur.
 
 Saklama süresi diski doğrudan belirler: **günlük veri × saklama günü × (1 + replica sayısı)**. Günde 20 GB
 log, 30 gün saklama ve 1 replica yaklaşık 20 × 30 × 2 = 1,2 TB eder; saklamayı 7 güne indirmek bunu 280 GB'a
