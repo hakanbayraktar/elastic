@@ -24,6 +24,14 @@ Her arayüz adımı kırmızı kutu ve numarayla gösterilir.
 
 - LAB-01 ana cluster'ı çalışıyor ve trial lisans açık (raporlama için). LAB-16'yı atladıysanız da lab çalışır;
   veri bu labın kendi betiğiyle gelir.
+- LAB-01'deki lisans adımını atladıysanız lisans `basic` kalır; deneme lisansını açın (cluster başına bir kez açılır):
+
+```bash
+curl -s -u elastic:'DevOps2026!' http://127.0.0.1:9200/_license | jq -r '.license.type'
+curl -s -X POST -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/_license/start_trial?acknowledge=true'; echo
+```
+
+  İlk satır `trial` ise lisans zaten açıktır; ikinci komut o durumda `"trial_was_started":false,"error_message":"Operation failed: Trial was already activated."` döner, sorun değildir. `basic` ise `{"acknowledged":true,"trial_was_started":true,"type":"trial"}` döner.
 
 ```bash
 cd ~/elastic/labs/LAB-18-alerting-raporlama
@@ -557,7 +565,7 @@ değeri (`alarm-slack`, `alarm-eposta`) yazın; aşağıdaki kural komutu connec
    alanına Resend hesabınızın e-posta adresini yazıp **Run**.
 
 6. Kaydedince açılan **Test** sekmesinde: Slack'te bir mesaj yazıp **Run**, mesaj kanala düşer; Email'de **To**
-   alanına Resend hesabınızın e-posta adresini, **Subject** ve **Message** yazıp **Run**.
+   alanına Resend hesabınızın e-posta adresini yazıp **Run**. E-posta testinin konusu ve metni sabittir ("This is a test email from Kibana"); Subject ve Message alanı yoktur.
 
 </details>
 
@@ -613,16 +621,18 @@ ile **alarm-slack**'i seçip **Message**'a, yeniden **Add action** ile **alarm-e
 </details>
 
 Gerçek kanallara gereksiz mesaj gitmesin diye denemeden sonra kuralı kapatın; kural silinmez, Rules sayfasından
-yeniden açılır:
+yeniden açılır. Kural adıyla bulunur; arayüzden kurulduysa kimliği farklıdır ama komut yine onu kapatır:
 
 ```bash
-./scripts/kbn.sh POST /api/alerting/rule/alarm-5xx/_disable; echo " kural kapatildi"
+./scripts/kbn.sh GET '/api/alerting/rules/_find?search_fields=name&search=%22%C3%96deme%205xx%20patlamas%C4%B1%22' \
+  | jq -r '.data[] | select(.name == "Ödeme 5xx patlaması") | .id' \
+  | while read -r id; do ./scripts/kbn.sh POST "/api/alerting/rule/$id/_disable"; echo "kural kapatildi: $id"; done
 ```
 
-Beklenen çıktı:
+Beklenen çıktı (arayüzden kurduysanız kimlik rastgele bir değerdir):
 
 ```text
- kural kapatildi
+kural kapatildi: alarm-5xx
 ```
 
 ---
@@ -651,7 +661,7 @@ sablon alarm-apache -> 200
 sablon alarm-gecmisi -> 200
 ```
 
-`2`, Adım 2'deki harita ve Adım 6'daki `Alarm panosu`'dur; yapmadığınız adımın nesnesi sayılmaz.
+`2`, Adım 2'deki harita ve Adım 6'daki `Alarm panosu`'dur; yapmadığınız adımın nesnesi sayılmaz. Kuralı arayüzden kurduysanız ilk satır `kural alarm-5xx -> 404` olur, altında kuralın kendi kimliğiyle bir `-> 204` satırı gelir.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.
