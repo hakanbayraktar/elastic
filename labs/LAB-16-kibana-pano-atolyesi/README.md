@@ -169,7 +169,7 @@ Metrics › Count): Lens'in arka planda yaptığını açıkça gösterir. **TSV
 8. Grafik türü kutusu (1) aynı veriyi Bar, Area, Table ya da Pie olarak gösterir; veri ve aggregation aynı kalır.
    Denedikten sonra **Line**'a geri dönün:
 
-![Grafik türü menüsü: 1](../../assets/screenshots/LAB-16/03h-grafik-turu.png)
+![Grafik türü menüsü: 1 grafik türü kutusu](../../assets/screenshots/LAB-16/03h-grafik-turu.png)
 
 9. Sağ üstte **Save**'e tıklayın. Pencerede:
    - **Title** (1): `Zaman içinde istekler (durum sınıfı)`
