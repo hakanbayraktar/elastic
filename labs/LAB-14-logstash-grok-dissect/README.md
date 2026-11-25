@@ -304,7 +304,7 @@ biçimde gelir:
 
 Ölçüm CPU'ya duyarlıdır: başka Logstash, Beats ya da Elastic Agent container'ları çalışırken bir ölçümde sıralama
 ters çıktı (dissect 57 s, grok 44 s); önce onları durdurun (`docker compose stop`). Ölçümlerde grok olay başına
-dissect'ten 7-28 µs fazla CPU harcadı; dissect'in referansa göre maliyeti gürültü içinde ile 14 µs arasında kaldı.
+dissect'ten 5-28 µs fazla CPU harcadı; dissect'in referansa göre maliyeti gürültü içinde ile 14 µs arasında kaldı.
 Saniyede birkaç yüz satırda bu fark hissedilmez; saniyede on binlerce satırda kaç worker gerektiğini belirler.
 
 </details>
