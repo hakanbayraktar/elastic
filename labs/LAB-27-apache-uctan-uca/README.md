@@ -342,38 +342,22 @@ anahtarı ve Slack webhook adresi.
 
 </details>
 
-İkisi de parola gibidir: bilen herkes sizin adınıza e-posta ya da mesaj gönderir. Komuta, repoya ya da ekran
-görüntüsüne yazmayın; yalnız sizin okuyabildiğiniz bir dosyaya koyun. Dosyayı önce yalnız size açık
-oluşturun (var olan dosyaya dokunmaz):
+İkisi de parola gibidir: bilen herkes sizin adınıza e-posta ya da mesaj gönderir; repoya ya da ekran görüntüsüne
+yazmayın. Kendi değerlerinizi terminale verin (tırnaklar kalsın). Sonraki komutları aynı terminalde çalıştırın;
+terminali kapatırsanız bu üç satırı yeniden yapıştırın:
+
+<!-- runner:skip -->
+```bash
+export RESEND_API_KEY='<Resend anahtarınız>'
+export SLACK_WEBHOOK_URL='<Slack webhook adresiniz>'
+export ALARM_TO='<Resend hesabınızın e-posta adresi>'
+```
+
+İki connector'ı kurun:
 
 ```bash
-[ -e ~/.lab24-gizli ] || install -m 600 /dev/null ~/.lab24-gizli
-chmod 600 ~/.lab24-gizli; stat -L -c %A ~/.lab24-gizli
-```
-
-Beklenen çıktı:
-
-```text
--rw-------
-```
-
-Sonra bir metin editörüyle (örneğin `nano ~/.lab24-gizli`) üç satırı yazın:
-
-```text
-RESEND_API_KEY=re_...
-SLACK_WEBHOOK=https://hooks.slack.com/services/...
-ALARM_TO=sizin@adresiniz.com
-```
-
-Değerleri ortama alın ve iki connector'ı kurun. Anahtar komut satırına yazılmaz, çünkü komut satırı çalışırken
-`ps` ile başkalarına görünür: `jq` JSON'u ortam değişkeninden (`$ENV`) üretir, `scripts/kbn.sh` onu standart
-girdiden Kibana API'sine gönderir. En sondaki `unset` anahtarları shell'den siler; `ALARM_TO` kalır:
-
-```bash
-set -a; . ~/.lab24-gizli; set +a
 jq -n '{name:"apache-eposta", connector_type_id:".email", config:{service:"other", host:"smtp.resend.com", port:465, secure:true, from:"onboarding@resend.dev", hasAuth:true}, secrets:{user:"resend", password:$ENV.RESEND_API_KEY}}' | ./scripts/kbn.sh POST /api/actions/connector/apache-eposta @- | jq -c '{id, connector_type_id}'
-jq -n '{name:"apache-slack", connector_type_id:".slack", secrets:{webhookUrl:$ENV.SLACK_WEBHOOK}}' | ./scripts/kbn.sh POST /api/actions/connector/apache-slack @- | jq -c '{id, connector_type_id}'
-unset RESEND_API_KEY SLACK_WEBHOOK
+jq -n '{name:"apache-slack", connector_type_id:".slack", secrets:{webhookUrl:$ENV.SLACK_WEBHOOK_URL}}' | ./scripts/kbn.sh POST /api/actions/connector/apache-slack @- | jq -c '{id, connector_type_id}'
 ```
 
 Beklenen çıktı:
@@ -386,17 +370,15 @@ Beklenen çıktı:
 <details>
 <summary><strong>Connector kurulumu yarıda kaldıysa</strong></summary>
 
-Dosya ortama okunmadan komut çalıştırılırsa ya da iki komuttan biri hata verirse connector'lardan biri
+Değişkenler tanımlanmadan komut çalıştırılırsa ya da iki komuttan biri hata verirse connector'lardan biri
 kurulur, diğeri kurulmaz. Aynı bloğu yeniden çalıştırmak çözmez: kurulmuş olan için Kibana `409 Conflict`
 döndürür, çünkü o id zaten vardır. İkisini de silip yeniden kurun:
 
 ```bash
-set -a; . ~/.lab24-gizli; set +a
 ./scripts/kbn.sh DELETE /api/actions/connector/apache-eposta; echo " apache-eposta silindi"
 ./scripts/kbn.sh DELETE /api/actions/connector/apache-slack; echo " apache-slack silindi"
 jq -n '{name:"apache-eposta", connector_type_id:".email", config:{service:"other", host:"smtp.resend.com", port:465, secure:true, from:"onboarding@resend.dev", hasAuth:true}, secrets:{user:"resend", password:$ENV.RESEND_API_KEY}}' | ./scripts/kbn.sh POST /api/actions/connector/apache-eposta @- | jq -c '{id, connector_type_id}'
-jq -n '{name:"apache-slack", connector_type_id:".slack", secrets:{webhookUrl:$ENV.SLACK_WEBHOOK}}' | ./scripts/kbn.sh POST /api/actions/connector/apache-slack @- | jq -c '{id, connector_type_id}'
-unset RESEND_API_KEY SLACK_WEBHOOK
+jq -n '{name:"apache-slack", connector_type_id:".slack", secrets:{webhookUrl:$ENV.SLACK_WEBHOOK_URL}}' | ./scripts/kbn.sh POST /api/actions/connector/apache-slack @- | jq -c '{id, connector_type_id}'
 ```
 
 Beklenen çıktı:
@@ -411,11 +393,10 @@ Beklenen çıktı:
 </details>
 
 Kibana gizli bilgileri şifreli saklar; connector listesi onları bir daha göstermez. Bağlantıyı kural
-beklemeden deneyin; e-posta kutunuza ve Slack kanalınıza birer test mesajı düşer. İlk satır alıcı adresini
-dosyadan okur: yeni bir terminal açtıysanız da `ALARM_TO` boş kalmaz (boş kalırsa e-posta testi `error` döner):
+beklemeden deneyin; e-posta kutunuza ve Slack kanalınıza birer test mesajı düşer. Yeni bir terminal
+açtıysanız önce üç `export` satırını yeniden yapıştırın; `ALARM_TO` boşsa e-posta testi `error` döner:
 
 ```bash
-ALARM_TO=$(sed -n 's/^ALARM_TO=//p' ~/.lab24-gizli)
 ./scripts/kbn.sh POST /api/actions/connector/apache-eposta/_execute "{\"params\":{\"to\":[\"$ALARM_TO\"],\"subject\":\"LAB-27 e-posta testi\",\"message\":\"Kibana connector testi\"}}" | jq -c '{status, connector_id}'
 ./scripts/kbn.sh POST /api/actions/connector/apache-slack/_execute '{"params":{"message":"LAB-27 Slack testi"}}' | jq -c '{status, connector_id}'
 ```
@@ -430,7 +411,6 @@ Beklenen çıktı:
 Kurala iki aksiyonu da ekleyin. Kural güncellemesi bütün tanımı ister; en kısa yol kuralı yeniden kurmaktır:
 
 ```bash
-ALARM_TO=$(sed -n 's/^ALARM_TO=//p' ~/.lab24-gizli)
 ./scripts/kbn.sh DELETE /api/alerting/rule/apache-5xx; echo
 jq -n --arg to "$ALARM_TO" -f scripts/kural.jq | ./scripts/kbn.sh POST /api/alerting/rule/apache-5xx @- | jq -c '{id, actions: [.actions[].id]}'
 ```
@@ -562,8 +542,8 @@ de siler.
 ## Temizlik
 
 Yalnız bu labın container'larını ve volume'lerini, `apache-web-*` index'lerini ve şablonunu, Metricbeat'in
-data stream'ini, kuralını, üç connector'ını, data view'larını, panosunu ve haritasını siler. Ana cluster'a,
-`~/.lab24-gizli` dosyanıza ve Reporting listesindeki PDF kaydına dokunmaz:
+data stream'ini, kuralını, üç connector'ını, data view'larını, panosunu ve haritasını siler. Ana cluster'a ve
+Reporting listesindeki PDF kaydına dokunmaz:
 
 ```bash
 ./teardown.sh
@@ -590,8 +570,6 @@ metricbeat sablonu -> 200
 ```
 
 </details>
-
-Gizli bilgi dosyası işiniz bitince silinebilir: `rm ~/.lab24-gizli`.
 
 Bu, çekirdek akışın son labıdır. İleri konular `labs/advanced/` altındadır: **[ADV-01 — Data stream kuralları ve Data Stream Lifecycle](../advanced/ADV-01-data-stream-kurallari-dsl/README.md)**
 

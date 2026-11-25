@@ -2,7 +2,7 @@
 # LAB-27 temizligi: yalniz bu labin container'lari ve volume'leri, apache-web-* index'leri ve sablonu,
 # Metricbeat data stream'i ve sablonu, apache-5xx kurali, uc connector'i, data view'lari, panosu ve haritasi,
 # istege bagli ML isi ve iki SLO.
-# Ana cluster'a ve ~/.lab24-gizli dosyasina dokunmaz.
+# Ana cluster'a dokunmaz.
 set -u
 cd "$(dirname "$0")"
 A='elastic:DevOps2026!'; ES=http://127.0.0.1:9200; KB=http://127.0.0.1:5601
