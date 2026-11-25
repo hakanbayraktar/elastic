@@ -2,7 +2,7 @@
 
 | Kullanılan Araçlar | Açık / Kullanılan Portlar |
 |---|---|
-| Kibana Dev Tools, `_cluster/health`, `_health_report`, `_cat` API'leri, allocation explain, rolling restart | 9200 (Elasticsearch), 5601 (Kibana) — LAB-01 ana cluster'ı; `19208` — LAB-19'un 3-node cluster'ı (Adım 7) |
+| Kibana Dev Tools, Kibana Index Management, `_cluster/health`, `_health_report`, `_cat` API'leri, allocation explain, rolling restart | 9200 (Elasticsearch), 5601 (Kibana) — LAB-01 ana cluster'ı; `19208` — LAB-19'un 3-node cluster'ı (Adım 7) |
 
 ---
 
@@ -12,6 +12,7 @@ Cluster sağlığı üç renkle özetlenir, ama renk nedeni söylemez. "Yellow" 
 yerleşemediğini gösterir; red'de bir index'in verisine erişilemez. Bu labda:
 
 - Mevcut yellow'un ve bilerek ürettiğimiz bir red'in nedenini Elasticsearch'e sorup ikisini düzelteceğiz.
+- Aynı durumu Kibana › Stack Management › Index Management'ta görüp düzeltmeyi oradan da yapacağız.
 - Disk dolduğunda index'in nasıl kilitlendiğini göreceğiz.
 - "Green ama sağlıklı mı?" sorusu için kısa bir kontrol listesi çıkaracağız.
 - 3-node cluster'ı kesintisiz yeniden başlatacağız (rolling restart).
@@ -29,7 +30,7 @@ yerleşemediğini gösterir; red'de bir index'in verisine erişilemez. Bu labda:
 cd ~/elastic/labs/LAB-21-cluster-sagligi-api
 ```
 
-Kibana adresini sunucuda hesaplayın (Adım 3'teki Index Management kutusu için):
+Kibana adresini sunucuda hesaplayın (Index Management adımları için):
 
 ```bash
 IP=$(curl -s https://api.ipify.org); H=$(hostname -s)
@@ -84,8 +85,9 @@ GET /_cluster/health?filter_path=status,number_of_nodes,active_shards,unassigned
 {"status": "yellow", "number_of_nodes": 1, "active_shards": 56, "unassigned_shards": 1}
 ```
 
-`active_shards` sayısı yüklü verilere göre sizde farklıdır. Öteki lablar da kuruluysa `unassigned_shards` 1'den
-büyük çıkar: tek node'da replica isteyen her index yellow'a bir replica ekler.
+`active_shards` sayısı yüklü verilere göre sizde farklıdır. Öteki lablar kuruluysa ya da geride data stream
+bıraktıysa (örneğin Fleet'in `metrics-fleet_server.agent_status-default`'u) `unassigned_shards` 1'den büyük çıkar:
+tek node'da replica isteyen her index yellow'a bir replica ekler.
 
 `_health_report` aynı soruyu konu konu (disk, shard, master, ILM...) cevaplar. Her konunun durumunu ve
 bir cümlelik açıklamasını tek satırda görmek için:
@@ -131,6 +133,17 @@ kibana_sample_data_ecommerce                                       0 r UNASSIGNE
 kaldığını söyler: `INDEX_CREATED` (index açılırken), `REPLICA_ADDED` (replica sonradan artırılınca),
 `CLUSTER_RECOVERED` (cluster yeniden başlayınca). Nedenini söylemez; sizde bu üçünden biri görünür.
 
+**Kibana'da aynı durum.** Index Management her index'in sağlığını ve shard sayılarını tablo olarak gösterir:
+
+1. Menü, **Stack Management**, soldaki listede **Data** altında **Index Management** (1):
+
+![Stack Management: 1 Index Management](../../assets/screenshots/LAB-21/01a-index-management-menu.png)
+
+2. Arama kutusuna (1) `kibana_sample_data_ecommerce` yazıp Enter'a basın. Satırda (2) **Health** `yellow`, **Replicas**
+   `1` görünür: index bir replica istiyor ama yerleştirilemiyor:
+
+![Index Management: 1 arama kutusu, 2 yellow satırı](../../assets/screenshots/LAB-21/01b-index-yellow.png)
+
 ### 2. Yellow'un nedeni ve düzeltmesi
 
 **Soru: Replica neden yerleşmiyor?**
@@ -170,12 +183,32 @@ GET /_cluster/allocation/explain?filter_path=current_state,node_allocation_decis
 
 `same_shard` kuralı `NO` diyor: bu shard'ın bir kopyası (primary) zaten o node'da. Replica, primary'nin başka bir
 node'daki kopyasıdır; aynı node'a konmaz, çünkü node düşünce ikisi birden kaybolur. Ana cluster tek
-node olduğu için replica hiçbir yere yerleşemez. Tek node'da doğru ayar replica sayısını sıfırlamaktır:
+node olduğu için replica hiçbir yere yerleşemez. Tek node'da doğru ayar replica sayısını sıfırlamaktır.
+
+**İki yol var, birini seçin.** Ayarı Dev Tools'la (**komut yolu**) ya da Index Management'tan (**arayüz yolu**)
+değiştirin; öteki yolu yalnız okuyun. Aynı yolu Adım 4'te de kullanın. Arkasından gelen kontrol iki yolda aynıdır.
+
+**Komut yolu.** Kibana › Dev Tools'a yapıştırın:
 
 ```http
 PUT /kibana_sample_data_ecommerce/_settings
 { "number_of_replicas": 0 }
 ```
+
+<details>
+<summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
+
+1. Index Management'ta `kibana_sample_data_ecommerce` adına tıklayın.
+2. **Settings** sekmesi (1) index'in ayarlarını gösterir. **Edit mode** (2) anahtarını açın. `"index.number_of_replicas"`
+   satırında (3) değeri `"0"` yapın ve **Save changes**'e (4) basın:
+
+![Index ayarı: 1 Settings, 2 Edit mode, 3 number_of_replicas, 4 Save changes](../../assets/screenshots/LAB-21/02a-replica-arayuz.png)
+
+**Save changes**, Dev Tools'taki `PUT /kibana_sample_data_ecommerce/_settings` isteğiyle aynı işi yapar.
+
+</details>
+
+İki yolda da sonucu kontrol edin:
 
 ```http
 GET /_cluster/health/kibana_sample_data_ecommerce?wait_for_status=green&timeout=30s&filter_path=status,unassigned_shards
@@ -222,14 +255,8 @@ GET /_cluster/health/saglik-arizali?filter_path=status,unassigned_primary_shards
 ```
 
 Index açıldı (`acknowledged: true`) ama `shards_acknowledged: false`: shard yerleşmedi.
-Kibana'da aynı durumu görmek için:
-
-1. Menü, **Stack Management**, soldaki listede **Data** altında **Index Management** (1):
-
-![Stack Management: 1 Index Management](../../assets/screenshots/LAB-21/03a-index-management-menu.png)
-
-2. Arama kutusuna (1) `saglik-arizali` yazıp Enter'a basın. Index'in satırında (2) sağlık ve document sayısı sütunları
-   boş kalır: shard hiçbir node'da olmadığı için Elasticsearch bu index'in istatistiğini veremez. Listede sağlığı boş
+Kibana'da aynı durumu görmek için Index Management'ta arama kutusuna (1) `saglik-arizali` yazıp Enter'a basın.
+Index'in satırında (2) sağlık ve document sayısı sütunları boş kalır: shard hiçbir node'da olmadığı için Elasticsearch bu index'in istatistiğini veremez. Listede sağlığı boş
    görünen bir index, red'in ilk işaretidir:
 
 ![Index Management: 1 arama kutusu, 2 saglik-arizali satırı](../../assets/screenshots/LAB-21/03b-index-management-red.png)
@@ -277,12 +304,29 @@ GET /_cluster/allocation/explain?filter_path=current_state,node_allocation_decis
 | `same_shard` | Kopyası zaten o node'da (Adım 2) | Node ekleyin ya da replica'yı azaltın |
 | `disk_threshold` | Node diski watermark sınırında (Adım 5) | Disk açın |
 
-Kuralı kaldırın; shard hemen yerleşir:
+Kuralı kaldırın; shard hemen yerleşir. Adım 2'de seçtiğiniz yolla devam edin.
+
+**Komut yolu.** Kibana › Dev Tools'a yapıştırın:
 
 ```http
 PUT /saglik-arizali/_settings
 { "index.routing.allocation.require._name": null }
 ```
+
+<details>
+<summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
+
+1. Index Management'ta `saglik-arizali` adına tıklayın.
+2. **Settings** sekmesi (1), **Edit mode** (2). `"index.routing.allocation.require._name"` satırında (3)
+   `"olmayan-node"` değerini tırnaklarıyla silip yerine tırnaksız `null` yazın ve **Save changes**'e (4) basın:
+
+![Index ayarı: 1 Settings, 2 Edit mode, 3 yerleşim kuralı null, 4 Save changes](../../assets/screenshots/LAB-21/04a-kural-arayuz.png)
+
+`null` tırnaksız yazılır; `"null"` yazarsanız kural kalkmaz, "null" adlı bir node aranır.
+
+</details>
+
+İki yolda da sonucu kontrol edin:
 
 ```http
 GET /_cluster/health/saglik-arizali?wait_for_status=green&timeout=30s&filter_path=status,timed_out
@@ -332,7 +376,9 @@ Beklenen çıktı:
 {"status":429,"type":"cluster_block_exception"}
 ```
 
-Yazma `429` ile reddedilir; hata mesajı flood-stage watermark'ı yazar. Bloğu kaldırın ve tekrar yazın:
+Yazma `429` ile reddedilir; hata mesajı flood-stage watermark'ı yazar. Disk gerçekte dolu olmadığı için
+Elasticsearch elle konan bu bloğu yaklaşık 30 saniye içinde kendisi kaldırır (diski 30 saniyede bir denetler); bloğu
+koyan ve yazmayı deneyen komutlar bu yüzden aynı blokta. Bloğu kaldırın ve tekrar yazın:
 
 ```bash
 curl -s -u elastic:'DevOps2026!' -X PUT 'http://127.0.0.1:9200/saglik-arizali/_settings' -H 'Content-Type: application/json' \
@@ -429,6 +475,9 @@ Beklenen çıktı:
 {"status":"yellow","number_of_nodes":2,"unassigned_shards":35}
 {"count":6}
 ```
+
+`es-b`'nin taşıdığı replica'lar yerleşemiyor (yellow), veri yine okunuyor (6 document). `unassigned_shards` sayısı
+cluster'daki index'lere göre değişir: LAB-19'un isteğe bağlı Kibana'sını kurduysanız 35 civarı, kurmadıysanız 5 civarıdır.
 
 Node'u başlatın ve cluster'a katılmasını bekleyin (`_cat/nodes` üç satır verene kadar):
 
