@@ -94,7 +94,7 @@ def elle(page):
     q = page.locator('[data-test-subj="queryInput"]').first
     q.click(); q.fill('loglevel : "error"'); page.keyboard.press("Enter"); k.settle(page, 5)
     page.locator('[data-test-subj="field-service-showDetails"]').first.click(); time.sleep(2)
-    shot(page, "06f-service-visualize", [(("testsubj", "queryInput"), 1, "down"), (("testsubj", "field-service-showDetails"), 2, "right"),
+    shot(page, "06f-service-visualize", [(("testsubj", "queryInput"), 1, "down"), (("testsubj", "field-service-showDetails"), 2, "ic"),
                                          (("testsubj", "fieldVisualize-service"), 3, "right")])
     page.locator('[data-test-subj="fieldVisualize-service"]').first.click(); k.settle(page, 8)
     for txt in ("Don't show again", "Got it", "Dismiss"):
@@ -154,7 +154,7 @@ def ingest(page):
     page.locator('[data-test-subj="runPipelineButton"]').first.click(); time.sleep(4)
     cikti = page.locator('[data-test-subj="outputTabContent"]').first.inner_text().replace("\n", " ")
     print("TEST CIKTI:", all(s in cikti for s in ('"ts"', '"loglevel": "error"', '"service": "payment-gateway"')), "| hata etiketi:", "_grokparsefailure" in cikti)
-    shot(page, "07i-test-cikti", [(("testsubj", "outputTab"), 1, "down"), (("testsubj", "outputTabContent"), 2, "left")])
+    shot(page, "07i-test-cikti", [(("testsubj", "outputTab"), 1, "right"), (("testsubj", "outputTabContent"), 2, "left")])
     page.locator('[data-test-subj="euiFlyoutCloseButton"]').first.click(); time.sleep(1.5)
     kaydet = '[data-test-subj="submitButton"]:has-text("Create pipeline")'
     page.locator(kaydet).first.scroll_into_view_if_needed(); time.sleep(1)
