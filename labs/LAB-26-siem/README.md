@@ -308,33 +308,22 @@ curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/_cluster/health/.lists-d
 ```
 
 İhlal alarmını incelediğinizi işaretleyin. Alarm durumu `open` → `acknowledged` olur; aynı ekip üyesi ya da
-başkası aynı alarma ikinci kez bakmaz:
+başkası aynı alarma ikinci kez bakmaz. **İki yol var, birini seçin:** **komut yolu** aşağıdaki Dev Tools isteğidir,
+**arayüz yolu** ondan sonraki açılır kutudadır. Öteki yolu yalnız okuyun, uygulamayın. Sayaç komutu iki yolda ortaktır,
+sonucu yola göre farklıdır.
+
+**Komut yolu.** Kibana › Dev Tools'a yapıştırın:
 
 ```http
 POST kbn:/api/detection_engine/signals/status
 { "status": "acknowledged", "query": { "term": { "kibana.alert.rule.rule_id": "siem-lab-successful-login-after-bruteforce" } } }
 ```
 
-```bash
-curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/.alerts-security.alerts-default/_search?size=0&filter_path=aggregations' -H 'Content-Type: application/json' \
-  -d '{"query": {"prefix": {"kibana.alert.rule.rule_id": "siem-lab-"}}, "aggs": {"s": {"terms": {"field": "kibana.alert.workflow_status"}}}}' \
-  | jq -c '[.aggregations.s.buckets[] | {(.key): .doc_count}] | add'
-```
-
-Beklenen çıktı:
-
-```text
-{"open":22,"acknowledged":7}
-```
-
-Sekans alarmı ve yapı taşları birlikte (7) `acknowledged` oldu; geri kalan 22 alarm hâlâ `open`.
-
 <details>
-<summary><strong>Dev Tools yerine arayüzden işaretlemek isterseniz</strong></summary>
+<summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
 
-**İkisinden birini yapın:** yukarıdaki `POST kbn:/api/detection_engine/signals/status` isteğini çalıştırdıysanız
-alarm zaten `acknowledged`'dır, bu kutuyu atlayın. Arayüzde yalnız sekans alarmı işaretlenir (yapı taşları gizli
-olduğu için); sayaç `{"open":28,"acknowledged":1}` olur.
+**Komut yolundaysanız bu adımları yapmayın;** alarm Dev Tools isteğiyle işaretlendi. Arayüz yolundaysanız yukarıdaki
+isteği çalıştırmayın.
 
 1. **Security › Detections › Alerts** sayfasında sorgu çubuğuna `kibana.alert.severity : "critical"` yazıp Enter'a basın; kalan satırın
    **⋯** (1) düğmesine tıklayın:
@@ -345,9 +334,28 @@ olduğu için); sayaç `{"open":28,"acknowledged":1}` olur.
 
    ![Alarm menüsü: 1 Mark as acknowledged](../../assets/screenshots/LAB-26/05f-acknowledged.png)
 
-İnceleme bitince aynı menüden **Mark as closed**.
-
 </details>
+
+İki yolda da sayacı kontrol edin:
+
+```bash
+curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/.alerts-security.alerts-default/_search?size=0&filter_path=aggregations' -H 'Content-Type: application/json' \
+  -d '{"query": {"prefix": {"kibana.alert.rule.rule_id": "siem-lab-"}}, "aggs": {"s": {"terms": {"field": "kibana.alert.workflow_status"}}}}' \
+  | jq -c '[.aggregations.s.buckets[] | {(.key): .doc_count}] | add'
+```
+
+Beklenen çıktı (komut yolu):
+
+```text
+{"open":22,"acknowledged":7}
+```
+
+- **Komut yolu:** istek kuralın bütün alarmlarını işaretler; sekans alarmı ve yapı taşları birlikte (7) `acknowledged`
+  oldu, geri kalan 22 alarm hâlâ `open`.
+- **Arayüz yolu:** arayüzde yalnız sekans alarmı işaretlenir (yapı taşları gizli olduğu için); sayaç
+  `{"open":28,"acknowledged":1}` olur.
+
+İnceleme bitince alarm, Alerts sayfasında satırın **⋯** menüsünden **Mark as closed** ile kapatılır.
 
 Olayı yazıya dökmek için [olay raporu şablonu](docs/OLAY-RAPORU-SABLONU.md) kullanılabilir.
 

@@ -183,7 +183,7 @@ Yeni gelen document'ler artık `000002`'ye yazılır; `000001` kapandı. Rollove
 başlar, warm ve delete fazlarının `min_age`'i bu andan itibaren işler.
 
 <details>
-<summary><strong>Politika ve data stream Kibana'da nerede?</strong></summary>
+<summary><strong>Politika ve data stream Kibana'da nerede?</strong> (yalnız bakın, değiştirmeyin)</summary>
 
 Politikayı Dev Tools'la kurduk; Kibana'da aynı politika ve data stream şöyle görünür (değiştirmeden bakın):
 

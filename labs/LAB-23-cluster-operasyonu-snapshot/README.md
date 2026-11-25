@@ -223,7 +223,7 @@ SLM'nin en eski snapshot'ı silindi, `max_count: 2` sağlandı. `elle-1` yerinde
 politikanın aldığı snapshot'lara dokunur.
 
 <details>
-<summary><strong>Snapshot'lar Kibana'da nerede? (LAB-19'un isteğe bağlı Kibana'sı)</strong></summary>
+<summary><strong>Snapshot'lar Kibana'da nerede? (LAB-19'un isteğe bağlı Kibana'sı; yalnız bakın)</strong></summary>
 
 LAB-19'daki "Bu cluster'a Kibana bağlamak" kutusunu yaptıysanız aynı bilgiler o Kibana'da görünür (`elastic` /
 `DevOps2026!`); adresi sunucuda hesaplayın ve değiştirmeden bakın:

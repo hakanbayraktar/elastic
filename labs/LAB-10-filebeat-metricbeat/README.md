@@ -325,7 +325,11 @@ Beklenen çıktı:
 Kibana: http://<IP>:5601   https://<host>-kibana.devopsatolyesi.com
 ```
 
-**Data view:** log index'leri için bir data view kurun (Dev Tools):
+**Data view:** log index'leri için bir data view kurun. **İki yol var, birini seçin:** **komut yolu** aşağıdaki Dev
+Tools isteğidir, **arayüz yolu** ondan sonraki açılır kutudadır. Öteki yolu yalnız okuyun, uygulamayın; ikisini birden
+yaparsanız aynı adlı iki data view oluşur. Sonraki Discover adımları iki yolda aynıdır.
+
+**Komut yolu.** Kibana › Dev Tools'a yapıştırın:
 
 ```http
 POST kbn:/api/data_views/data_view
@@ -333,9 +337,10 @@ POST kbn:/api/data_views/data_view
 ```
 
 <details>
-<summary><strong>Dev Tools yerine arayüzden kurmak isterseniz</strong></summary>
+<summary><strong>Arayüz yolu</strong> (komut yolundaysanız yalnız okuyun)</summary>
 
-**İkisinden birini yapın:** Dev Tools isteğini çalıştırdıysanız data view zaten var, bu kutuyu atlayın.
+**Komut yolundaysanız bu adımları yapmayın;** data view Dev Tools isteğiyle kuruldu. Arayüz yolundaysanız yukarıdaki
+isteği çalıştırmayın.
 
 1. Menü düğmesine (1) tıklayın, **Management** altında **Stack Management**'ı (2) seçin:
 
@@ -355,6 +360,8 @@ POST kbn:/api/data_views/data_view
    ![Data view: 1 ad, 2 index pattern, 3 @timestamp, 4 kaydet](../../assets/screenshots/LAB-10/06n-data-view-form.png)
 
 </details>
+
+İki yolda da:
 
 1. Menü düğmesine (1) tıklayın, **Analytics** altında **Discover**'ı (2) seçin:
 
@@ -441,6 +448,9 @@ sablon beats-log -> 200
 sablon beats-metric -> 200
 data view beats-log -> 200
 ```
+
+Data view'ı arayüz yolunda kurduysanız son satır `data view beats-log -> 404` olur, altında data view'ın kendi
+kimliğiyle bir `-> 200` satırı gelir: teardown onu başlığıyla (`beats-log-*`) bulur.
 
 </details>
 
