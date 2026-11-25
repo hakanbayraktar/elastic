@@ -19,8 +19,6 @@ Bu labda:
 - Yanlış pozitifi kuralı kapatmadan ayarlayacağız.
 - Bir yapılandırma dosyasındaki değişikliği Auditbeat ile yakalayacağız.
 
-Kibana'daki her tıklama kırmızı kutu ve numarayla gösterilir.
-
 ![SIEM hattı: senaryo logu, Logstash, zenginleştirme, tespit kuralları, alarm](../../assets/infographics/33-siem-tespit-hatti.png)
 
 ---
@@ -490,8 +488,6 @@ enrich policy siem-threat-ip -> 200
 ```
 
 </details>
-
-Container ve volume satırlarının sırası sizde farklı olabilir.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.
