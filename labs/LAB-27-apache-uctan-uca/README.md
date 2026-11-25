@@ -129,7 +129,7 @@ Aynı istek birkaç saniye sonra Elasticsearch'te:
 ```bash
 timeout 60 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:9200/apache-web-*/_count?q=http.request.id:apache-yolculuk" | jq .count)" -ge 1 ]; do printf .; sleep 3; done'; echo
 curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/apache-web-*/_search?q=http.request.id:apache-yolculuk' \
-  | jq -c '.hits.hits[0]._source | {"source.ip": .source.ip, ulke: .source.geo.country_name, sehir: .source.geo.city_name, konum: .source.geo.location, method: .http.request.method, "url.path": .url.path, durum: .http.response.status_code}'
+  | jq -c '.hits.hits[0]._source | {"source.ip": .source.ip, ulke: .source.geo.country_name, sehir: .source.geo.city_name, konum: {lon: .source.geo.location.lon, lat: .source.geo.location.lat}, method: .http.request.method, "url.path": .url.path, durum: .http.response.status_code}'
 ```
 
 Beklenen çıktı:
@@ -528,7 +528,8 @@ Kibana'da menüden **Analytics › Machine Learning**, **Anomaly Detection › J
 ![Anomaly Detection Jobs: 1 apache-ip-istek-anomali](../../assets/screenshots/LAB-27/06e-ml-isi.png)
 
 Menüden **Observability › SLOs**: iki hedef (1, 2) ve şu anki değerleri. Erişilebilirlik hedefi arıza testleri yüzünden
-ihlal edilmiş (Violated) görünebilir:
+ihlal edilmiş (Violated) görünebilir. Kurulumdan hemen sonra ikisi de **No data** görünür; değerler SLO veriyi
+işledikçe gelir:
 
 ![SLOs: 1 erişilebilirlik, 2 gecikme](../../assets/screenshots/LAB-27/06f-slolar.png)
 
@@ -550,9 +551,22 @@ Reporting listesindeki PDF kaydına dokunmaz:
 ```
 
 <details>
-<summary><strong>Çıktının tamamı (14 satır)</strong></summary>
+<summary><strong>Çıktının tamamı (27 satır)</strong></summary>
 
 ```text
+Container apache-web-observability-apache-1 Removed
+Container apache-web-observability-elastic-setup-1 Removed
+Container apache-web-observability-filebeat-1 Removed
+Container apache-web-observability-logstash-1 Removed
+Container apache-web-observability-metricbeat-1 Removed
+Container apache-web-observability-metricbeat-setup-1 Removed
+Container apache-web-observability-traffic-generator-1 Removed
+Container mailpit-apache-lab Removed
+Network apache-web-observability_web Removed
+Volume apache-web-observability_apache-logs Removed
+Volume apache-web-observability_filebeat-data Removed
+Volume apache-web-observability_metricbeat-data Removed
+Volume apache-web-observability_traffic-logs Removed
 kural apache-5xx -> 204
 ML isi -> 200
 SLO apache-web-erisilebilirlik -> 204
