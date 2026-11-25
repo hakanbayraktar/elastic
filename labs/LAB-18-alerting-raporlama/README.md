@@ -16,8 +16,6 @@ saatler sonra görür. "Sorun nerede?" sorusu da çoğu zaman bir konum sorusudu
 - Arızayı kendimiz üretip alarmın açıldığını, geçmişe yazıldığını ve kendiliğinden kapandığını izleyeceğiz.
 - Sonucu **CSV** ve panonun **PDF** raporu olarak alacağız.
 
-Her arayüz adımı kırmızı kutu ve numarayla gösterilir.
-
 ---
 
 ## Ön Koşullar
