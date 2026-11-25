@@ -475,37 +475,22 @@ Doğrulanmış bir alan adınız yoksa Resend yalnız hesabınızın e-posta adr
 
 </details>
 
-**Gizli dosya.** Değerleri yalnız sizin okuyabildiğiniz bir dosyaya koyun. Önce dosyayı yalnız size açık oluşturun
-(var olan dosyaya dokunmaz):
+**Değerleri terminale verin.** Slack'ten kopyaladığınız webhook adresini, Resend anahtarını ve Resend hesabınızın
+e-posta adresini kendi değerlerinizle yazın (tırnaklar kalsın). Sonraki komutları aynı terminalde çalıştırın;
+terminali kapatırsanız bu üç satırı yeniden yapıştırın:
+
+<!-- runner:skip -->
+```bash
+export SLACK_WEBHOOK_URL='<Slack webhook adresiniz>'
+export RESEND_API_KEY='<Resend anahtarınız>'
+export ALARM_TO='<Resend hesabınızın e-posta adresi>'
+```
+
+**Connector'lar.** İki connector'ı kurun:
 
 ```bash
-[ -e ~/.lab18-gizli ] || install -m 600 /dev/null ~/.lab18-gizli
-chmod 600 ~/.lab18-gizli; stat -L -c %A ~/.lab18-gizli
-```
-
-Beklenen çıktı:
-
-```text
--rw-------
-```
-
-Bir metin editörüyle (`nano ~/.lab18-gizli`) üç satırı yazın; alıcı Resend hesabınızın e-posta adresidir:
-
-```text
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
-RESEND_API_KEY=re_...
-ALARM_TO=<Resend hesabınızın e-posta adresi>
-```
-
-**Connector'lar.** Değerleri ortama alıp iki connector'ı kurun. Anahtar komut satırına yazılmaz: `jq` JSON'u ortam
-değişkeninden (`$ENV`) üretir, `scripts/kbn.sh` onu standart girdiden Kibana API'sine gönderir; sondaki `unset`
-anahtarları shell'den siler:
-
-```bash
-set -a; . ~/.lab18-gizli; set +a
 jq -n '{name:"alarm-slack", connector_type_id:".slack", secrets:{webhookUrl:$ENV.SLACK_WEBHOOK_URL}}' | ./scripts/kbn.sh POST /api/actions/connector/alarm-slack @- | jq -c '{id, connector_type_id}'
 jq -n '{name:"alarm-eposta", connector_type_id:".email", config:{service:"other", host:"smtp.resend.com", port:587, secure:false, from:"onboarding@resend.dev", hasAuth:true}, secrets:{user:"resend", password:$ENV.RESEND_API_KEY}}' | ./scripts/kbn.sh POST /api/actions/connector/alarm-eposta @- | jq -c '{id, connector_type_id}'
-unset SLACK_WEBHOOK_URL RESEND_API_KEY
 ```
 
 Beklenen çıktı:
@@ -569,11 +554,9 @@ değeri (`alarm-slack`, `alarm-eposta`) yazın; aşağıdaki kural komutu connec
 
 </details>
 
-**Bağlantıyı deneyin.** Kural beklemeden Slack kanalınıza ve e-posta kutunuza birer test mesajı düşer. İlk satır alıcı
-adresini dosyadan okur:
+**Bağlantıyı deneyin.** Kural beklemeden Slack kanalınıza ve e-posta kutunuza birer test mesajı düşer:
 
 ```bash
-ALARM_TO=$(sed -n 's/^ALARM_TO=//p' ~/.lab18-gizli)
 ./scripts/kbn.sh POST /api/actions/connector/alarm-slack/_execute '{"params":{"message":"LAB-18 Slack testi"}}' | jq -c '{status, connector_id}'
 ./scripts/kbn.sh POST /api/actions/connector/alarm-eposta/_execute "{\"params\":{\"to\":[\"$ALARM_TO\"],\"subject\":\"LAB-18 e-posta testi\",\"message\":\"Kibana connector testi\"}}" | jq -c '{status, connector_id}'
 ```
@@ -592,7 +575,6 @@ da `ALARM_TO`'nun Resend hesabınızın adresi olmaması.
 kurmaktır (`scripts/kural.jq`, Adım 4'teki tanım + iki aksiyon). Sonra arızayı yeniden üretin:
 
 ```bash
-ALARM_TO=$(sed -n 's/^ALARM_TO=//p' ~/.lab18-gizli)
 ./scripts/kbn.sh DELETE /api/alerting/rule/alarm-5xx; echo
 jq -n --arg to "$ALARM_TO" -f scripts/kural.jq | ./scripts/kbn.sh POST /api/alerting/rule/alarm-5xx @- | jq -c '{id, actions: [.actions[].id]}'
 python3 scripts/veri_uret.py --ariza
@@ -641,9 +623,8 @@ kural kapatildi: alarm-5xx
 
 Yalnız bu labın kuralını (arayüzden kurulduysa adıyla bulunur), connector'larını (`alarm-gecmisi-yaz`; kurduysanız
 `alarm-slack` ve `alarm-eposta`), `alarm-apache` ve `alarm-gecmisi` index'lerini, şablonunu, data view'ını, haritasını
-ve panosunu siler; ana cluster'a dokunmaz. Reporting listesindeki rapor Kibana'nın kendi kaydıdır ve kalır;
-`~/.lab18-gizli` dosyanıza da dokunmaz (işiniz bitince `rm ~/.lab18-gizli` ile silebilirsiniz). 7. adımı yaptıysanız
-çıktıda iki `connector ... -> 204` satırı daha görünür:
+ve panosunu siler; ana cluster'a dokunmaz. Reporting listesindeki rapor Kibana'nın kendi kaydıdır ve kalır. 7. adımı
+yaptıysanız çıktıda iki `connector ... -> 204` satırı daha görünür:
 
 ```bash
 ./teardown.sh
