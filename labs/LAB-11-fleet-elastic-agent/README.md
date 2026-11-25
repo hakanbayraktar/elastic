@@ -711,7 +711,7 @@ successful run completed in 1 min, 30.03 secs
 
 Yalnız bu labın container'larını, Fleet'teki ajan kayıtlarını, **Fleet Server Policy** ve **Lab Linux sunucu**
 politikalarını (içindeki integration'larla), Fleet Server'ın service token'larını, labın Fleet Server adresini,
-labın data stream'lerini, **Sunucu CPU (Fleet)** panosunu, labın kurduğu integration paketlerini (Nginx, System, Fleet Server, Elastic Agent; hazır panoları, şablonları ve pipeline'larıyla) ve `.env` dosyasını siler. Ana cluster'a, Fleet'in
+labın data stream'lerini, **Sunucu CPU (Fleet)** panosunu, labın kurduğu integration paketlerini (Nginx, System, Fleet Server, Elastic Agent; hazır panoları, şablonları ve pipeline'larıyla), Elastic Agent paketinin açtığı 10 kapalı "[Elastic Agent] ..." alarm kuralını ve `.env` dosyasını siler. Ana cluster'a, Fleet'in
 output ayarına ve host Nginx'e dokunmaz. `stress-ng` süreci süresi dolunca kendiliğinden biter; paket sunucuda
 kalır (`sudo apt-get remove stress-ng` ile kaldırılır):
 
@@ -720,7 +720,7 @@ kalır (`sudo apt-get remove stress-ng` ile kaldırılır):
 ```
 
 <details>
-<summary><strong>Çıktının tamamı (10 satır)</strong></summary>
+<summary><strong>Çıktının tamamı (11 satır)</strong></summary>
 
 ```text
 Container agent-fleet-lab Removed
@@ -733,6 +733,7 @@ fleet server adresi -> 200
 data stream -> 200
 pano (Sunucu CPU (Fleet)) -> 1
 integration paketi -> 4 kaldirildi
+Elastic Agent kurali -> 10 silindi
 ```
 
 `4`: Nginx, System, Fleet Server ve Elastic Agent paketleri; kurulmamış paket sayılmaz (örneğin betik yolunda Adım 6'yı yapmadıysanız 2).

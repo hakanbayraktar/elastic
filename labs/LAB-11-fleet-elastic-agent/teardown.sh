@@ -47,4 +47,12 @@ for p in nginx system fleet_server elastic_agent; do
   [ -n "$V" ] && [ "$(curl -s -o /dev/null -w '%{http_code}' -u "$A" -H "$H" -X DELETE "$KB/api/fleet/epm/packages/$p/$V")" = 200 ] && N=$((N + 1))
 done
 echo "integration paketi -> $N kaldirildi"
+# elastic_agent paketi kurulurken Fleet "[Elastic Agent] ..." alerting kurallarini da acar (kapali); paket
+# kaldirilinca kurallar kalir. Id'leri fleet-default-elastic_agent- ile baslar; yalniz Fleet kullanan bu lab kurar.
+N=0
+for id in $(curl -s -u "$A" "$KB/api/alerting/rules/_find?per_page=100&search_fields=name&search=%22Elastic%20Agent%22" \
+  | jq -r '.data[] | select(.id | startswith("fleet-default-elastic_agent-")) | .id'); do
+  curl -s -o /dev/null -u "$A" -H "$H" -X DELETE "$KB/api/alerting/rule/$id"; N=$((N + 1))
+done
+echo "Elastic Agent kurali -> $N silindi"
 rm -f .env .env.fleet
