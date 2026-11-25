@@ -28,8 +28,11 @@ GRK=$(run_pass bench-grok.conf);      printf '    yalniz grok           : %s s\n
 awk -v c="${COUNT}" -v b="${BASE}" -v d="${DIS}" -v g="${GRK}" -v n="${NOISE}" 'BEGIN {
   gd = g - d; dd = d - b;
   printf "\n    grok - dissect        : %+.2f s  ->  olay basina %+.1f us ek CPU\n", gd, gd * 1e6 / c;
-  if (dd < n)
+  # Fark iki yonde de olculur: dissect referanstan hizli cikamaz, -n altindaki deger de gurultudur.
+  if (dd < n && dd > -n)
     printf "    dissect - referans    : %+.2f s  ->  olcum gurultusu (<%.1f s) icinde: dissect pratikte bedava\n", dd, n;
+  else if (dd <= -n)
+    printf "    dissect - referans    : %+.2f s  ->  dissect referanstan hizli olamaz: gurultu esigini (%.1f s) asan dalgalanma, betigi tekrar calistirin\n", dd, n;
   else
     printf "    dissect - referans    : %+.2f s  ->  olay basina %+.1f us ek CPU\n", dd, dd * 1e6 / c;
 }'

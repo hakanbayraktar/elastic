@@ -188,7 +188,7 @@ grok-error-2026.11.21     6
 grok-unparsed-2026.11.21  2
 ```
 
-11 satır iki kez gönderildi: 22 olay. Index adındaki tarih gönderdiğiniz güne göre değişir. Üç sayı birlikte okunur: normal olaylar, ayrı
+11 satır iki kez gönderildi: 22 olay. Index adındaki tarih gönderdiğiniz güne göre değişir; UTC gece yarısına yakın gönderirseniz olaylar iki günün index'ine bölünür ve satır sayısı artar, toplamlar yine 14 / 6 / 2'dir. Üç sayı birlikte okunur: normal olaylar, ayrı
 index'teki hatalar ve **ayrıştırılamayan ama kaybolmayan** satırlar. Aynı sağlık bilgisi grok
 filtresinin sayaçlarında da vardır:
 
