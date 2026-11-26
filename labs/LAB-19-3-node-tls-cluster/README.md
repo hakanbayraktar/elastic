@@ -367,7 +367,7 @@ Native (APT ve systemd) kurulum ve dedicated rollü (`master`/`data`/`ingest`) C
 
 ## Temizlik
 
-LAB-23 aynı cluster'ı kullanır; LAB-23'ü yapacaksanız temizliği sonra çalıştırın. Yalnız bu labın 3-node cluster'ını
+LAB-23 ve LAB-24'ün 7. adımı aynı cluster'ı kullanır; onları yapacaksanız temizliği sonra çalıştırın. Yalnız bu labın 3-node cluster'ını
 ve Kibana'sını, volume'larını (veri, sertifikalar, snapshot deposu), CA kopyasını ve sanal ortamı siler; ana
 cluster'a dokunmaz. `starter/.env` kalır:
 

@@ -66,7 +66,7 @@ labın `Ön Koşullar` bölümünü güncelleyin.
 | `8081`, `3001` | LAB-10 demo Nginx / demo API | hayır |
 | `8088`, `127.0.0.1:8025` | LAB-27 Apache / Mailpit arayüzü (SSH tüneli). Logstash Beats girdisi `5044` yalnız Docker ağında | `8088` evet |
 | `127.0.0.1:8220` | LAB-11 Fleet Server | hayır |
-| `19208` | LAB-19 bağımsız 3-node TLS cluster, HTTPS (LAB-23 aynı cluster'ı kullanır; node arası `9300` yalnız Docker ağında, host'a açılmaz) | hayır (SSH tüneli) |
+| `19208` | LAB-19 bağımsız 3-node TLS cluster, HTTPS (LAB-21, LAB-23 ve LAB-24 Adım 7 aynı cluster'ı kullanır; node arası `9300` yalnız Docker ağında, host'a açılmaz) | hayır (SSH tüneli) |
 | `15608` | LAB-19/23 3-node cluster'ın Kibana'sı (`kibana3` subdomain) | evet |
 | `127.0.0.1:9602` | LAB-26 SIEM Logstash API (Beats girdisi yalnız Docker ağında) | hayır |
 | `127.0.0.1:4317`, `127.0.0.1:4318` | ADV-02 OTLP gRPC / HTTP (yalnız loopback) | hayır |

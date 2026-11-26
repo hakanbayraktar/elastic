@@ -371,7 +371,8 @@ yüklenebilecek bir toplu aktarım) düşünülür.
 
 Yalnız bu labın SLM politikasını, snapshot'larını, repository'sini, `geri-cluster-urunler` ve `cluster-arsiv` index'lerini ve node
 boşaltma ayarını siler. 3-node cluster ve `cluster-urunler` LAB-19'a aittir ve çalışmaya devam eder; cluster'ı
-kaldırmak için ardından `../LAB-19-3-node-tls-cluster/teardown.sh` çalıştırın. Ana cluster etkilenmez:
+kaldırmak için ardından `../LAB-19-3-node-tls-cluster/teardown.sh` çalıştırın (LAB-24'ün 7. adımı da bu cluster'ı
+izler; onu yapacaksanız sonra). Ana cluster etkilenmez:
 
 ```bash
 ./teardown.sh

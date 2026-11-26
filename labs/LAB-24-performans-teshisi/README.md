@@ -2,7 +2,7 @@
 
 | Kullanılan Araçlar | Açık / Kullanılan Portlar |
 |---|---|
-| Search slow log, `X-Opaque-Id`, Profile API, Tasks API, Metricbeat ile Stack Monitoring, Kibana Dev Tools | 9200 / 5601 — LAB-01 ana cluster'ı |
+| Search slow log, `X-Opaque-Id`, Profile API, Tasks API, Metricbeat ile Stack Monitoring, Kibana Dev Tools | 9200 / 5601 — LAB-01 ana cluster'ı; 7. adımda 19208 — LAB-19 3-node cluster |
 
 ---
 
@@ -16,7 +16,7 @@ Bu labda 200 bin ürünlük bir index'te:
 - Slow log ile yavaş sorguyu ve onu gönderen uygulamayı bulacağız.
 - Profile API ile `must` ve `filter` farkını, joker karakterli sorgunun maliyetini ölçeceğiz.
 - Uzun süren bir sorguyu Tasks API ile bulup iptal edeceğiz.
-- Stack Monitoring ile cluster'ı sürekli izleyeceğiz.
+- Stack Monitoring ile cluster'ı sürekli izleyeceğiz; isteğe bağlı olarak 3-node cluster'da düşen bir node'u göreceğiz.
 
 ![Yavaş sorgu teşhisi: slow log, Profile API, Tasks](../../assets/infographics/34-performans-teshisi.png)
 
@@ -26,6 +26,7 @@ Bu labda 200 bin ürünlük bir index'te:
 
 - LAB-01 ana cluster'ı çalışıyor. LAB-01'i atladıysanız onun Adım 1-2'sini çalıştırın.
 - Diğer lablara bağlı değildir; veri betikle üretilir. Adım 5'teki sorgu iptal edilene kadar bir işlemci çekirdeğini meşgul eder.
+- İsteğe bağlı 7. adım LAB-19'un 3-node cluster'ının açık olmasını ister; kapalıysa o adımı atlayın.
 
 ```bash
 cd ~/elastic/labs/LAB-24-performans-teshisi
@@ -289,25 +290,136 @@ grafikleri açılır; slow log "hangi sorgu" sorusunu, bu ekran "hangi node, ne 
 Cluster'da yerleşemeyen bir replica varsa **Health** `Missing replica shards` (yellow) gösterir; Nodes sayfasındaki
 **Status** de `Yellow` olur. `_cluster/health`'in söylediğiyle aynı bilgi, burada zaman içinde grafiğiyle.
 
----
+### 7. 3-node cluster'ı izlemek (isteğe bağlı)
 
-## Temizlik
+**Soru: Birden çok node ve düşen bir node Stack Monitoring'de nasıl görünür?**
 
-Bu labın `perf-urunler` index'ini (slow log eşikleri onunla birlikte gider), Metricbeat container'ını, `.monitoring-es-8-mb`
-data stream'ini ve `izleme_mb` kullanıcısını siler. Ana cluster'a dokunmaz:
+Bu adım LAB-19'un 3-node cluster'ının açık olmasını ister; kapalıysa atlayın. İkinci bir Metricbeat 3-node
+cluster'ı izler ve veriyi **ana cluster'a** yazar. Gerçek ortamda da izleme verisi ayrı bir cluster'da tutulur:
+izlenen cluster çökse bile veri kaybolmaz.
+
+Kibana, bağlı olduğu cluster dışındaki bir cluster'ı yalnız o cluster'da trial ya da ücretli lisans varsa açar;
+3-node cluster'da trial açın ve izleme kullanıcısını orada da oluşturun:
 
 ```bash
-./teardown.sh
+export CA=../LAB-19-3-node-tls-cluster/.ca/ca.crt C3=https://127.0.0.1:19208
+curl -s --cacert "$CA" -u elastic:'DevOps2026!' -X POST "$C3/_license/start_trial?acknowledge=true"; echo
+curl -s --cacert "$CA" -u elastic:'DevOps2026!' -X PUT "$C3/_security/user/izleme_mb" \
+  -H 'Content-Type: application/json' -d '{"password": "Izleme2026!", "roles": ["remote_monitoring_collector", "remote_monitoring_agent"]}'; echo
 ```
 
 Beklenen çıktı:
 
 ```text
+{"acknowledged":true,"trial_was_started":true,"type":"trial"}
+{"created":true}
+```
+
+İkinci Metricbeat'in ayarı, `config/metricbeat-izleme3.yml`:
+
+```yaml
+hosts: ["https://es-a:9200", "https://es-b:9200", "https://es-c:9200"]   # her node ayri toplanir
+ssl.certificate_authorities: ["/usr/share/metricbeat/ca.crt"]          # LAB-19'un CA'si
+output.elasticsearch:
+  hosts: ["http://elasticsearch-lab00:9200"]  # izleme verisi ana cluster'a gider
+```
+
+- Üç node ayrı ayrı yazılır; biri düşünce diğerlerinden veri gelmeye devam eder.
+- Container iki Docker ağına birden katılır: 3-node cluster'ınkine (toplamak için) ve ana cluster'ınkine (yazmak için).
+
+Container'ı compose'un `cluster3` profiliyle başlatın; 6. adımdaki container olduğu gibi çalışmaya devam eder:
+
+```bash
+docker compose --profile cluster3 up -d 2>&1 | grep Started
+timeout 120 bash -c 'until [ "$(curl -s -u elastic:"DevOps2026!" "http://127.0.0.1:9200/.monitoring-es-8-mb/_count?q=elasticsearch.cluster.name:elastic-cluster" | jq .count 2>/dev/null)" -gt 0 ] 2>/dev/null; do printf .; sleep 3; done'; echo
+curl -s -u elastic:'DevOps2026!' 'http://127.0.0.1:9200/.monitoring-es-8-mb/_search?size=0' -H 'Content-Type: application/json' \
+  -d '{"aggs": {"c": {"terms": {"field": "elasticsearch.cluster.name"}}}}' | jq -c '[.aggregations.c.buckets[].key]'
+```
+
+Beklenen çıktı:
+
+```text
+ Container metricbeat-izleme3-lab Started
+...
+["docker-cluster","elastic-cluster"]
+```
+
+İzleme verisinde artık iki cluster var: `docker-cluster` ana cluster'ın (LAB-01) adı, `elastic-cluster` 3-node cluster.
+
+1. **Stack Monitoring**'i yeniden açın. Birden çok cluster olduğu için önce **Cluster listing** gelir; **elastic-cluster**'a
+   (1) tıklayın:
+
+   ![Cluster listing: 1 elastic-cluster](../../assets/screenshots/LAB-24/07a-cluster-listesi.png)
+
+2. **Nodes: 3** (1) bağlantısına tıklayın:
+
+   ![elastic-cluster overview: 1 Nodes](../../assets/screenshots/LAB-24/07b-cluster3-ozet.png)
+
+3. Liste (1) üç node'u, rollerini ve shard sayılarını gösterir; yıldız işaretli node seçilmiş master'dır:
+
+   ![Nodes: 1 üç node Online](../../assets/screenshots/LAB-24/07c-cluster3-nodes.png)
+
+Şimdi bir node'u durdurun:
+
+```bash
+docker compose --env-file ../LAB-19-3-node-tls-cluster/starter/.env -f ../LAB-19-3-node-tls-cluster/starter/docker-compose.yml stop es-b 2>&1 | grep Stopped
+```
+
+Beklenen çıktı:
+
+```text
+ Container elastic-cluster-es-b-1 Stopped
+```
+
+4. Sayfa 10 saniyede bir yenilenir. Yaklaşık bir dakika içinde `es-b` **Offline** (1) görünür. Cluster bu sürede eksik
+   replica'ları kalan iki node'a yeniden kurar; **Unassigned shards** 0'a, **Status** Green'e döner. Durdurduğunuz
+   node master ise kalan node'lardan biri master seçilir:
+
+   ![Nodes: 1 es-b Offline](../../assets/screenshots/LAB-24/07d-cluster3-offline.png)
+
+`es-b`'yi yeniden başlatın ve cluster'a katılmasını bekleyin:
+
+```bash
+docker compose --env-file ../LAB-19-3-node-tls-cluster/starter/.env -f ../LAB-19-3-node-tls-cluster/starter/docker-compose.yml start es-b 2>&1 | grep Started
+timeout 180 bash -c 'until [ "$(curl -s --cacert "$CA" -u elastic:"DevOps2026!" "$C3/_cat/nodes?h=name" | wc -l)" = 3 ]; do printf .; sleep 3; done'; echo
+```
+
+Beklenen çıktı:
+
+```text
+ Container elastic-cluster-setup-1 Started
+ Container elastic-cluster-es-b-1 Started
+...............
+```
+
+Birkaç saniye içinde `es-b` listede yeniden **Online** olur.
+
+---
+
+## Temizlik
+
+Bu labın `perf-urunler` index'ini (slow log eşikleri onunla birlikte gider), iki Metricbeat container'ını,
+`.monitoring-es-8-mb` data stream'ini ve `izleme_mb` kullanıcısını (3-node cluster açıksa orada da) siler. Ana cluster'a
+ve 3-node cluster'ın kendisine dokunmaz; 3-node cluster'daki trial lisans kalır:
+
+```bash
+./teardown.sh
+```
+
+Beklenen çıktı (7. adımı yaptıysanız):
+
+```text
 index perf-urunler -> 200
  Container metricbeat-izleme-lab Removed
+ Container metricbeat-izleme3-lab Removed
 data stream .monitoring-es-8-mb -> 200
 kullanici izleme_mb -> 200
+kullanici izleme_mb (3-node) -> 200
 ```
+
+7. adımı yapmadıysanız `metricbeat-izleme3-lab` satırı gelmez; 3-node satırı cluster kapalıysa hiç gelmez, açıksa
+`404` döner. LAB-19'un teardown'unu bu betikten sonra çalıştırın: ikinci Metricbeat açıkken 3-node cluster'ın ağı
+silinemez.
 
 Labı aynı sunucuda yeniden yapacaksanız başlamadan önce `./teardown.sh` çalıştırın; README'deki sayılar temiz
 başlangıca göredir.

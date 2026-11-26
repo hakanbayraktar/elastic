@@ -95,7 +95,7 @@ Bir labın komutlarını yanlış cluster'da çalıştırmamak için önce bu ta
 | Cluster | Elasticsearch | Kibana | Sürüm | Nasıl başlatılır | Kullanan lablar |
 |---|---|---|---|---|---|
 | **Ana cluster** (tek node) | `9200` | `5601` | 9.5.5 | LAB-01 `starter/docker-compose.yml` | LAB-02 … LAB-18, LAB-20 … LAB-22, LAB-24 … LAB-27 ve ADV-01 … ADV-07 |
-| **3-node TLS cluster** | `19208` (HTTPS) | `15608` | 9.5.5 | LAB-19 Adım 1 (`starter/docker-compose.yml`) | Yalnızca **LAB-19 / LAB-23** |
+| **3-node TLS cluster** | `19208` (HTTPS) | `15608` | 9.5.5 | LAB-19 Adım 1 (`starter/docker-compose.yml`) | Yalnızca **LAB-19 / LAB-21 / LAB-23**, LAB-24 Adım 7 (izleme) |
 | **Eski sürüm profili** | `9208` | `5608` | 8.19 | ADV-08 profili | Yalnızca **ADV-08** |
 | **ECK cluster'ı** (kind içinde) | `127.0.0.1:30087` (HTTPS) | `127.0.0.1:30086` | 9.5.5 | ADV-09 Adım 1-3 | Yalnızca **ADV-09** |
 

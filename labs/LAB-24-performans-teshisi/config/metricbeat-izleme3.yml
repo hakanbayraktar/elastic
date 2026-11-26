@@ -1,0 +1,15 @@
+# Stack Monitoring icin ikinci Metricbeat: LAB-19'un 3-node cluster'ini (es-a, es-b, es-c) HTTPS ve CA ile izler,
+# veriyi ana cluster'a (LAB-01) yazar. Izlenen cluster cokse bile izleme verisi baska yerde durur.
+metricbeat.modules:
+  - module: elasticsearch
+    xpack.enabled: true                     # Stack Monitoring'in bekledigi bicimde yaz
+    period: 10s
+    hosts: ["https://es-a:9200", "https://es-b:9200", "https://es-c:9200"]   # her node ayri toplanir
+    username: "izleme_mb"                   # 3-node cluster'da acilan izleme kullanicisi
+    password: "Izleme2026!"
+    ssl.certificate_authorities: ["/usr/share/metricbeat/ca.crt"]          # LAB-19'un CA'si
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch-lab00:9200"]  # izleme verisi ana cluster'a gider
+  username: "izleme_mb"
+  password: "Izleme2026!"

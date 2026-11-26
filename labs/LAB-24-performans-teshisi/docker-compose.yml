@@ -1,4 +1,5 @@
 # LAB-24 Adim 6: Stack Monitoring icin Metricbeat. Ana cluster'in agina katilir, yeni ag kurmaz.
+# Adim 7 (cluster3 profili): LAB-19'un 3-node cluster'ini izleyen ikinci Metricbeat; iki aga birden katilir.
 services:
   metricbeat-izleme:
     image: docker.elastic.co/beats/metricbeat:9.5.5
@@ -9,7 +10,21 @@ services:
       - ./config/metricbeat-izleme.yml:/usr/share/metricbeat/metricbeat.yml:ro
     networks: [elastic]
 
+  metricbeat-izleme3:
+    profiles: [cluster3]
+    image: docker.elastic.co/beats/metricbeat:9.5.5
+    container_name: metricbeat-izleme3-lab
+    user: root
+    command: ["metricbeat", "-e", "--strict.perms=false"]
+    volumes:
+      - ./config/metricbeat-izleme3.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - ../LAB-19-3-node-tls-cluster/.ca/ca.crt:/usr/share/metricbeat/ca.crt:ro
+    networks: [elastic, cluster3]
+
 networks:
   elastic:
     name: elastic-lab00_default
+    external: true
+  cluster3:
+    name: elastic-cluster_default
     external: true
